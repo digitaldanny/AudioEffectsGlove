@@ -1,4 +1,9 @@
 PythonGyroAccelTest/
+.vscode/
+__pycache__/
+
+# Generated binaries
+device
 
 # Prerequisites
 *.d
