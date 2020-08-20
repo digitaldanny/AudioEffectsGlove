@@ -31,6 +31,13 @@ PyObject* pSensorObj;   // nxp.sensor object
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
+    /*
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+     * DESCRIPTION: Init
+     * Set up communication to fxos8700 and fxas21002c devices for receiving 
+     * Accel/Gyro/Mag sensor data.
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+    */
     bool NxpWrapper::Init() {
 #if TARGET_HW_RASPBERRYPI
         return RasPi::Init();
@@ -39,6 +46,22 @@ PyObject* pSensorObj;   // nxp.sensor object
 #endif
     }
 
+    /*
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+     * DESCRIPTION: GetAccelData
+     * Get an sensor X,Y,Z reading from the NXP module. For this function, the results
+     * will be accelerometer data.
+     * 
+     * INPUTS:
+     * @sensor_data
+     *      Reference to the structure that will contain the X,Y,Z sensor readings
+     *      from the NXP module.
+     * 
+     * RETURN:
+     * bool - True, reading successful and sensor_data now contains valid data from the NXP module.
+     *        False, reading failed and sensor_data contents should be considered garbage.
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+    */
     bool NxpWrapper::GetAccelData(SensorData_t& sensor_data) {
 #if TARGET_HW_RASPBERRYPI
         return RasPi::GetAccelData(sensor_data);
@@ -47,6 +70,14 @@ PyObject* pSensorObj;   // nxp.sensor object
 #endif
     }
 
+    /*
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+     * DESCRIPTION: GetGyroData
+     * This function operates the same as GetAccelData except for gyroscope data.
+     * To see a more detailed description/inputs/outputs, read the comment above
+     * NxpWrapper::GetAccelData.
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+    */
     bool NxpWrapper::GetGyroData(SensorData_t& sensor_data) {
 #if TARGET_HW_RASPBERRYPI
         return RasPi::GetGyroData(sensor_data);
@@ -55,6 +86,14 @@ PyObject* pSensorObj;   // nxp.sensor object
 #endif
     }
 
+    /*
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+     * DESCRIPTION: GetMagData
+     * This function operates the same as GetAccelData except for magnetometer data.
+     * To see a more detailed description/inputs/outputs, read the comment above
+     * NxpWrapper::GetAccelData.
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+    */
     bool NxpWrapper::GetMagData(SensorData_t& sensor_data) {
 #if TARGET_HW_RASPBERRYPI
         return RasPi::GetMagData(sensor_data);
@@ -73,6 +112,14 @@ PyObject* pSensorObj;   // nxp.sensor object
 
 #if TARGET_HW_RASPBERRYPI
 
+    /*
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+     * DESCRIPTION: Init
+     * Raspberry Pi implementation of NxpWrapper::Init.
+     * High level information about this function can be found in the description
+     * for NxpWrapper::Init.
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+    */
     bool NxpWrapper::RasPi::Init(){
         
         PyObject *pDict;    // nxp module's namespace
@@ -107,19 +154,72 @@ PyObject* pSensorObj;   // nxp.sensor object
 
         return true;
     }
+
+    /*
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+     * DESCRIPTION: GetAccelData
+     * Raspberry Pi implementation of NxpWrapper::GetAccelData.
+     * High level information about this function can be found in the description
+     * for NxpWrapper::GetAccelData.
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+    */
     bool NxpWrapper::RasPi::GetAccelData(SensorData_t& sensor_data){
-        PyObject_CallMethod(pSensorObj, ACCEL_FUNC, NULL);
-        return true;
-    }
-    bool NxpWrapper::RasPi::GetGyroData(SensorData_t& sensor_data){
-        PyObject_CallMethod(pSensorObj, GYRO_FUNC, NULL);
-        return true;
-    }
-    bool NxpWrapper::RasPi::GetMagData(SensorData_t& sensor_data){
-        PyObject_CallMethod(pSensorObj, MAG_FUNC, NULL);
+        PyObject* rx = PyObject_CallMethod(pSensorObj, ACCEL_FUNC, NULL);
+        if (!PyArg_ParseTuple(rx, "fff", &sensor_data.x, &sensor_data.y, &sensor_data.z))
+        {
+            printf("Failed to parse!!\n");
+            return false;
+        }
         return true;
     }
 
+    /*
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+     * DESCRIPTION: GetGyroData
+     * Raspberry Pi implementation of NxpWrapper::GetGyroData.
+     * High level information about this function can be found in the description
+     * for NxpWrapper::GetAccelGetGyroDataData.
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+    */
+    bool NxpWrapper::RasPi::GetGyroData(SensorData_t& sensor_data){
+        PyObject* rx = PyObject_CallMethod(pSensorObj, GYRO_FUNC, NULL);
+        if (!PyArg_ParseTuple(rx, "fff", &sensor_data.x, &sensor_data.y, &sensor_data.z))
+        {
+            printf("Failed to parse!!\n");
+            return false;
+        }
+        return true;
+    }
+
+    /*
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+     * DESCRIPTION: GetMagData
+     * Raspberry Pi implementation of NxpWrapper::GetMagData.
+     * High level information about this function can be found in the description
+     * for NxpWrapper::GetMagData.
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+    */
+    bool NxpWrapper::RasPi::GetMagData(SensorData_t& sensor_data){
+        PyObject* rx = PyObject_CallMethod(pSensorObj, MAG_FUNC, NULL);
+        if (!PyArg_ParseTuple(rx, "fff", &sensor_data.x, &sensor_data.y, &sensor_data.z))
+        {
+            printf("Failed to parse!!\n");
+            return false;
+        }
+        return true;
+    }
+
+    /*
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+     * DESCRIPTION: PythonAssert
+     * If the passed PyObject pointer is null, the function checks if there were 
+     * any Python errors and prints the error. This function is meant to handle
+     * checking that PyObject pointers returned from the Python/C api are valid.
+     * 
+     * RETURN:
+     * bool - True if passed object is valid. Otherwise, no return due to infinite loop.
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+    */
     bool NxpWrapper::RasPi::PythonAssert(PyObject* obj)
     {
         if (obj == NULL)
@@ -129,19 +229,8 @@ PyObject* pSensorObj;   // nxp.sensor object
             PyErr_Fetch(&ptype, &pvalue, &ptraceback);
             const char *pStrErrorMessage = PyUnicode_AsUTF8(pvalue);
             printf("NxpWrapper::RasPi::PythonAssert - %s\n", pStrErrorMessage);
-            exit(-1); 
+            while(1);
         }
         return true;
     }
 #endif
-
-int main()
-{
-    NxpWrapper::SensorData_t accelData;
-    printf("TARGET_HW_RASBERRYPI: %d\n", TARGET_HW_RASPBERRYPI);
-    printf("nxp.init = %d\n", NxpWrapper::Init());
-    NxpWrapper::GetAccelData(accelData);
-    NxpWrapper::GetMagData(accelData);
-    NxpWrapper::GetGyroData(accelData);
-    return 0;
-}

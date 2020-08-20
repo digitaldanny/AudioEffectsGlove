@@ -56,17 +56,17 @@ class sensor:
     '''
     def accel(self):
         x,y,z = self.fxos.accelerometer
-        print("Python Accel: {}, {}, {}".format(x, y, z))
+        #print("Python Accel: {}, {}, {}".format(x, y, z))
         return x,y,z
 
     def mag(self):
         x,y,z = self.fxos.magnetometer
-        print("Python Mag: {}, {}, {}".format(x, y, z))
+        #print("Python Mag: {}, {}, {}".format(x, y, z))
         return x,y,z
 
     def gyro(self):
         x,y,z = self.fxas.gyroscope
-        print("Python Gyro: {}, {}, {}".format(x, y, z))
+        #print("Python Gyro: {}, {}, {}".format(x, y, z))
         return x,y,z    
 
 # +----------+----------+----------+----------+

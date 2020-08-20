@@ -5,9 +5,9 @@ CC 			= g++
 
 all: $(EXE_NAME)
 
-$(EXE_NAME): nxp_interface_api.cpp
+$(EXE_NAME): main.cpp nxp_interface_api.h
 	@echo =============== Building device ===============
-	$(CC) $(FLAGS) $(EXE_NAME) $(LIBS) nxp_interface_api.cpp 
+	$(CC) $(FLAGS) $(EXE_NAME) $(LIBS) main.cpp nxp_interface_api.cpp 
 clean: 	 
 	@echo =============== Cleaning ===============
 	$(RM) $(EXE_NAME)
