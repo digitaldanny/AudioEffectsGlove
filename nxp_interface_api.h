@@ -16,10 +16,6 @@
 #include "python3.5/Python.h"
 #endif
 
-#if TARGET_HW_DESKTOP
-#include "python3.6/Python.h"
-#endif
-
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
  * DEFINES
