@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "build_switches.h"
 #include "nxp_interface_api.h"
 
 int main()

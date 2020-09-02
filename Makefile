@@ -1,5 +1,6 @@
 FLAGS 		= -g -Wall -o
-LIBS 		= -I/usr/include/python3.5m -lpython3.5m
+#LIBS 		= -I/usr/include/python3.5m -lpython3.5m
+LIBS 		= -I/usr/include/python3.6 -lpython3.6
 EXE_NAME 	= device 
 CC 			= g++
 
