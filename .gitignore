@@ -1,4 +1,10 @@
 localDocs/
+PythonGyroAccelTest/
+.vscode/
+
+# Generated binaries
+device
+>>>>>>> e06b5bfc711eb2aa420924486bc396fa7949c4a3
 
 # Prerequisites
 *.d
