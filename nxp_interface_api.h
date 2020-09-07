@@ -87,6 +87,20 @@ namespace NxpWrapper {
         bool PythonAssert(PyObject* obj);
     }
 #endif
+
+    /*
+    * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+    * DESCRIPTION: Dummy
+    * The functions are used to provide dummy sensor data.
+    * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+    */
+#if TARGET_HW_DESKTOP
+    namespace Dummy{
+        bool GetAccelData(SensorData_t& sensor_data);
+        bool GetGyroData(SensorData_t& sensor_data);
+        bool GetMagData(SensorData_t& sensor_data);
+    }
+#endif
 };
 
 #endif

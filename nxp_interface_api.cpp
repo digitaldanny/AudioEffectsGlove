@@ -12,6 +12,10 @@
 
 #include "nxp_interface_api.h"
 
+#if TARGET_HW_DESKTOP
+#include "math.h"
+#endif
+
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 * GLOBALS
@@ -65,6 +69,8 @@ PyObject* pSensorObj;   // nxp.sensor object
     bool NxpWrapper::GetAccelData(SensorData_t& sensor_data) {
 #if TARGET_HW_RASPBERRYPI
         return RasPi::GetAccelData(sensor_data);
+#elif TARGET_HW_DESKTOP
+        return Dummy::GetAccelData(sensor_data);
 #else
         return false;
 #endif
@@ -81,6 +87,8 @@ PyObject* pSensorObj;   // nxp.sensor object
     bool NxpWrapper::GetGyroData(SensorData_t& sensor_data) {
 #if TARGET_HW_RASPBERRYPI
         return RasPi::GetGyroData(sensor_data);
+#elif TARGET_HW_DESKTOP
+        return Dummy::GetGyroData(sensor_data);
 #else
         return false;
 #endif
@@ -97,6 +105,8 @@ PyObject* pSensorObj;   // nxp.sensor object
     bool NxpWrapper::GetMagData(SensorData_t& sensor_data) {
 #if TARGET_HW_RASPBERRYPI
         return RasPi::GetMagData(sensor_data);
+#elif TARGET_HW_DESKTOP
+        return Dummy::GetMagData(sensor_data);
 #else
         return false;
 #endif
@@ -231,6 +241,64 @@ PyObject* pSensorObj;   // nxp.sensor object
             printf("NxpWrapper::RasPi::PythonAssert - %s\n", pStrErrorMessage);
             while(1);
         }
+        return true;
+    }
+#endif
+
+/*
+* +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+* DUMMY FUNCTIONS
+* These functions output dummy samples for testing on targets that are not
+* attached to the sensors.
+* +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+#if TARGET_HW_DESKTOP
+    /*
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+     * DESCRIPTION: GetAccelData
+     * Returns samples from a sine wave.
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+    */
+    bool NxpWrapper::Dummy::GetAccelData(SensorData_t& sensor_data){
+        static int sampleNum = 0;
+        float samplingRate = 46875.0f;
+        float freqMult = 1.0f;
+        float sample = sin(freqMult*2.0f*M_PI*(float)sampleNum/samplingRate);
+        sensor_data = {sample, sample, sample};
+        sampleNum++;
+        return true;
+    }
+
+    /*
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+     * DESCRIPTION: GetGyroData
+     * Returns samples from a sine wave.
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+    */
+    bool NxpWrapper::Dummy::GetGyroData(SensorData_t& sensor_data){
+        static int sampleNum = 0;
+        float samplingRate = 46875.0f;
+        float freqMult = 2.0f;
+        float sample = sin(freqMult*2.0f*M_PI*(float)sampleNum/samplingRate);
+        sensor_data = {sample, sample, sample};
+        sampleNum++;
+        return true;
+    }
+
+    /*
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+     * DESCRIPTION: GetMagData
+     * Returns samples from a 
+     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+    */
+    bool NxpWrapper::Dummy::GetMagData(SensorData_t& sensor_data){
+        static int sampleNum = 0;
+        float samplingRate = 46875.0f;
+        float freqMult = 4.0f;
+        float sample = sin(freqMult*2.0f*M_PI*(float)sampleNum/samplingRate);
+        sensor_data = {sample, sample, sample};
+        sampleNum++;
         return true;
     }
 #endif
