@@ -12,56 +12,71 @@ import json
 class ServerSocket:
 
     def __init__(self, port):
-        
-        self.stored         = "DEADBEEF"
         self.host           = ''
         self.port           = port
         self.sock_conn      = None
-        self.sock_server    = self.__setupServer() # Setup the socket from the port number provided
+        self.sock_server    = None
 
-    def __getServerSocketInfo(self):
-        return self.host, self.port
-
-    def __setupServer(self):
+    def __enter__(self):
         '''
         +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-        DESCRIPTION: __setupServer
-        
+        DESCRIPTION: __enter__
+        Sets up a server socket and returns a connection to the client if one is found.
         +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
         '''
-        # AF_INET = address family, APv4 requires (host, port) tuple
+        self.sock_server    = self.__setupServerSocket() # Setup the server socket from the port number provided
+        self.sock_conn      = self.openConnection() # Setup connection 
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        '''
+        +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+        DESCRIPTION: __exit__
+        Closes connection to client and closes server socket.
+        +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+        '''
+        if self.sock_conn:      self.sock_conn.close()
+        if self.sock_server:    self.sock_server.close()
+
+    def __setupServerSocket(self):
+        '''
+        +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+        DESCRIPTION: __setupServerSocket
+        This function sets up a socket on localhost using the port provided upon 
+        object instantiation.
+
+        SOCKET DETAILS:
+        Protocol        : TCP
+        Address Family  : IPv4
+        +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+        '''
+        # AF_INET = address family, IPv4 requires (host, port) tuple
         # SOCK_STREAM = socket expects TCP packets
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        print("Socket created.")
+        print("Server socket created.")
 
         # Bind the socket to an address so the server
         # can accept client connections.
         try:
-            serverSockInfo = self.__getServerSocketInfo()
-            s.bind(serverSockInfo)
+            s.bind((self.host, self.port))
         except socket.error as msg:
             print(msg)
         print("Socket bind complete")
 
+        print("Host name: {}".format(socket.gethostbyname(socket.gethostname())))
         return s
-
-    def __READ(self):
-        reply = self.stored
-        return reply
-
-    def __WRITE(self, message):
-        self.stored = message[1]
 
     # +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
     # PUBLIC METHODS
     # +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 
-    def setupConnection(self):
+    def openConnection(self):
         '''
         +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-        DESCRIPTION: SetupConnection
-        
+        DESCRIPTION: openConnection
+        Listens for a client connection on the self.server_socket. If a connection is
+        found, it is returned.
         +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
         '''
         # Allows 1 connection.
@@ -74,116 +89,40 @@ class ServerSocket:
 
         # Assign the socket connection to the class instance's attributes
         self.sock_conn = connection
+        return connection
 
-    def decodeRequest(self):
+    def recvRequest(self):
         '''
         +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-        DESCRIPTION: decodeRequest
-        
+        DESCRIPTION: recvRequest
+        Waits for a request over the client connection and returns the raw data.
+        This function does NOT decode the received request.
+
+        INPUTS: N/A
+
+        RETURN: 
         +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
         '''
-        closeConnection = False
-
-        # RECEIVE THE DATA ------------------------------------
-        #start = timeit.default_timer()
+        if not self.sock_conn: return None
         data = self.sock_conn.recv(1024)
-        data = data.decode('utf-8')
+        return data.decode('utf-8')
 
-        # Split the data to separate the command from theWW
-        # rest of the data.
-        dataMessage = data.split(' ', 1)
-        command = dataMessage[0]
+    def sendResponse(self, data):
+        '''
+        +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+        DESCRIPTION: sendResponse
+        Sends raw data over connection.
 
-        # Decode the command received from the client ----------
-        
-        # Send the currently stored data back to the client.
-        # This may not be used once the FIFOs are implemented and
-        # a periodic status updater will be sent back to the client.
-        if command == 'READ':
-            print("Reading from memory..")
-            reply = self.__READ()
+        INPUTS:
+        @data - ()
 
-        # writes the data to the test variable.
-        # Soon this will be updated to write to the FIFO
-        elif command == 'WRITE':
-            print("Storing to memory..")
-            self.__WRITE(dataMessage)
-            reply = 'Updating the server with new data..'
-
-        # Repeat the previous data message.
-        elif command == 'REPEAT':
-            reply = self.__REPEAT(dataMessage)
-
-        # Go back to the beginning of the loop
-        # and listen for another client connection.
-        elif command == 'EXIT':
-            print("Client has exited..")
-            closeConnection = True
-
-        # Shut down the server by closing the SERVER socket.
-        # End of the program.
-        elif command == 'KILL':
-            print("Server socket closed..")
-            self.sock_server.close()
-            closeConnection = True
-
-        # Handle unknown commands.
-        else:
-            reply = 'Unknown command..'
-
-        # RESPOND TO CLIENT --------------------------------
-        # Only respond to client if the client is still connected.
-        if not closeConnection:
-            self.sock_conn.sendall(str.encode(reply))
-            print("Data has been send..")  
-
-        # Else if the server received exit or kill data, close the
-        # CONNECTION socket to the client.
-        else:
-            self.sock_conn.close()
-            print("Client socket closed..")
-
-        # if the client has requested to exit OR kill the server
-        return closeConnection
-
-class Server(ServerSocket):
-
-    def __init__(self, port):
-        ServerSocket.__init__(self, port)
-        
-    def __exit__(self):
-        self.closeConnection()
-        self.closeServer()
-        
-    '''SUMMARY: Try to close the server socket. '''
-    def closeConnection(self):
-        try:
-            self.sock_conn.close()
-            print("Connection socket closed.")
-        except:
-            print("No connection socket to close.")
-            
-    ''' SUMMARY: Try to close the connection socket. '''
-    def closeServer(self):
-        try:
-            self.sock_server.close()
-            print("Server socket closed.")
-        except:
-            print("No server socket to close.")
-
-    ''' SUMMARY: Receive a request from the user - cfg.ACCEL, cfg.GRYO, cfg.MAG'''
-    def receive(self):
-        req = self.sock_conn.recv(1)
-        return req.decode('utf-8')
-
-    def respond(self, msg):
-
-        # First send the length of the message, then send the
-        # message. The client will be able to read the length
-        # and then pull the appropriate amount of data.
-        encoded = msg.encode('utf-8')
-        self.sock_conn.send(str(len(encoded)).encode('utf-8'))
+        RETURN: 
+        +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+        '''
+        if not self.sock_conn: return False
+        encoded = data.encode('utf-8')
         self.sock_conn.send(encoded)
+        return True
 
 # ==============================================================
 # ==============================================================
@@ -194,36 +133,10 @@ class Server(ServerSocket):
 # ==============================================================
 
 def TestProtocol():
-
-    # instantiate the wifi server which automatically
-    # sets up a server socket on the specified port.
-    s = Server(5560)
-
-    mess = None
-
-    # Continue to make connections or send/receive data
-    # until a client requests that the server socket is
-    # closed.
     while True:
-        try:
-            s.setupConnection()
-            close_conn = False
-            
-            while not close_conn:
-                mess = s.receive()
-                print("REQ: " + str(mess))
-
-                # determine if the request is asking to disconnect
-                # or shut down the server.
-                if mess == 'E' or mess == 'K': break
-
-                # return the appropriate data to the client.
-                s.respond('{"x" : 2.561, "y" : 1.231, "z" : 4.322}')
-
-            if mess == 'K': break 
-        except Exception as e:
-            print(e)
-            break    
+        with ServerSocket(5560) as s:
+            request = s.recvRequest()
+            print("Received request: {}".format(request))
 
 if __name__ == "__main__":
     print(sys.version)
