@@ -1,8 +1,8 @@
-# My ignores
 localDocs/
 PythonGyroAccelTest/
 .vscode/
 .vs/
+dev
 
 # Unity ignores
 [Ll]ibrary/
@@ -36,9 +36,6 @@ sysinfo.txt
 # Builds
 *.apk
 *.unitypackage
-
-# Generated binaries
-device
 
 # Prerequisites
 *.d

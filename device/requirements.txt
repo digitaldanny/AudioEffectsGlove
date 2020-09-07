@@ -1,0 +1,2 @@
+git+https://github.com/adafruit/Adafruit_FXOS8700.git@1.4.0#egg=Adafruit_FXOS8700
+git+https://github.com/adafruit/Adafruit_FXAS21002C.git@1.3.0#egg=Adafruit_FXAS21002C
