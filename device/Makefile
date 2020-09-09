@@ -1,14 +1,48 @@
-FLAGS 		= -g -Wall -o
-#LIBS 		= -I/usr/include/python3.5m -lpython3.5m
-LIBS 		= -I/usr/include/python3.6m -lpython3.6m
-EXE_NAME 	= device 
-CC 			= g++
+SRC_DIR := src
+OBJ_DIR := obj
+BIN_DIR := bin
+INC_DIR := inc
+CC 		:= g++         
 
-all: $(EXE_NAME)
+EXE 	:= $(BIN_DIR)/device
+SRC     := $(shell find $(SRC_DIR) -name *.cpp)		# Find all cpp files in the src directory
+OBJ 	:= $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o) 	# Name obj files based on cpp filenames
 
-$(EXE_NAME): main.cpp nxp_interface_api.h
-	@echo =============== Building device ===============
-	$(CC) $(FLAGS) $(EXE_NAME) $(LIBS) main.cpp nxp_interface_api.cpp 
-clean: 	 
-	@echo =============== Cleaning ===============
-	$(RM) $(EXE_NAME)
+# Desktop libraries
+CFLAGS   := -Wall -I$(INC_DIR) -I. -I/usr/include/python3.6m  
+LIBS     := -lpython3.6m   
+
+# RPi libraries
+#CFLAGS   := -Wall -I$(INC_DIR) -I. -I/usr/include/python3.5m  
+#LIBS     := -lpython3.5m
+
+# "all" and "clean" are not targets to build.
+.PHONY: all clean
+
+all: $(EXE)
+
+$(EXE): $(OBJ)
+	$(CC) $^ -o $@
+
+# Create the object files. Creation of the bin directory (BIN_DIR) is done with an
+# order-only-prerequisite so that the directory will be created if it does not exist.
+#
+# Documentation on order-only-prereqs: https://www.gnu.org/software/make/manual/make.html#Prerequisite-Types
+# "The rule to create the objdir directory will be run, if needed, before any ‘.o’ is built, 
+# but no ‘.o’ will be built because the objdir directory timestamp changed."
+$(EXE): $(OBJ) | $(BIN_DIR)
+	$(CC) $^ $(LIBS) -o $@
+
+$(BIN_DIR):
+	mkdir -p $@
+
+# Create object files from the source code. Again, object directory might not exist, so use
+# order-only-prereq to create it.
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BIN_DIR) $(OBJ_DIR):
+	mkdir -p $@
+
+clean:
+	$(RM) -rv $(BIN_DIR) $(OBJ_DIR)

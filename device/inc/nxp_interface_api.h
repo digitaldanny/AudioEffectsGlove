@@ -31,13 +31,6 @@
 #define GYRO_FUNC       "gyro"
 #endif
 
-/*
-* +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-* DESCRIPTION: RasPi
-* The functions below are only used when the program is being run on
-* the Raspberry Pi prototype.
-* +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-*/
 namespace NxpWrapper {
 
     /*

@@ -10,7 +10,6 @@ for testing how the server will respond to the Unity client.
 import socket
 import sys
 import json
-import subprocess 
 import time
 
 class ClientSocket:

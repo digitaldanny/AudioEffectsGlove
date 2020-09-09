@@ -2,7 +2,8 @@ localDocs/
 PythonGyroAccelTest/
 .vscode/
 .vs/
-dev
+bin/
+obj/
 
 # Unity ignores
 [Ll]ibrary/
