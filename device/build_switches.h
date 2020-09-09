@@ -12,6 +12,14 @@
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * ENTRY POINTS
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+#define ENABLE_UNIT_TEST_WIRELESS_API   1   // Issue #8: Enables running the unit test for the wireless API.
+#define ENABLE_UNIT_TEST_NXP_API        0   // Issue #2: Enables unit test for the gyro/accel/mag sensor pack reading.
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
  * WIRELESS API
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
