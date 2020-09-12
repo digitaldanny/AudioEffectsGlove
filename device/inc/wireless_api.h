@@ -11,10 +11,32 @@
 #include "build_switches.h"
 #include <stdio.h>
 
-// Prototype target includes
+#if ENABLE_WIRELESS_API_PYTHON
+#include "python_common.h"
+
 #if TARGET_HW_RASPBERRYPI
 #include "python3.5/Python.h"
-#endif
+#endif // ENABLE_WIRELESS_API_PYTHON
+
+#if TARGET_HW_DESKTOP
+#include "python3.6/Python.h"
+#endif // TARGET_HW_DESKTOP
+#endif // ENABLE_WIRELESS_API_PYTHON
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * DEFINES
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+#if ENABLE_WIRELESS_API_PYTHON
+#define SERVER_MODULE   PROTO_PATH "server"
+#define SOCKET_CLASS    "ServerSocket"
+#define RECV_REQ_FUNC   "recvRequest"
+#define SEND_RESP_FUNC  "sendResponse"
+#define OPEN_CONN_FUNC  "__enter__"
+#define DISCONNECT_FUNC "__exit__"
+#endif // ENABLE_WIRELESS_API_PYTHON
 
 namespace WirelessApi {
 
@@ -29,7 +51,7 @@ namespace WirelessApi {
     * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
     */
 
-    bool            ConnectToClient         ();
+    bool            ConnectToClient         (int port_num);
     bool            SendResponse            (char* data, int dataSizeInBytes);
     RequestType_e   RecvRequest             ();
     bool            DisconnectFromClient    ();
@@ -43,7 +65,7 @@ namespace WirelessApi {
     */
 #if ENABLE_WIRELESS_API_PYTHON
     namespace Python{
-        bool            ConnectToClient         ();
+        bool            ConnectToClient         (int port_num);
         bool            SendResponse            (char* data, int dataSizeInBytes);
         RequestType_e   RecvRequest             ();
         bool            DisconnectFromClient    ();

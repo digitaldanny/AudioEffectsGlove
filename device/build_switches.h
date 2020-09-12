@@ -12,7 +12,7 @@
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
- * ENTRY POINTS
+ * ENTRY POINTS (Main programs / Unit tests)
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 #define ENABLE_UNIT_TEST_WIRELESS_API   1   // Issue #8: Enables running the unit test for the wireless API.
@@ -23,6 +23,6 @@
  * WIRELESS API
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
-#define ENABLE_WIRELESS_API_PYTHON  (1 & TARGET_HW_PYTHON_CAPABLE) // Issue #8: Enables calls to server.py for sending/receiving client requests.
+#define ENABLE_WIRELESS_API_PYTHON  1 // Issue #8: Enables calls to server.py for sending/receiving client requests.
 
 #endif

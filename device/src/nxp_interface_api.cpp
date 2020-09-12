@@ -16,6 +16,10 @@
 #include "math.h"
 #endif
 
+#if TARGET_HW_RASPBERRYPI
+#include "python_common.h"
+#endif
+
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 * GLOBALS
@@ -23,8 +27,8 @@
 */
 
 #if TARGET_HW_RASPBERRYPI
-PyObject *pModule;      // nxp module                
-PyObject* pSensorObj;   // nxp.sensor object
+static PyObject *pModule;      // nxp module                
+static PyObject* pSensorObj;   // nxp.sensor object
 #endif
 
 /*
@@ -128,15 +132,15 @@ PyObject* pSensorObj;   // nxp.sensor object
      * Raspberry Pi implementation of NxpWrapper::Init.
      * High level information about this function can be found in the description
      * for NxpWrapper::Init.
+     * 
+     * NOTE: This function assumes that the Py_Initialize() function has already
+     * been called.
      * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
     */
     bool NxpWrapper::RasPi::Init(){
         
         PyObject *pDict;    // nxp module's namespace
-        PyObject *pSensor;  // nxp.sensor class    
-        
-        // Initialize the Python Interpreter
-        Py_Initialize();
+        PyObject *pSensor;  // nxp.sensor class  
 
         // Move PYTHONPATH to current working directory to find nxp module
         PyRun_SimpleString("import sys");
@@ -215,31 +219,6 @@ PyObject* pSensorObj;   // nxp.sensor object
         {
             printf("Failed to parse!!\n");
             return false;
-        }
-        return true;
-    }
-
-    /*
-     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-     * DESCRIPTION: PythonAssert
-     * If the passed PyObject pointer is null, the function checks if there were 
-     * any Python errors and prints the error. This function is meant to handle
-     * checking that PyObject pointers returned from the Python/C api are valid.
-     * 
-     * RETURN:
-     * bool - True if passed object is valid. Otherwise, no return due to infinite loop.
-     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-    */
-    bool NxpWrapper::RasPi::PythonAssert(PyObject* obj)
-    {
-        if (obj == NULL)
-        {
-            // Print out the error and exit
-            PyObject *ptype, *pvalue, *ptraceback;      
-            PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-            const char *pStrErrorMessage = PyUnicode_AsUTF8(pvalue);
-            printf("NxpWrapper::RasPi::PythonAssert - %s\n", pStrErrorMessage);
-            while(1);
         }
         return true;
     }

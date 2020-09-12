@@ -7,26 +7,21 @@ CXX 	:= g++
 EXE 	:= $(BIN_DIR)/device
 SRC     := $(shell find $(SRC_DIR) -name *.cpp)		# Find all cpp files in the src directory
 OBJ 	:= $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o) 	# Name obj files based on cpp filenames
+OS_NAME := $(shell uname -s | tr A-Z a-z)
 
 CFLAGS = -Wall
-INCLUDES = -I$(INC_DIR) -I. -I/usr/include/python3.6m 
-LIBS = -lpython3.6m
-# ifeq ($(OS), Windows_NT)
-# 	# Desktop libraries
-# 	@echo "Building for Windows Desktop"
-# 	CFLAGS = -Wall -I$(INC_DIR) -I. -I/usr/include/python3.6m 
-# 	LIBS = -lpython3.6m
-# else
-# 	# RPi libraries
-# 	@echo "Building for RPi"
-# 	CFLAGS = -Wall -I$(INC_DIR) -I. -I/usr/include/python3.5m
-# 	LIBS = -lpython3.5m
-# endif
+WIN_INC = -I$(INC_DIR) -I. -I/usr/include/python3.6m 
+RPI_INC = -I$(INC_DIR) -I. -I/usr/include/python3.5m 
+WIN_LIBS = -lpython3.6m
+RPI_LIBS = -lpython3.5m
 
 # "all" and "clean" are not targets to build.
 .PHONY: all clean
 
 all: $(EXE)
+
+os:
+	@echo $(OS_NAME)
 
 # Create the object files. Creation of the bin directory (BIN_DIR) is done with an
 # order-only-prerequisite so that the directory will be created if it does not exist.
@@ -35,7 +30,13 @@ all: $(EXE)
 # "The rule to create the objdir directory will be run, if needed, before any ‘.o’ is built, 
 # but no ‘.o’ will be built because the objdir directory timestamp changed."
 $(EXE): $(OBJ) | $(BIN_DIR)
-	$(CXX) $^ $(LIBS) -o $@ $(INCLUDES)
+ifeq ($(OS),Windows_NT)
+	@echo "*** Building for Desktop target. ***"
+	$(CXX) $^ $(WIN_LIBS) -o $@ $(WIN_INC)
+else
+	@echo "*** Building for RPi target (prototype). ***"
+	$(CXX) $^ $(RPI_LIBS) -o $@ $(RPI_INC)
+endif
 
 # Create object files from the source code. Again, object directory might not exist, so use
 # order-only-prereq to create it.

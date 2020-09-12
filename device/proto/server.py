@@ -12,6 +12,7 @@ import json
 class ServerSocket:
 
     def __init__(self, port):
+        print("PYTHON: Initializing ServerSocket class with port #{}.".format(port))
         self.host           = ''
         self.port           = port
         self.sock_conn      = None
@@ -24,6 +25,7 @@ class ServerSocket:
         Sets up a server socket and returns a connection to the client if one is found.
         +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
         '''
+        print("PYTHON: Inside '__enter__'")
         self.sock_server    = self.__setupServerSocket() # Setup the server socket from the port number provided
         self.sock_conn      = self.openConnection() # Setup connection 
         return self
@@ -35,6 +37,7 @@ class ServerSocket:
         Closes connection to client and closes server socket.
         +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
         '''
+        print("PYTHON: Inside '__exit__'")
         if self.sock_conn:      self.sock_conn.close()
         if self.sock_server:    self.sock_server.close()
 
@@ -134,7 +137,7 @@ class ServerSocket:
 
 def TestProtocol():
     while True:
-        with ServerSocket(5560) as s:
+        with ServerSocket(9876) as s:
             request = s.recvRequest()
             print("Received request: {}".format(request))
 

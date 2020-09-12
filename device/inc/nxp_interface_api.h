@@ -24,7 +24,7 @@
 
 // Prototype target defines
 #if TARGET_HW_RASPBERRYPI
-#define NXP_MODULE      "nxp"
+#define NXP_MODULE      PROTO_PATH "nxp"
 #define SENSOR_CLASS    "sensor"
 #define ACCEL_FUNC      "accel"
 #define MAG_FUNC        "mag"
@@ -77,7 +77,6 @@ namespace NxpWrapper {
         bool GetAccelData(SensorData_t& sensor_data);
         bool GetGyroData(SensorData_t& sensor_data);
         bool GetMagData(SensorData_t& sensor_data);
-        bool PythonAssert(PyObject* obj);
     }
 #endif
 

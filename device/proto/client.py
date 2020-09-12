@@ -99,7 +99,7 @@ class ClientSocket:
 def protocol():
 
     while True:
-        with ClientSocket(5560, .05) as c:
+        with ClientSocket(9876, .05) as c:
             if not c:
                 print("Trying again in 2 seconds.\n")
                 time.sleep(2) 
