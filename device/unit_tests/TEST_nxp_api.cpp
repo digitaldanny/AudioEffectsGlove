@@ -6,7 +6,7 @@
 
 int unitTest_nxpApi() {
     NxpWrapper::SensorData_t data;
-
+    Py_Initialize(); // Initialize the Python Interpreter
     printf("TARGET_HW_RASBERRYPI: %d\n", TARGET_HW_RASPBERRYPI);
     printf("nxp.init = %d\n", NxpWrapper::Init());
 
@@ -21,6 +21,7 @@ int unitTest_nxpApi() {
         NxpWrapper::GetGyroData(data);
         printf("C Gyro Data: %f, %f, %f\n\n", data.x, data.y, data.z);
     }
+    Py_Finalize();
     return 0;
 }
 

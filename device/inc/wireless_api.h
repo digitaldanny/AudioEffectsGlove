@@ -34,7 +34,7 @@
 #define SOCKET_CLASS    "ServerSocket"
 #define RECV_REQ_FUNC   "recvRequest"
 #define SEND_RESP_FUNC  "sendResponse"
-#define OPEN_CONN_FUNC  "__enter__"
+#define CONNECT_FUNC    "__enter__"
 #define DISCONNECT_FUNC "__exit__"
 #endif // ENABLE_WIRELESS_API_PYTHON
 

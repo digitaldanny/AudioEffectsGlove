@@ -84,19 +84,20 @@ bool WirelessApi::Python::ConnectToClient(int port_num)
     if (PyCallable_Check(pSocket)) 
     {
         PyObject* portNumObj = Py_BuildValue("i", port_num);
-        pSocketObj = PyObject_CallObject(pSocket, portNumObj);
+        PythonAssert((pSocketObj = PyObject_CallFunctionObjArgs(pSocket, portNumObj, NULL)));
+        Py_DECREF(portNumObj);
     }
     else 
         PythonAssert(NULL); // forces an assertion
 
     // Remove references to Python objects for garbage collection
-    //Py_DECREF(pDict);
-    //Py_DECREF(pSocket);
+    Py_DECREF(pDict);
+    Py_DECREF(pSocket);
 
     // Call the connect to socket function to search for a connection
     // with a client.
     printf("C: Listening for connection to client.\n");
-    PyObject* conn = PyObject_CallMethod(pSocketObj, OPEN_CONN_FUNC, NULL);
+    PyObject* conn = PyObject_CallMethod(pSocketObj, CONNECT_FUNC, NULL);
     if (conn == Py_None)
     {
         printf("WirelessApi::Python::ConnectToClient - Could not connect to a client.\n");
