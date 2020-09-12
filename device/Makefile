@@ -4,6 +4,9 @@ BIN_DIR := bin
 INC_DIR := inc
 CXX 	:= g++         
 
+SYSTEM  := RPI		# Makefile builds for RPi target by default
+					# Makefile can optionally build for desktop if specified with "make SYSTEM=DESKTOP"
+
 EXE 	:= $(BIN_DIR)/device
 SRC     := $(shell find $(SRC_DIR) -name *.cpp)		# Find all cpp files in the src directory
 OBJ 	:= $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o) 	# Name obj files based on cpp filenames
@@ -20,8 +23,8 @@ RPI_LIBS = -lpython3.5m
 
 all: $(EXE)
 
-os:
-	@echo $(OS_NAME)
+sys:
+	@echo $(SYSTEM)
 
 # Create the object files. Creation of the bin directory (BIN_DIR) is done with an
 # order-only-prerequisite so that the directory will be created if it does not exist.
@@ -30,10 +33,11 @@ os:
 # "The rule to create the objdir directory will be run, if needed, before any ‘.o’ is built, 
 # but no ‘.o’ will be built because the objdir directory timestamp changed."
 $(EXE): $(OBJ) | $(BIN_DIR)
-ifeq ($(OS),Windows_NT)
+ifeq ($(SYSTEM), DESKTOP)
 	@echo "*** Building for Desktop target. ***"
 	$(CXX) $^ $(WIN_LIBS) -o $@ $(WIN_INC)
 else
+	@echo $(SYSTEM)
 	@echo "*** Building for RPi target (prototype). ***"
 	$(CXX) $^ $(RPI_LIBS) -o $@ $(RPI_INC)
 endif
