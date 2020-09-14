@@ -114,6 +114,10 @@ bool WirelessApi::Python::ConnectToClient(int port_num)
 bool WirelessApi::Python::SendResponse(char* data, int dataSizeInBytes)
 {
     printf("WirelessApi::Python::SendResponse\n");
+
+    // Convert character array into a Python list to be received by
+    // client.recvResponse function.
+
     PyObject* rx = PyObject_CallMethod(pSocketObj, SEND_RESP_FUNC, NULL);
     if (!PyBool_Check(rx))
     {
