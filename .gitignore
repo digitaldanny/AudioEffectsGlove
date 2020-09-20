@@ -5,6 +5,9 @@ PythonGyroAccelTest/
 bin/
 obj/
 
+# Python generated
+__pycache__/
+
 # Unity ignores
 [Ll]ibrary/
 [Tt]emp/
