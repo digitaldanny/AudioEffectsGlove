@@ -12,8 +12,8 @@ import json
 class ServerSocket:
 
     def __init__(self, port):
-        print("PYTHON: Initializing ServerSocket class with port #{}.".format(port))
-        self.host           = ''
+        print("PYTHON: Initializing ServerSocket class with port #{}".format(port))
+        self.host           = 'localhost'
         self.port           = port
         self.sock_conn      = None
         self.sock_server    = None
@@ -137,9 +137,15 @@ class ServerSocket:
 
 def TestProtocol():
     while True:
-        with ServerSocket(9876) as s:
+        with ServerSocket(5563) as s:
+
+            # Receive client request
             request = s.recvRequest()
             print("Received request: {}".format(request))
+            
+            # Respond to request
+            response = input("Response to client: ")
+            s.sendResponse(response)
 
 if __name__ == "__main__":
     print(sys.version)

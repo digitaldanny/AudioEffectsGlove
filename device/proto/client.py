@@ -14,7 +14,8 @@ import time
 
 class ClientSocket:
         
-    def __init__(self, port, timeout):
+    def __init__(self, ipv4, port, timeout):
+        self.ip = ipv4
         self.port = port
         self.timeout = timeout
         self.conn = None
@@ -32,7 +33,7 @@ class ClientSocket:
         ''' 
         +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
         DESCRIPTION: __setupConnection 
-        Search all LAN IPs for a valid connection on the defined port.
+        Connect to defined ip address through defined port number.
 
         SOCKET DETAILS:
         Protocol        : TCP
@@ -42,51 +43,36 @@ class ClientSocket:
         +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
         '''
         sock = None
-        #serverIP = "192.168.0."
-        serverIP = "127.0.1."
+        serverIP = self.ip
+        portNum = self.port
 
         # Set up socket for communicating to server with IPv4, TCP/IP
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(self.timeout)
-  
-        # Test all 256 LAN IPs and return the socket if
-        # a valid connection is made.
-        for ping in range(0,255): 
-            address = serverIP + str(ping) 
             
-            # Try to connect to the port at this address. If a timeout
-            # occurs, this was not the server's IP.
-            try:
-                sock.connect((address, self.port)) # Timeout reset
-                sock.settimeout(None)
-                return sock
-                
-            except:
-                # Only update the user occasionally
-                if ping % 100 == 0:
-                    print("Searching for connection..")
-        return None # connection failed
+        # Try to connect to the port at this address. If a timeout
+        # occurs, this was not the server's IP.
+        try:
+            print("Connecting to server on {}:{}".format(serverIP, portNum))
+            sock.connect((serverIP, portNum)) # Timeout reset
+            sock.settimeout(None)
+            return sock
+            
+        except:
+            print("Could not connect to server on {}:{}".format(serverIP, portNum))
+            return None # connection failed
 
     # +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
     # PUBLIC METHODS
     # +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 
-    def request(self, req):
-
-        # send the request to the server as a single byte
+    def sendRequest(self, req):
         self.conn.send(req.encode('utf-8'))
 
-        # receive the data from the server
-        #msgLength = self.conn.recv(1024)
-        #data = self.conn.recv(int(msgLength))
-
-        # decode the json.dump
-        #decoded = json.loads(data.decode('utf-8'))
-        #x = decoded.get("x")
-        #y = decoded.get("y")
-        #z = decoded.get("z")
-
-        #return x,y,z
+    def recvResponse(self):
+        dataUtf8Encoded = self.conn.recv(1024)
+        data = dataUtf8Encoded.decode('utf-8')
+        return data
 
 # ==============================================================
 # ==============================================================
@@ -99,13 +85,20 @@ class ClientSocket:
 def protocol():
 
     while True:
-        with ClientSocket(9876, .05) as c:
+        with ClientSocket("127.0.1.1", 5563, .5) as c:
             if not c:
                 print("Trying again in 2 seconds.\n")
                 time.sleep(2) 
                 continue
+
+            # Send request to server
             req = input("Enter a message for the server: $")
-            c.request(req)
+            c.sendRequest(req)
+
+            # Wait for response from server
+            print("Waiting for response from server")
+            rx = c.recvResponse()
+            print("Client received data: {}".format(rx))
 
 if __name__ == "__main__":
     print(sys.version)

@@ -23,6 +23,6 @@
  * WIRELESS API
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
-#define ENABLE_WIRELESS_API_PYTHON  1 // Issue #8: Enables calls to server.py for sending/receiving client requests.
+#define ENABLE_WIRELESS_API_PYTHON  0 // Issue #8: Enables calls to server.py for sending/receiving client requests.
 
 #endif
