@@ -138,6 +138,8 @@ static PyObject* pSensorObj;   // nxp.sensor object
      * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
     */
     bool NxpWrapper::RasPi::Init(){
+		
+		printf("Entered RaspiInit\n");
         
         PyObject *pDict;    // nxp module's namespace
         PyObject *pSensor;  // nxp.sensor class  
@@ -146,7 +148,10 @@ static PyObject* pSensorObj;   // nxp.sensor object
         PyRun_SimpleString("import sys");
         PyRun_SimpleString("import os");
         PyRun_SimpleString("sys.path.append(os.getcwd())");
-        
+       	
+	printf(NXP_MODULE);
+	printf("\n");
+
         // Load the module object (nxp.py)
         PythonAssert((pModule = PyImport_ImportModule(NXP_MODULE)));
 
