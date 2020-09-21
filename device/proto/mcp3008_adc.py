@@ -44,7 +44,7 @@ class Mcp3008:
         self.spi.close()
 
     def errorPrint(self, msg):
-        print("**ERROR** - {}.{}: {}".format(self.__class__.__name__, inspect.currentframe().f_code.co_name, msg))
+        print("**ERROR** - {}.{}: {}".format(self.__class__.__name__, inspect.stack()[1][3], msg))
 
     def readAdc(self, adc_channel):
         '''
