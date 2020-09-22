@@ -11,4 +11,8 @@ int unitTest_wirelessApi();
 int unitTest_nxpApi();
 #endif // ENABLE_UNIT_TEST_NXP_API
 
+#if ENABLE_UNIT_TEST_MUX
+int unitTest_mux();
+#endif // ENABLE_UNIT_TEST_MUX
+
 #endif

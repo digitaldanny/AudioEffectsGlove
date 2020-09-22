@@ -8,6 +8,11 @@ class Cd4051be:
     This class controls the 2 analog multiplexers used for reading the 
     flex sensors.
 
+    GPIO Configurations:
+    Pin 16 -> Sel2
+    Pin 20 -> Sel1
+    Pin 21 -> Sel0
+
     Chip documentation is available here:
     https://ww1.microchip.com/downloads/en/DeviceDoc/21295d.pdf
     +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -29,10 +34,10 @@ class Cd4051be:
     def errorPrint(self, msg):
         print("**ERROR** - {}.{}: {}".format(self.__class__.__name__, inspect.stack()[1][3], msg))
 
-    def setMuxInput(self, mux_channel):
+    def setMuxCh(self, mux_channel):
         '''
         +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
-        Description: setMuxInput
+        Description: setMuxCh
         This function changes the select lines of both 8:1 Analog Multiplexers
         to change which input channel will appear on the output.
 
@@ -41,13 +46,13 @@ class Cd4051be:
             Determines which mux input to allow on the output. Must be a
             value between 0-7, corresponding to the 8 mux input channels.
         
-        RETURN: None
+        RETURN: True if setting mux channel was successful.
         +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
         '''
 
         if mux_channel < 0 or mux_channel > 7:
-            self.errorPrint("Invalid mux channel. Must be an integer value between 0-4.")
-            return None
+            self.errorPrint("Invalid mux channel. Must be an integer value between 0-7.")
+            return False
 
         # Convert mux channel integer into a binary string to iterate over.
         chBin = "{:03b}".format(mux_channel)
@@ -59,6 +64,7 @@ class Cd4051be:
                 gpio.output(self.SELECT_LINE[i], gpio.HIGH)
             else:
                 gpio.output(self.SELECT_LINE[i], gpio.LOW)
+        return True
 
 if __name__ == "__main__":
     '''
@@ -71,4 +77,4 @@ if __name__ == "__main__":
     with Cd4051be() as mux:
         while True:
             channel = int(input("Select a channel: $"))
-            mux.setMuxInput(channel)
+            mux.setMuxCh(channel)

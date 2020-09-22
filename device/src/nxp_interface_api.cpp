@@ -149,8 +149,8 @@ static PyObject* pSensorObj;   // nxp.sensor object
         PyRun_SimpleString("import os");
         PyRun_SimpleString("sys.path.append(os.getcwd())");
        	
-	printf(NXP_MODULE);
-	printf("\n");
+	    printf(NXP_MODULE);
+	    printf("\n");
 
         // Load the module object (nxp.py)
         PythonAssert((pModule = PyImport_ImportModule(NXP_MODULE)));

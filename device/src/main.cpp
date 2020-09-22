@@ -13,5 +13,9 @@ int main()
     unitTest_nxpApi();
 #endif // ENABLE_UNIT_TEST_NXP_API
 
+#if ENABLE_UNIT_TEST_MUX
+    unitTest_mux();
+#endif // ENABLE_UNIT_TEST_MUX
+
     return 0;
 }
