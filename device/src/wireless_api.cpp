@@ -119,7 +119,7 @@ bool WirelessApi::Python::SendResponse(char* data, int dataSizeInBytes)
     // client.recvResponse function.
 
     PyObject* rx = PyObject_CallMethod(pSocketObj, SEND_RESP_FUNC, NULL);
-    if (!PyBool_Check(rx))
+    if (rx == Py_False)
     {
         printf("WirelessApi::Python::SendResponse - Failed to send!!\n");
         return false;
