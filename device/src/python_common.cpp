@@ -21,7 +21,7 @@ bool PythonAssert(PyObject* obj)
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         const char *pStrErrorMessage = PyUnicode_AsUTF8(pvalue);
         printf("PythonAssert - %s\n", pStrErrorMessage);
-        while(1);
+        return false;
     }
     return true;
 }
