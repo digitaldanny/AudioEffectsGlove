@@ -11,7 +11,7 @@
 #include "build_switches.h"
 #include <stdio.h>
 
-#if ENABLE_MUX_API_PYTHON
+#if ENABLE_MUX_PYTHON
 #include "python_common.h"
 
 #if TARGET_HW_RASPBERRYPI
@@ -21,7 +21,7 @@
 #if TARGET_HW_DESKTOP
 #include "python3.6/Python.h"
 #endif // TARGET_HW_DESKTOP
-#endif // ENABLE_MUX_API_PYTHON
+#endif // ENABLE_MUX_PYTHON
 
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -45,7 +45,7 @@ namespace Mux {
     bool Init               ();
     bool SelectMuxChannel   (int mux_channel);
 
-#if ENABLE_MUX_API_PYTHON
+#if ENABLE_MUX_PYTHON
     namespace Python {
 
         bool Init               ();

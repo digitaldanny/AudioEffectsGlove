@@ -13,7 +13,7 @@
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
-#if ENABLE_MUX_API_PYTHON
+#if ENABLE_MUX_PYTHON
 static PyObject *pModule;      // mux module                
 static PyObject* pMuxObj;      // mux.Cd4051be object
 #endif
@@ -34,11 +34,11 @@ static PyObject* pMuxObj;      // mux.Cd4051be object
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 */
 bool Mux::Init() {
-#if ENABLE_MUX_API_PYTHON
+#if ENABLE_MUX_PYTHON
     return Mux::Python::Init();
 #else
     return false;
-#endif // ENABLE_MUX_API_PYTHON
+#endif // ENABLE_MUX_PYTHON
 }
 
 /*
@@ -57,11 +57,11 @@ bool Mux::Init() {
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 */
 bool Mux::SelectMuxChannel(int mux_channel) {
-#if ENABLE_MUX_API_PYTHON
+#if ENABLE_MUX_PYTHON
     return Mux::Python::SelectMuxChannel(mux_channel);
 #else
     return false;
-#endif // ENABLE_MUX_API_PYTHON
+#endif // ENABLE_MUX_PYTHON
 }
 
 /*
@@ -72,12 +72,12 @@ bool Mux::SelectMuxChannel(int mux_channel) {
 * descriptions in the "TOP LEVEL FUNCTIONS" section above.
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
-#if ENABLE_MUX_API_PYTHON
+#if ENABLE_MUX_PYTHON
 
 bool Mux::Python::Init() {
 
-    PyObject *pDict;    // nxp module's namespace
-    PyObject *pSensor;  // nxp.sensor class  
+    PyObject *pDict;    // mux module's namespace
+    PyObject *pMux;  // mux.Cd4051be class  
 
     // Move PYTHONPATH to current working directory to find nxp module
     PyRun_SimpleString("import sys");
@@ -91,11 +91,11 @@ bool Mux::Python::Init() {
     PythonAssert((pDict = PyModule_GetDict(pModule)));
 
     // Get a handle to the mux.Cd4051be class constructor
-    PythonAssert((pSensor = PyDict_GetItemString(pDict, MUX_CLASS)));
+    PythonAssert((pMux = PyDict_GetItemString(pDict, MUX_CLASS)));
 
     // Call the constructor
-    if (PyCallable_Check(pSensor)) 
-        pMuxObj = PyObject_CallObject(pSensor, NULL);
+    if (PyCallable_Check(pMux)) 
+        pMuxObj = PyObject_CallObject(pMux, NULL);
     else 
         PythonAssert(NULL); // forces an assertion
 
@@ -104,7 +104,7 @@ bool Mux::Python::Init() {
 
     // Remove references to Python objects for garbage collection
     Py_DECREF(pDict);
-    Py_DECREF(pSensor);
+    Py_DECREF(pMux);
     return true;    
 }
 
@@ -118,4 +118,4 @@ bool Mux::Python::SelectMuxChannel(int mux_channel) {
     return true;
 }
 
-#endif // ENABLE_MUX_API_PYTHON
+#endif // ENABLE_MUX_PYTHON
