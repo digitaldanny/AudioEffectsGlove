@@ -17,5 +17,9 @@ int main()
     unitTest_mux();
 #endif // ENABLE_UNIT_TEST_MUX
 
+#if ENABLE_UNIT_TEST_ADC
+    unitTest_adc();
+#endif // ENABLE_UNIT_TEST_ADC
+
     return 0;
 }
