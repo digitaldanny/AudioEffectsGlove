@@ -10,7 +10,6 @@ SYSTEM  := RPI		# Makefile builds for RPi target by default
 EXE 	:= $(BIN_DIR)/device
 SRC     := $(shell find $(SRC_DIR) -name *.cpp)		# Find all cpp files in the src directory
 OBJ 	:= $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o) 	# Name obj files based on cpp filenames
-OS_NAME := $(shell uname -s | tr A-Z a-z)
 
 CFLAGS = -Wall
 WIN_INC = -I$(INC_DIR) -I. -I/usr/include/python3.6m 
@@ -22,9 +21,6 @@ RPI_LIBS = -lpython3.5m
 .PHONY: all clean
 
 all: $(EXE)
-
-sys:
-	@echo $(SYSTEM)
 
 # Create the object files. Creation of the bin directory (BIN_DIR) is done with an
 # order-only-prerequisite so that the directory will be created if it does not exist.
@@ -52,4 +48,5 @@ $(BIN_DIR) $(OBJ_DIR):
 	mkdir -p $@
 
 clean:
+	@echo *** Cleaning up ***
 	$(RM) -rv $(BIN_DIR) $(OBJ_DIR)
