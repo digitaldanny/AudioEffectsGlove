@@ -113,8 +113,10 @@ bool Mux::Python::SelectMuxChannel(int mux_channel) {
     if (rx == Py_False)
     {
         printf("Mux::Python::SelectMuxChannel - Mux select failed!!\n");
+        Py_DECREF(rx);
         return false;
     }
+    Py_DECREF(rx);
     return true;
 }
 
