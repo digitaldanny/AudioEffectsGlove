@@ -187,8 +187,10 @@ static PyObject* pSensorObj;   // nxp.sensor object
         if (!PyArg_ParseTuple(rx, "fff", &sensor_data.x, &sensor_data.y, &sensor_data.z))
         {
             printf("Failed to parse!!\n");
+            Py_DECREF(rx);
             return false;
         }
+        Py_DECREF(rx);
         return true;
     }
 
