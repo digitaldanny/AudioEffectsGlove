@@ -108,32 +108,39 @@ bool Adc::Python::Init() {
 }
 
 int Adc::Python::ReadAdcChannel(int adc_channel) {
-    printf("C: Calling ADC_READ_FUNC\n");
 
+    // Check that the Adc object has not been deallocated.
     if (!PythonAssert(pAdcObj))
+    {
         printf("ADC Object does not exist anymore!!\n");
+        return -1;
+    }
 
-    PyObject* rx = PyObject_CallMethod(pAdcObj, ADC_READ_FUNC, "i", adc_channel, NULL);
-    
+    // Call the mcp3008_adc.Mcp3008.readAdc method
+    PyObject* rx = PyObject_CallMethod(pAdcObj, ADC_READ_FUNC, "(i)", adc_channel);
+
     // Check if the ADC_READ function returned an ADC reading. If not, return an error (-1).
-    if (rx == Py_None)
+    if (rx == Py_None || !PythonAssert(rx))
     {
         printf("Adc::Python::ReadAdcChannel - Adc capture failed!!\n");
+        Py_DECREF(rx);
         return -1;
     }
     else // Valid ADC reading captured. 
     {
         int adcReading = -1;
-
-        // ADC reading should be valid at this point. Quick check is in place in case something
-        // unexpected happens.
-        if (PyArg_ParseTuple(rx, "i", &adcReading)) 
-            return adcReading;
-        else
+        int throwAway = -1;
+        
+        // Parsed received Python Object as an integer
+        if (!PyArg_ParseTuple(rx, "ii", &adcReading, &throwAway)) 
         {
             printf("Adc::Python::ReadAdcChannel - Could not parse the adc reading. Is device power on?\n");
+            Py_DECREF(rx);
             return -1;
         }
+
+        Py_DECREF(rx);
+        return adcReading;
     }
 }
 

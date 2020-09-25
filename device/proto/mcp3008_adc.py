@@ -81,9 +81,14 @@ class Mcp3008:
         garbage = 0x00
         msg = [startTx, (singleEndMode | adc_channel) << 4, garbage]
 
-        print("Sending 0x{:02x}{:02x}{:02x}".format(msg[0], msg[1], msg[2]))
+        # Transfer the message
         rx = self.spi.xfer2(msg)
-        return (rx[1] << 8) | (rx[2] << 0)
+        #print("Sent 0x{:02x}{:02x}{:02x}".format(msg[0], msg[1], msg[2]))
+        #print("Python: Received {}".format(int((rx[1] << 8) | (rx[2] << 0))))
+
+        # Return a 2 value tuple (2nd value in tuple is garbage as a workaround to C++ PyObject_ParseTuple 
+        # failing if only 1 value is returned).
+        return int((rx[1] << 8) | (rx[2] << 0)), -1
 
 if __name__ == "__main__":
     '''
@@ -96,6 +101,6 @@ if __name__ == "__main__":
     with Mcp3008() as s:
         while True:
             for channel in range(0, 2):
-                result = s.readAdc(channel)
+                result, _ = s.readAdc(channel)
                 print("ADC Channel #{}: {:.2f}".format(channel, 3.3*result/1024))
                 sleep(0.5)
