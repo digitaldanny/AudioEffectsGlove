@@ -16,11 +16,18 @@ bool PythonAssert(PyObject* obj)
 {
     if (obj == NULL)
     {
-        // Print out the error and exit
+        // Collect the error
         PyObject *ptype, *pvalue, *ptraceback;      
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+
+        // Print the error
         const char *pStrErrorMessage = PyUnicode_AsUTF8(pvalue);
-        printf("PythonAssert - %s\n", pStrErrorMessage);
+        printf("***PythonAssert*** - %s\n", pStrErrorMessage);
+
+        // Decrement reference count to objects
+        Py_DECREF(ptype);
+        Py_DECREF(pvalue);
+        Py_DECREF(ptraceback);
         return false;
     }
     return true;
