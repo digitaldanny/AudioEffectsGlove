@@ -23,10 +23,15 @@
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
+// Python module defines
 #define ADC_MODULE          PROTO_PATH "mcp3008_adc"
 #define ADC_CLASS           "Mcp3008"
 #define ADC_INIT_FUNC       "__enter__"
 #define ADC_READ_FUNC       "readAdc"
+
+// ADC channel defines
+#define ADC_CHAN_MCP        0
+#define ADC_CHAN_PIP        1
 
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+

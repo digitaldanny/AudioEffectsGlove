@@ -19,4 +19,8 @@ int unitTest_mux();
 int unitTest_adc();
 #endif // ENABLE_UNIT_TEST_ADC
 
+#if ENABLE_UNIT_TEST_FLEX_SENSORS
+int unitTest_flexSensors();
+#endif // ENABLE_UNIT_TEST_FLEX_SENSORS
+
 #endif
