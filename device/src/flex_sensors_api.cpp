@@ -1,5 +1,16 @@
 #include "flex_sensors_api.h"
 
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: Init
+ * Initialize hardware for collecting joint data.
+ * 
+ * INPUTS: N/A
+ * 
+ * RETURN:
+ * bool - True if hardware setup was successful.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
 bool FlexSensors::Init()
 {
     if (!Mux::Init() || !Adc::Init())
@@ -10,6 +21,22 @@ bool FlexSensors::Init()
     return true;
 }
 
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: GetJointsData
+ * Get MCP and PIP joint data for the selected finger.
+ * 
+ * INPUTS:
+ * @finger
+ *      Enum for which finger to collect data for (thumb, pointer, middle, ring, pinky).
+ * @joints
+ *      This struct will contain the sensor readings for the specified finger if 
+ *      this function is successful.
+ * 
+ * RETURN:
+ * bool - True if getting joint data was successful (contents on joints are valid).
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
 bool FlexSensors::GetJointsData(FlexSensors::finger_e finger, FlexSensors::fingerJoints_t* joints)
 {
     int mcpAdcReading;
