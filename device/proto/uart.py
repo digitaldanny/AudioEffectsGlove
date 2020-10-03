@@ -2,15 +2,16 @@ import serial
 from time import sleep
 
 def TestHc05():
-    baudRateCmdMode = 38400
+    print("Running TestHc05..")
     uart = Uart()
-    uart.set_baud_rate(baudRateCmdMode)
 
     # Configuration read/writes
     configs = [
-        "AT+VERSION?\r\n",
-        "AT+ROLE=0\r\n",    # sets device to SLAVE
+        b"AT+VERSION?\r\n",
+        b"AT+ROLE=0\r\n",    # sets device to SLAVE
     ]
+
+    uart.recv(uart.available()) # clear the buffer
 
     # Configure uart for command mode
     for c in configs:
@@ -20,28 +21,27 @@ def TestHc05():
         sleep(0.3)
         
         print("Reading response..")
-        numBytesInBuffer = uart.available()
-        if numBytesInBuffer:
-            print(uart.recv(numBytesInBuffer))
-        else:
-            print("WARNING: No response from device..")
+        try:
+            numBytesInBuffer = uart.available()
+            if numBytesInBuffer:
+                print(uart.recv(numBytesInBuffer).decode('utf-8'))
+            else:
+                print("WARNING: No response from device..")
+        except:
+            print("Could not decode response from device")
 
 class Uart:
 
-    # Baud rate for AT command mode:    38400
-    # Baud rate for sending data:       9600
+    # Default baud rate:    38400
 
     def __init__(self):
-        self.dev = serial.Serial("/dev/ttyS0", 9600)
+        self.dev = serial.Serial("/dev/serial0", 38400)
         self.dev.parity = serial.PARITY_NONE
         self.dev.stopbits = serial.STOPBITS_ONE
         self.dev.bytesize = serial.EIGHTBITS
 
-    def set_baud_rate(self, baud_rate):
-        self.dev.baudrate = baud_rate
-
     def send(self, byte_array):
-        self.dev.write(byte_array.encode('utf-8'))
+        self.dev.write(byte_array)
 
     def available(self):
         return self.dev.inWaiting()

@@ -15,7 +15,7 @@ CFLAGS = -Wall
 WIN_INC = -I$(INC_DIR) -I. -I/usr/include/python3.6m 
 RPI_INC = -I$(INC_DIR) -I. -I/usr/include/python3.5m 
 WIN_LIBS = -lpython3.6m
-RPI_LIBS = -lpython3.5m
+RPI_LIBS = -lpython3.5m -lwiringPi
 
 # "all" and "clean" are not targets to build.
 .PHONY: all clean
