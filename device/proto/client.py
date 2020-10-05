@@ -23,7 +23,11 @@ class ClientSocket:
     def __enter__(self):
         print("Setting up client connection")
         self.conn = self.__setupConnection()
-        return self
+
+        if self.conn:
+            return self
+        else:
+            return None
         
     def __exit__(self, exception_type, exception_value, traceback):
         print("Closing client connection")
@@ -85,15 +89,21 @@ class ClientSocket:
 def protocol():
 
     while True:
-        with ClientSocket("127.0.1.1", 5563, .5) as c:
+        with ClientSocket("192.168.0.106", 5563, .5) as c:
+            
             if not c:
                 print("Trying again in 2 seconds.\n")
                 time.sleep(2) 
                 continue
 
             # Send request to server
-            req = input("Enter a message for the server: $")
+            req = input("Enter a message for the server ('q' to quit): $")
+            print("Sending {}".format(req))
             c.sendRequest(req)
+
+            if req == "q":
+                print("Exitting infinite loop")
+                return
 
             # Wait for response from server
             print("Waiting for response from server")

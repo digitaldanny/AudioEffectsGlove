@@ -13,7 +13,7 @@ class ServerSocket:
 
     def __init__(self, port):
         print("PYTHON: Initializing ServerSocket class with port #{}".format(port))
-        self.host           = 'localhost'
+        self.host           = ''
         self.port           = port
         self.sock_conn      = None
         self.sock_server    = None
@@ -28,7 +28,12 @@ class ServerSocket:
         print("PYTHON: Inside '__enter__'")
         self.sock_server    = self.__setupServerSocket() # Setup the server socket from the port number provided
         self.sock_conn      = self.openConnection() # Setup connection 
-        return self
+        
+        if self.sock_conn:
+            return self
+        else:
+            self.sock_server.close()
+            return None
 
     def __exit__(self, exception_type, exception_value, traceback):
         '''
@@ -65,6 +70,7 @@ class ServerSocket:
             s.bind((self.host, self.port))
         except socket.error as msg:
             print(msg)
+            return None
         print("Socket bind complete")
 
         print("Host name: {}".format(socket.gethostbyname(socket.gethostname())))
@@ -106,7 +112,6 @@ class ServerSocket:
         RETURN: 
         +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
         '''
-        if not self.sock_conn: return None
         data = self.sock_conn.recv(1024)
         return data.decode('utf-8')
 
@@ -142,6 +147,10 @@ def TestProtocol():
             # Receive client request
             request = s.recvRequest()
             print("Received request: {}".format(request))
+
+            if request == "q":
+                print("Exitting infinite loop")
+                return
             
             # Respond to request
             response = input("Response to client: ")
