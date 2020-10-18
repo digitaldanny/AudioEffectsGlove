@@ -10,12 +10,12 @@
 
 #if TARGET_HW_RASPBERRYPI
 #include "python3.5/Python.h"
-#endif // ENABLE_WIRELESS_API_PYTHON
+#endif // TARGET_HW_RASPBERRYPI
 
 #if TARGET_HW_DESKTOP
 #include "python3.6/Python.h"
 #endif // TARGET_HW_DESKTOP
-#endif // ENABLE_WIRELESS_API_PYTHON
+#endif // ENABLE_ADC_PYTHON
 
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
