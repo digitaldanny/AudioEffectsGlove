@@ -1,5 +1,5 @@
 #ifndef _SRC_ADC
-#define _ADC
+#define _SRC_ADC
 
 // Common target includes
 #include "build_switches.h"
@@ -51,7 +51,6 @@ namespace Adc {
         int ReadAdcChannel      (int adc_channel);
         
     }
-#endif
+#endif // ENABLE_ADC_PYTHON
 }
-
-#endif
+#endif // _SRC_ADC

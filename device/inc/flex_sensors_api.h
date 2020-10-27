@@ -7,9 +7,9 @@
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
+#include <adc_wrapper.h>
 #include <stdio.h>
 #include "mux.h"
-#include "adc.h"
 
 namespace FlexSensors {
 

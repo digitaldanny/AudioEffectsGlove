@@ -25,5 +25,12 @@ int main()
     unitTest_flexSensors();
 #endif // ENABLE_UNIT_TEST_FLEX_SENSORS
 
+#if ENABLE_MAIN_V1
+    // Quick test to make sure program runs on C2000
+    int variable1 = 0;
+    variable1++;
+    while(1);
+#endif // ENABLE_MAIN_V1
+
     return 0;
 }

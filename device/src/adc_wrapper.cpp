@@ -5,7 +5,7 @@
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
-#include "adc.h"
+#include "adc_wrapper.h"
 
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -143,5 +143,4 @@ int Adc::Python::ReadAdcChannel(int adc_channel) {
         return adcReading;
     }
 }
-
 #endif // ENABLE_ADC_PYTHON
