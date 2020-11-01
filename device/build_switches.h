@@ -18,6 +18,9 @@
 #define TARGET_HW_DESKTOP        0   // Issue #9: Enables dummy responses from sensors for Desktop development.
 #define TARGET_HW_C2000          1   // Issue #13: Enables firmware specific to C2000 development board.
 #define TARGET_HW_PYTHON_CAPABLE (1 & (TARGET_HW_RASPBERRYPI | TARGET_HW_DESKTOP)) // Determines if the selected target hardware can make calls to Python.
+#if (TARGET_HW_RASPBERRYPI + TARGET_HW_DESKTOP + TARGET_HW_C2000) > 1
+#error Only 1 hardware target can be active per build.
+#endif
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
