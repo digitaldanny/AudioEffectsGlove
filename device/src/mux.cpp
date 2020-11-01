@@ -36,6 +36,8 @@ static PyObject* pMuxObj;      // mux.Cd4051be object
 bool Mux::Init() {
 #if ENABLE_MUX_PYTHON
     return Mux::Python::Init();
+#elif ENABLE_MUX_C2000
+    return Mux::C2000::Init();
 #else
     return false;
 #endif // ENABLE_MUX_PYTHON
@@ -44,8 +46,8 @@ bool Mux::Init() {
 /*
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
  * DESCRIPTION: SelectMuxChannel
- * Get an sensor X,Y,Z reading from the NXP module. For this function, the results
- * will be accelerometer data.
+ * Select the mux channel for MCP and PIP muxes. This allows a different finger's joint
+ * voltages to be output from the MCP and PIP muxes.
  * 
  * INPUTS:
  * @mux_channel
@@ -59,10 +61,81 @@ bool Mux::Init() {
 bool Mux::SelectMuxChannel(int mux_channel) {
 #if ENABLE_MUX_PYTHON
     return Mux::Python::SelectMuxChannel(mux_channel);
+#elif ENABLE_MUX_C2000
+    return Mux::C2000::SelectMuxChannel(mux_channel);
 #else
     return false;
 #endif // ENABLE_MUX_PYTHON
 }
+
+/*
+* +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+* C2000 HANDLERS
+* These functions are the C2000 dev board specific implementations of mux.cpp.
+* For more details about what each function does, read the function
+* descriptions in the "TOP LEVEL FUNCTIONS" section above.
+* +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+#if ENABLE_MUX_C2000
+
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * SUMMARY: Init
+ * This function initializes GPIO 2:0 as outputs for select
+ * line control on the MCP mux (CD4051BE IC).
+ *
+ * PINOUT:
+ * Gpio 0 -> Mux select 0
+ * Gpio 1 -> Mux select 1
+ * Gpio 2 -> Mux select 2
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ */
+bool Mux::C2000::Init()
+{
+    for (unsigned int i = 0; i <= 2; i++)
+    {
+        GPIO_setDirectionMode(i, GPIO_DIR_MODE_OUT);    // leds set as outputs
+        GPIO_setPadConfig(i, GPIO_PIN_TYPE_PULLUP);     // internal pullups enabled
+        GPIO_setPinConfig(GPIO_0_GPIO0 + i*0x200);      // set pin's peripheral config mux to be used as a GPIO
+    }
+    return true;
+}
+
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * SUMMARY: SelectMuxChannel
+ * This function's description is the same as the top level
+ * function's description.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ */
+bool Mux::C2000::SelectMuxChannel(int mux_channel) {
+
+    // Check that the provided mux channel is within the valid channel range.
+    if (mux_channel < MUX_CHAN_MIN || mux_channel > MUX_CHAN_MAX)
+    {
+        /* provided mux channel is outside of valid channel range */
+        return false;
+    }
+
+    //
+    // read, modify, write to port so other port functionality is not ruined.
+    //
+
+    // Read port A's current pin values
+    uint32_t portData = GPIO_readPortData(GPIO_PORT_A);
+
+    // Modify port A's pins to reflect mux channel changes
+    portData &= 0xFFFFFFF8;     // preserves data from bits 31:3, while clearing bits 2:0
+    portData |= mux_channel;    // adds mux channel values to the output port
+
+    // Write port A's pin values back out to the GPIO
+    GPIO_writePortData(GPIO_PORT_A, mux_channel); // writes low-true data to LEDs
+
+    return true;
+}
+
+#endif // ENABLE_MUX_C2000
 
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+

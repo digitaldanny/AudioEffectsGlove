@@ -27,9 +27,10 @@
 #define ENABLE_UNIT_TEST_WIRELESS_API   0   // Issue #8: Enables unit test for the wireless API.
 #define ENABLE_UNIT_TEST_NXP_API        0   // Issue #2: Enables unit test for the gyro/accel/mag sensor pack reading.
 #define ENABLE_UNIT_TEST_MUX            0   // Issue #7: Enables unit test for setting mux channels. 
+#define ENABLE_UNIT_TEST_MUX_C2000      1   // Issue #15: Enables unit test for setting mux channels on the C2000 dev board.
 #define ENABLE_UNIT_TEST_ADC            0   // Issue #7: Enables unit test for reading adc channels.
 #define ENABLE_UNIT_TEST_FLEX_SENSORS   0   // Issue #7: Enables unit test for reading all 10 flex sensor voltage levels.
-#define ENABLE_MAIN_V1                  1   // Issue #13: Enables main program that will be running
+#define ENABLE_MAIN_V1                  0   // Issue #13: Enables main program that will be running
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -43,7 +44,12 @@
  * FLEX SENSOR API
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
-#define ENABLE_MUX_PYTHON       (1 & TARGET_HW_PYTHON_CAPABLE) // Issue #7: Enables Python module for selecting mux channel.
+#define ENABLE_MUX_PYTHON       (1 & TARGET_HW_PYTHON_CAPABLE)  // Issue #7: Enables Python module for selecting mux channel.
+#define ENABLE_MUX_C2000        (1 & TARGET_HW_C2000)           // Issue #15: Enables C2000 GPIO for selecting mux channel.
+#if (ENABLE_MUX_PYTHON + ENABLE_MUX_C2000) > 1
+#error Mux only allows 1 implementation to be active at a time.
+#endif
+
 #define ENABLE_ADC_PYTHON       (1 & TARGET_HW_PYTHON_CAPABLE) // Issue #7: Enables Python module for reading from specific ADC channels.
 
 #endif

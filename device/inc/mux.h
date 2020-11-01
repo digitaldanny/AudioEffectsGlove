@@ -23,11 +23,18 @@
 #endif // TARGET_HW_DESKTOP
 #endif // ENABLE_MUX_PYTHON
 
+#if ENABLE_MUX_C2000
+#include "device.h"
+#endif
+
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 * DEFINES
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
+
+#define MUX_CHAN_MIN        (0)   // Minimum mux channel
+#define MUX_CHAN_MAX        (7)   // Maximum mux channel
 
 #define MUX_MODULE          PROTO_PATH "cd4051be_mux"
 #define MUX_CLASS           "Cd4051be"
@@ -45,14 +52,19 @@ namespace Mux {
     bool Init               ();
     bool SelectMuxChannel   (int mux_channel);
 
-#if ENABLE_MUX_PYTHON
-    namespace Python {
-
+#if ENABLE_MUX_C2000
+    namespace C2000 {
         bool Init               ();
         bool SelectMuxChannel   (int mux_channel);
-        
     }
-#endif
+#endif // ENABLE_MUX_C2000
+
+#if ENABLE_MUX_PYTHON
+    namespace Python {
+        bool Init               ();
+        bool SelectMuxChannel   (int mux_channel);
+    }
+#endif // ENABLE_MUX_PYTHON
 }
 
 #endif

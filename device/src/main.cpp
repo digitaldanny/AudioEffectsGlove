@@ -2,6 +2,8 @@
 #include "build_switches.h"
 #include "unit_tests.h"
 
+#include "mux.h"
+
 int main()
 {
 
@@ -16,6 +18,18 @@ int main()
 #if ENABLE_UNIT_TEST_MUX
     unitTest_mux();
 #endif // ENABLE_UNIT_TEST_MUX
+
+#if ENABLE_UNIT_TEST_MUX_C2000
+    int counter = 0;
+
+    Mux::Init();
+    while (1)
+    {
+        Mux::SelectMuxChannel(counter);
+        counter++;
+        counter &= 0x7; // only allow the counter to use the first 3 bits
+    }
+#endif // ENABLE_UNIT_TEST_MUX_C2000
 
 #if ENABLE_UNIT_TEST_ADC
     unitTest_adc();
