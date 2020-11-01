@@ -20,15 +20,7 @@ int main()
 #endif // ENABLE_UNIT_TEST_MUX
 
 #if ENABLE_UNIT_TEST_MUX_C2000
-    int counter = 0;
-
-    Mux::Init();
-    while (1)
-    {
-        Mux::SelectMuxChannel(counter);
-        counter++;
-        counter &= 0x7; // only allow the counter to use the first 3 bits
-    }
+    unitTest_muxC2000();
 #endif // ENABLE_UNIT_TEST_MUX_C2000
 
 #if ENABLE_UNIT_TEST_ADC
