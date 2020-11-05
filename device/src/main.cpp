@@ -2,7 +2,7 @@
 #include "build_switches.h"
 #include "unit_tests.h"
 
-#include "mux.h"
+#include "adc_wrapper.h"
 
 int main()
 {
@@ -26,6 +26,25 @@ int main()
 #if ENABLE_UNIT_TEST_ADC
     unitTest_adc();
 #endif // ENABLE_UNIT_TEST_ADC
+
+#if ENABLE_UNIT_TEST_ADC_C2000
+
+    int adc_channel = 0;
+
+    if(!Adc::Init())
+    {
+        /* Failed ADC setup */
+        ;
+    }
+
+    while(1)
+    {
+        Adc::ReadAdcChannel(adc_channel & 0x1);
+        adc_channel++;
+        adc_channel &= 0x1;
+    }
+
+#endif // ENABLE_UNIT_TEST_ADC_C2000
 
 #if ENABLE_UNIT_TEST_FLEX_SENSORS
     unitTest_flexSensors();

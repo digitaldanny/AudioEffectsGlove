@@ -44,12 +44,17 @@ namespace Adc {
     bool Init               ();
     int ReadAdcChannel      (int adc_channel);
 
-#if ENABLE_ADC_PYTHON
-    namespace Python {
-
+#if ENABLE_ADC_C2000
+    namespace C2000 {
         bool Init               ();
         int ReadAdcChannel      (int adc_channel);
-        
+    }
+#endif // ENABLE_ADC_C2000
+
+#if ENABLE_ADC_PYTHON
+    namespace Python {
+        bool Init               ();
+        int ReadAdcChannel      (int adc_channel);
     }
 #endif // ENABLE_ADC_PYTHON
 }

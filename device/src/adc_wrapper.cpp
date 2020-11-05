@@ -36,6 +36,8 @@ static PyObject* pAdcObj;      // adc.Mcp3008 object
 bool Adc::Init() {
 #if ENABLE_ADC_PYTHON
     return Adc::Python::Init();
+#elif ENABLE_ADC_C2000
+    return Adc::C2000::Init();
 #else
     return false;
 #endif // ENABLE_ADC_API_PYTHON
@@ -58,9 +60,25 @@ bool Adc::Init() {
 int Adc::ReadAdcChannel(int adc_channel) {
 #if ENABLE_ADC_PYTHON
     return Adc::Python::ReadAdcChannel(adc_channel);
+#elif ENABLE_ADC_C2000
+    return Adc::C2000::ReadAdcChannel(adc_channel);
 #else
     return false;
 #endif // ENABLE_ADC_API_PYTHON
+}
+
+/*
+* +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+* C2000 HANDLERS
+* +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+bool Adc::C2000::Init() {
+    return false;
+}
+
+int Adc::C2000::ReadAdcChannel(int adc_channel) {
+    return -1;
 }
 
 /*
