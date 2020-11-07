@@ -24,7 +24,9 @@
 #endif // ENABLE_MUX_PYTHON
 
 #if ENABLE_MUX_C2000
-#include "device.h"
+extern "C" {
+ #include <device_headers/device.h>
+}
 #endif
 
 /*
