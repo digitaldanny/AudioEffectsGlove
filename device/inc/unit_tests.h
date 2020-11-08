@@ -23,6 +23,10 @@ int unitTest_muxC2000();
 int unitTest_adc();
 #endif // ENABLE_UNIT_TEST_ADC
 
+#if ENABLE_UNIT_TEST_ADC_C2000
+unitTest_adcC2000();
+#endif // ENABLE_UNIT_TEST_ADC_C2000
+
 #if ENABLE_UNIT_TEST_FLEX_SENSORS
 int unitTest_flexSensors();
 #endif // ENABLE_UNIT_TEST_FLEX_SENSORS
