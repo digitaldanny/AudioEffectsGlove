@@ -72,10 +72,14 @@ int Adc::ReadAdcChannel(int adc_channel) {
 
 #if ENABLE_ADC_C2000
 
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: Adc<A/B>ConvComplete_ISR
+ * These interrupt read the ADC value after conversions are complete and store
+ * them into a global to be accessed by the ReadAdcChannel function.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
 __interrupt static void AdcAConvComplete_ISR() {
-
-    // Enable modifying/reading protected registers
-    EALLOW;
 
     // Read the raw sample value
     adcData[ADC_A].value = ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER0);
@@ -93,39 +97,40 @@ __interrupt static void AdcAConvComplete_ISR() {
 
     // Acknowledge the interrupt
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);
-
-    // Disable modifying and reading protected registers
-    EDIS;
     return;
 }
 
 __interrupt static void AdcBConvComplete_ISR() {
 
-    // Enable modifying/reading protected registers
-    EALLOW;
+    // Read the raw sample value
+    adcData[ADC_B].value = ADC_readResult(ADCBRESULT_BASE, ADC_SOC_NUMBER0);
+    adcData[ADC_B].capturesSinceLastRead++;
 
-    //adcReading[ADC_B] =
+    // Clear the interrupt flag
+    ADC_clearInterruptStatus(ADCB_BASE, ADC_INT_NUMBER1);
 
-    // Disable modifying and reading protected registers
-    EDIS;
+    // Check if overflow has occurred
+    if(true == ADC_getInterruptOverflowStatus(ADCB_BASE, ADC_INT_NUMBER1))
+    {
+        ADC_clearInterruptOverflowStatus(ADCB_BASE, ADC_INT_NUMBER1);
+        ADC_clearInterruptStatus(ADCB_BASE, ADC_INT_NUMBER1);
+    }
+
+    // Acknowledge the interrupt
+    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);
     return;
 }
 
 /*
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
- * DESCRIPTION: Init
- * Set up ADC channels for capturing MCP and PIP joint values.
- *
- * RETURN:
- * bool - true if HW configuration was successful.
+ * DESCRIPTION: ConfigAdc<a/b>Epwm<1/2>
+ * These functions are used to configure a PWM module to trigger an ADC conversion
+ * without using software to trigger the conversion manually.
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 */
-bool Adc::C2000::Init() {
-
-    // Initialize the global adcData values to be 0.
-    memset((void*)&adcData, 0, ADC_MAX_NUM_CHAN*sizeof(adcData_t));
-
-    // Point the interrupt vector at the custom function name.
+static void ConfigAdcaEpwm1()
+{
+    // Point the interrupt vector at the interrupt handler.
     Interrupt_register(INT_ADCA1, &AdcAConvComplete_ISR);
 
     // Configure ADCA module
@@ -133,7 +138,6 @@ bool Adc::C2000::Init() {
     // - Set resolution and signal mode and load corresponding trims.
     // - Set pulse positions to late
     // - Power up the ADC and then delay for 1 ms
-
     ADC_setPrescaler(ADCA_BASE, ADC_CLK_DIV_4_0);
     ADC_setMode(ADCA_BASE, ADC_RESOLUTION_12BIT, ADC_MODE_SINGLE_ENDED);
     ADC_setInterruptPulseMode(ADCA_BASE, ADC_PULSE_END_OF_CONV);
@@ -145,7 +149,6 @@ bool Adc::C2000::Init() {
     // - Configure the SOC to occur on the first up-count event
     // - Set the compare A value to 2048 and the period to 4096
     // - Freeze the counter
-
     EPWM_disableADCTrigger(EPWM1_BASE, EPWM_SOC_A);
     EPWM_setADCTriggerSource(EPWM1_BASE, EPWM_SOC_A, EPWM_SOC_TBCTR_U_CMPA);
     EPWM_setADCTriggerEventPrescale(EPWM1_BASE, EPWM_SOC_A, 1);
@@ -156,17 +159,80 @@ bool Adc::C2000::Init() {
     // Configure ADCA's SOC0 to be triggered by EPWM1
     // - Set SOC0 to set the interrupt 1 flag. Enable the interrupt and make
     //   sure its flag is cleared.
-
     ADC_setupSOC(ADCA_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_EPWM1_SOCA, ADC_CH_ADCIN0, 15);
     ADC_setInterruptSource(ADCA_BASE, ADC_INT_NUMBER1, ADC_SOC_NUMBER0);
     ADC_enableInterrupt(ADCA_BASE, ADC_INT_NUMBER1);
     ADC_clearInterruptStatus(ADCA_BASE, ADC_INT_NUMBER1);
 
     // Start ePWM1, enabling SOCA and putting the counter in up-count mode
-
     EPWM_enableADCTrigger(EPWM1_BASE, EPWM_SOC_A);
     EPWM_setTimeBaseCounterMode(EPWM1_BASE, EPWM_COUNTER_MODE_UP);
     Interrupt_enable(INT_ADCA1);
+}
+
+static void ConfigAdcbEpwm2()
+{
+    // Point the interrupt vector at the interrupt handler.
+    Interrupt_register(INT_ADCB1, &AdcBConvComplete_ISR);
+
+    // Configure ADCB module
+    // - Set ADCCLK divider to /4
+    // - Set resolution and signal mode and load corresponding trims.
+    // - Set pulse positions to late
+    // - Power up the ADC and then delay for 1 ms
+    ADC_setPrescaler(ADCB_BASE, ADC_CLK_DIV_4_0);
+    ADC_setMode(ADCB_BASE, ADC_RESOLUTION_12BIT, ADC_MODE_SINGLE_ENDED);
+    ADC_setInterruptPulseMode(ADCB_BASE, ADC_PULSE_END_OF_CONV);
+    ADC_enableConverter(ADCB_BASE);
+    DEVICE_DELAY_US(1000);
+
+    // Enable EPWM to generate the ADC conversions without software interaction.
+    // - Disable SOCB
+    // - Configure the SOC to occur on the first up-count event
+    // - Set the compare A value to 2048 and the period to 4096
+    // - Freeze the counter
+    EPWM_disableADCTrigger(EPWM2_BASE, EPWM_SOC_B);
+    EPWM_setADCTriggerSource(EPWM2_BASE, EPWM_SOC_B, EPWM_SOC_TBCTR_U_CMPA);
+    EPWM_setADCTriggerEventPrescale(EPWM2_BASE, EPWM_SOC_B, 1);
+    EPWM_setCounterCompareValue(EPWM2_BASE, EPWM_COUNTER_COMPARE_A, 0x0800);
+    EPWM_setTimeBasePeriod(EPWM2_BASE, 0x1000);
+    EPWM_setTimeBaseCounterMode(EPWM2_BASE, EPWM_COUNTER_MODE_STOP_FREEZE);
+
+    // Configure ADCB's SOC0 to be triggered by EPWM1
+    // - Set SOC0 to set the interrupt 1 flag. Enable the interrupt and make
+    //   sure its flag is cleared.
+    ADC_setupSOC(ADCB_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_EPWM2_SOCB, ADC_CH_ADCIN2, 15);
+    ADC_setInterruptSource(ADCB_BASE, ADC_INT_NUMBER1, ADC_SOC_NUMBER0);
+    ADC_enableInterrupt(ADCB_BASE, ADC_INT_NUMBER1);
+    ADC_clearInterruptStatus(ADCB_BASE, ADC_INT_NUMBER1);
+
+    // Start ePWM1, enabling SOCB and putting the counter in up-count mode
+    EPWM_enableADCTrigger(EPWM2_BASE, EPWM_SOC_B);
+    EPWM_setTimeBaseCounterMode(EPWM2_BASE, EPWM_COUNTER_MODE_UP);
+    Interrupt_enable(INT_ADCB1);
+}
+
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: Init
+ * Set up ADC channels for capturing MCP and PIP joint values. Both ADCs are
+ * triggered with EPWM hardware so that a software trigger is not required.
+ *
+ * EPWM1 triggers ADCA
+ * EPWM2 triggers ADCB
+ *
+ * RETURN:
+ * bool - true if HW configuration was successful.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
+bool Adc::C2000::Init() {
+
+    // Initialize the global adcData values to be 0.
+    memset((void*) (&adcData), 0, ADC_MAX_NUM_CHAN * sizeof(adcData_t));
+
+    // Configure ADC and EPWM modules for converting ADC values automatically.
+    ConfigAdcaEpwm1();
+    ConfigAdcbEpwm2();
 
     return true;
 }
