@@ -1,10 +1,3 @@
-/*
- * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
- * DESCRIPTION: mux.cpp
- * This module configures the analog muxes connected to the flex sensors.
- * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
-*/
-
 #include "adc_wrapper.h"
 
 /*
@@ -17,6 +10,10 @@
 static PyObject *pModule;      // adc module                
 static PyObject* pAdcObj;      // adc.Mcp3008 object
 #endif
+
+#if ENABLE_ADC_C2000
+volatile adcData_t adcData[ADC_MAX_NUM_CHAN];
+#endif // ENABLE_ADC_C2000
 
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -73,13 +70,136 @@ int Adc::ReadAdcChannel(int adc_channel) {
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
-bool Adc::C2000::Init() {
-    return false;
+#if ENABLE_ADC_C2000
+
+__interrupt static void AdcAConvComplete_ISR() {
+
+    // Enable modifying/reading protected registers
+    EALLOW;
+
+    // Read the raw sample value
+    adcData[ADC_A].value = ADC_readResult(ADCARESULT_BASE, ADC_SOC_NUMBER0);
+    adcData[ADC_A].capturesSinceLastRead++;
+
+    // Clear the interrupt flag
+    ADC_clearInterruptStatus(ADCA_BASE, ADC_INT_NUMBER1);
+
+    // Check if overflow has occurred
+    if(true == ADC_getInterruptOverflowStatus(ADCA_BASE, ADC_INT_NUMBER1))
+    {
+        ADC_clearInterruptOverflowStatus(ADCA_BASE, ADC_INT_NUMBER1);
+        ADC_clearInterruptStatus(ADCA_BASE, ADC_INT_NUMBER1);
+    }
+
+    // Acknowledge the interrupt
+    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP1);
+
+    // Disable modifying and reading protected registers
+    EDIS;
+    return;
 }
 
-int Adc::C2000::ReadAdcChannel(int adc_channel) {
-    return -1;
+__interrupt static void AdcBConvComplete_ISR() {
+
+    // Enable modifying/reading protected registers
+    EALLOW;
+
+    //adcReading[ADC_B] =
+
+    // Disable modifying and reading protected registers
+    EDIS;
+    return;
 }
+
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: Init
+ * Set up ADC channels for capturing MCP and PIP joint values.
+ *
+ * RETURN:
+ * bool - true if HW configuration was successful.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
+bool Adc::C2000::Init() {
+
+    // Initialize the global adcData values to be 0.
+    memset((void*)&adcData, 0, ADC_MAX_NUM_CHAN*sizeof(adcData_t));
+
+    // Point the interrupt vector at the custom function name.
+    Interrupt_register(INT_ADCA1, &AdcAConvComplete_ISR);
+
+    // Configure ADCA module
+    // - Set ADCCLK divider to /4
+    // - Set resolution and signal mode and load corresponding trims.
+    // - Set pulse positions to late
+    // - Power up the ADC and then delay for 1 ms
+
+    ADC_setPrescaler(ADCA_BASE, ADC_CLK_DIV_4_0);
+    ADC_setMode(ADCA_BASE, ADC_RESOLUTION_12BIT, ADC_MODE_SINGLE_ENDED);
+    ADC_setInterruptPulseMode(ADCA_BASE, ADC_PULSE_END_OF_CONV);
+    ADC_enableConverter(ADCA_BASE);
+    DEVICE_DELAY_US(1000);
+
+    // Enable EPWM to generate the ADC conversions without software interaction.
+    // - Disable SOCA
+    // - Configure the SOC to occur on the first up-count event
+    // - Set the compare A value to 2048 and the period to 4096
+    // - Freeze the counter
+
+    EPWM_disableADCTrigger(EPWM1_BASE, EPWM_SOC_A);
+    EPWM_setADCTriggerSource(EPWM1_BASE, EPWM_SOC_A, EPWM_SOC_TBCTR_U_CMPA);
+    EPWM_setADCTriggerEventPrescale(EPWM1_BASE, EPWM_SOC_A, 1);
+    EPWM_setCounterCompareValue(EPWM1_BASE, EPWM_COUNTER_COMPARE_A, 0x0800);
+    EPWM_setTimeBasePeriod(EPWM1_BASE, 0x1000);
+    EPWM_setTimeBaseCounterMode(EPWM1_BASE, EPWM_COUNTER_MODE_STOP_FREEZE);
+
+    // Configure ADCA's SOC0 to be triggered by EPWM1
+    // - Set SOC0 to set the interrupt 1 flag. Enable the interrupt and make
+    //   sure its flag is cleared.
+
+    ADC_setupSOC(ADCA_BASE, ADC_SOC_NUMBER0, ADC_TRIGGER_EPWM1_SOCA, ADC_CH_ADCIN0, 15);
+    ADC_setInterruptSource(ADCA_BASE, ADC_INT_NUMBER1, ADC_SOC_NUMBER0);
+    ADC_enableInterrupt(ADCA_BASE, ADC_INT_NUMBER1);
+    ADC_clearInterruptStatus(ADCA_BASE, ADC_INT_NUMBER1);
+
+    // Start ePWM1, enabling SOCA and putting the counter in up-count mode
+
+    EPWM_enableADCTrigger(EPWM1_BASE, EPWM_SOC_A);
+    EPWM_setTimeBaseCounterMode(EPWM1_BASE, EPWM_COUNTER_MODE_UP);
+    Interrupt_enable(INT_ADCA1);
+
+    return true;
+}
+
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: ReadAdcChannel
+ * Set up ADC channels for capturing MCP and PIP joint values.
+ *
+ * RETURN:
+ * int - Returns the most recent ADC reading if succesful. Returns -1 if failing.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
+int Adc::C2000::ReadAdcChannel(int adc_channel) {
+
+    if (adc_channel < 0 || adc_channel > ADC_MAX_NUM_CHAN-1)
+    {
+        /* provided adc_channel was outside of expected range */
+        return -1;
+    }
+
+    // Check if enough ADC readings have been captured to return an ADC reading.
+    // This reduces the possibility of a mux channel switch causing incorrect ADC values
+    // to be read for the specified channel.
+    if (adcData[adc_channel].capturesSinceLastRead < ADC_NUM_READINGS_BEFORE_VALID)
+        return -1;
+
+    // Reset adc reading counter and return the most recent adc reading.
+    adcData[adc_channel].capturesSinceLastRead = 0;
+    return (int)adcData[adc_channel].value;
+}
+
+#endif // ENABLE_ADC_C2000
 
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+

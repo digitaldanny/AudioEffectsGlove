@@ -2,10 +2,30 @@
 #include "build_switches.h"
 #include "unit_tests.h"
 
+#if TARGET_HW_C2000
+extern "C" {
+ #include "device.h"
+}
+#endif // TARGET_HW_C2000
+
+// TEMPORARY.. REMOVE THIS
 #include "adc_wrapper.h"
+int adc_reading;
+int adc_channel = 0;
 
 int main()
 {
+#if TARGET_HW_C2000
+    Device_init();                  // Initialize device clock and peripherals
+    Device_initGPIO();              // Disable pin locks and enable internal pullups.
+    Interrupt_initModule();         // Initialize PIE and clear PIE registers. Disables CPU interrupts.
+    Interrupt_initVectorTable();    // Initialize the PIE vector table with pointers to the shell ISRs
+
+    // More documentation on these registers here: https://www.ti.com/lit/ug/spru430f/spru430f.pdf
+    EALLOW;                         // Enable modifying/reading protected registers.
+    EINT;                           // Enable Global Interrupt (INTM)
+    ERTM;                           // Enable realtime interrupt (DBGM)
+#endif
 
 #if ENABLE_UNIT_TEST_WIRELESS_API
     unitTest_wirelessApi();
@@ -29,8 +49,6 @@ int main()
 
 #if ENABLE_UNIT_TEST_ADC_C2000
 
-    int adc_channel = 0;
-
     if(!Adc::Init())
     {
         /* Failed ADC setup */
@@ -39,7 +57,7 @@ int main()
 
     while(1)
     {
-        Adc::ReadAdcChannel(adc_channel & 0x1);
+        adc_reading = Adc::ReadAdcChannel(adc_channel & 0x1);
         adc_channel++;
         adc_channel &= 0x1;
     }

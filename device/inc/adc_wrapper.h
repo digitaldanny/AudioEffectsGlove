@@ -5,6 +5,13 @@
 #include "build_switches.h"
 #include <stdio.h>
 
+#if ENABLE_ADC_C2000
+extern "C" {
+ #include <device_headers/device.h>
+}
+ #include "string.h"
+#endif // ENABLE_ADC_C2000
+
 #if ENABLE_ADC_PYTHON
 #include "python_common.h"
 
@@ -29,9 +36,31 @@
 #define ADC_INIT_FUNC       "__enter__"
 #define ADC_READ_FUNC       "readAdc"
 
+// C2000 defines
+#define ADC_NUM_READINGS_BEFORE_VALID   (2) // Number of ADC readings required before a value can be read
+
 // ADC channel defines
-#define ADC_CHAN_MCP        0
-#define ADC_CHAN_PIP        1
+#define ADC_A               (0)   ///< Adc module A
+#define ADC_B               (1)   ///< Adc module B
+#define ADC_MAX_NUM_CHAN    (2)   ///< Number of ADC channels used
+
+/*
+* +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+* STRUCTS
+* +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+#if ENABLE_ADC_C2000
+/*
+ * DESCRIPTION: adcData_t
+ * @value                   uint16      12-bit ADC reading.
+ * @capturesSinceLastRead   uint32_t    Number of new sample captured since value was last read.
+ */
+typedef struct {
+    volatile uint16_t value;
+    volatile uint32_t capturesSinceLastRead;
+} adcData_t;
+#endif // ENABLE_ADC_C2000
 
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
