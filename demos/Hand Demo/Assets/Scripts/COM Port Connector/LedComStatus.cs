@@ -32,7 +32,6 @@ public class LedComStatus : MonoBehaviour
      */
     private void UpdateLedColor()
     {
-        Debug.Log("UpdateLedColor");
         if (this.isComPortConnected)
             imageLed.color = colorConnected;
         else
