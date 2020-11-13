@@ -9,16 +9,22 @@ to debug the Unity Bluetooth script and the C2000 / HC-05 connection.
 # +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 #                             SCRIPT CONFIGURATIONS
 # +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-BAUDRATE        = 115200
+BAUDRATE        = 15200
 TIMEOUT_SECONDS = 0.5
 COM_WRITE       = "COM7"
-COM_READ        = "COM5"
+COM_READ        = "COM7"
 # +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+s
 
 import serial
 
-portWrite   = serial.Serial(COM_WRITE, baudrate=BAUDRATE, timeout=TIMEOUT_SECONDS)
-portRead    = serial.Serial(COM_READ, baudrate=BAUDRATE, timeout=TIMEOUT_SECONDS)
+# If the read/write COM ports do not match, this is being used for a closed loop test.
+#   Instantiate two serial port objects - one for reading and one for writing
+# Else, the serial object is being used normally so only instantiate one object.
+portWrite = serial.Serial(COM_WRITE, baudrate=BAUDRATE, timeout=TIMEOUT_SECONDS)
+if COM_WRITE != COM_READ:
+    portRead = serial.Serial(COM_READ, baudrate=BAUDRATE, timeout=TIMEOUT_SECONDS)
+else:
+    portRead = portWrite
 
 while (True):
 

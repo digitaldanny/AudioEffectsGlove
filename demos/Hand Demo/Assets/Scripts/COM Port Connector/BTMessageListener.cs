@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,9 +13,8 @@ public class BTMessageListener : MonoBehaviour
     [SerializeField] BTMessageHandler messageHandler;
 
     // Invoked when a line of data is received from the serial device.
-    void OnMessageArrived(string msg)
+    void OnMessageArrived(byte[] msg)
     {
-        Debug.Log("Received: " + msg);
         messageHandler.Recv(msg);
     }
 

@@ -4,18 +4,16 @@ using UnityEngine;
 
 public class BTMessageHandler : MonoBehaviour
 {
-    [SerializeField] SerialController serialController;
-    [SerializeField] string received;
+    [SerializeField] SerialControllerCustomDelimiter serialController;
+    [SerializeField] byte[] received;
 
-    public bool Send(string msg)
+    public void Send(byte[] msg)
     {
         serialController.SendSerialMessage(msg);
-        return true;
     }
 
-    public bool Recv(string msg)
+    public void Recv(byte[] msg)
     {
         this.received = msg;
-        return true;
     }
 }
