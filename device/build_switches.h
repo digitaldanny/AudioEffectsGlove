@@ -32,7 +32,8 @@
 #define ENABLE_UNIT_TEST_MUX            0   // Issue #7: Enables unit test for setting mux channels. 
 #define ENABLE_UNIT_TEST_MUX_C2000      0   // Issue #15: Enables unit test for setting mux channels on the C2000 dev board.
 #define ENABLE_UNIT_TEST_ADC            0   // Issue #7: Enables unit test for reading adc channels.
-#define ENABLE_UNIT_TEST_ADC_C2000      1   // Issue #14: Enables unit test for reading both adc channels at the same time.
+#define ENABLE_UNIT_TEST_ADC_C2000      0   // Issue #14: Enables unit test for reading both adc channels at the same time.
+#define ENABLE_UNIT_TEST_UART_C2000     1   // Issue #21: Enables UART (or SCI) loopback test for C2000 dev board using GPIO56 (TX) and GPIO139 (RX).
 #define ENABLE_UNIT_TEST_FLEX_SENSORS   0   // Issue #7: Enables unit test for reading all 10 flex sensor voltage levels.
 #define ENABLE_MAIN_V1                  0   // Issue #13: Enables main program that will be running
 
@@ -42,6 +43,8 @@
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 #define ENABLE_WIRELESS_API_PYTHON  (0 & TARGET_HW_PYTHON_CAPABLE) // Issue #8: Enables calls to server.py for sending/receiving client requests.
+
+#define ENABLE_UART_C2000 (1 & TARGET_HW_C2000) // Issue #21: Enables UART module for transmitting data from C2000 to HC-05 (RS232 Bluetooth chip).
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
