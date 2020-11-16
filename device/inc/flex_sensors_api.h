@@ -7,9 +7,9 @@
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
-#include <adc_wrapper.h>
+#include <adc_if.h>
+#include <mux_if.h>
 #include <stdio.h>
-#include "mux.h"
 
 #define ADC_CHAN_MCP    (0) // ADC channel used to read MCP joint data
 #define ADC_CHAN_PIP    (1) // ADC channel used to read PIP joint data

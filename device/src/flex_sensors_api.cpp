@@ -13,9 +13,14 @@
 */
 bool FlexSensors::Init()
 {
-    if (!Mux::Init() || !Adc::Init())
+    if (!Mux::Init())
     {
-        printf("FlexSensors::Init - Could not initialize Mux or ADC\n");
+        printf("FlexSensors::Init - Could not initialize Mux\n");
+        return false;
+    }
+    if (!Adc::Init())
+    {
+        printf("FlexSensors::Init - Could not initialize ADC\n");
         return false;
     }
     return true;
@@ -50,8 +55,8 @@ bool FlexSensors::GetJointsData(FlexSensors::finger_e finger, FlexSensors::finge
     }
 
     // Read from both ADC channels to collect an ADC sample for the mux outputs
-    // ADC0 - MCP mux output
-    // ADC1 - PIP mux output
+    // ADCA - MCP mux output
+    // ADCB - PIP mux output
     if ((mcpAdcReading = Adc::ReadAdcChannel(ADC_CHAN_MCP)) == -1)
     {
         printf("FlexSensors::GetJointsData - Could not get MCP ADC reading.\n");

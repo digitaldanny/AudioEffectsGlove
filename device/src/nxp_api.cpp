@@ -10,7 +10,7 @@
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
-#include "nxp_interface_api.h"
+#include <nxp_api.h>
 
 #if TARGET_HW_DESKTOP
 #include "math.h"
