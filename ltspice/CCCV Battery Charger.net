@@ -1,0 +1,61 @@
+* C:\Users\Daniel\Desktop\SW_Projects\GestureControl\ltspice\CCCV Battery Charger.asc
+V§DAD+5 DAD_5V 0 5
+Ra N002 N003 1.8k
+Rb N003 0 1.15k
+Roff N003 DAD_5V 250
+V§Battery V_battery 0 SINE(2.1 2.1 100)
+R4 N001 V_schmitt 4k
+Q3 N001 N001 DAD_5V 0 PNP
+Q4 Vcc N001 DAD_5V 0 PNP
+R5 N004 DAD_5V 850
+R7 0 N004 1k
+XU1 N003 V_battery DAD_5V 0 N002 level.2 Avol=1Meg GBW=10Meg Slew=10Meg ilimit=25m rail=0 Vos=0 phimargin=45 en=0 enk=0 in=0 ink=0 Rin=500Meg
+XU2 N004 N002 DAD_5V 0 V_schmitt level.2 Avol=1Meg GBW=10Meg Slew=10Meg ilimit=25m rail=0 Vos=0 phimargin=45 en=0 enk=0 in=0 ink=0 Rin=500Meg
+V1 VRef_4_2 0 4.2
+V2 VRef_3_7 0 3.7
+R8 N010 0 .1
+R9 N007 N006 100k
+R10 0 N011 100k
+R11 N010 N011 1k
+R12 0 N006 1k
+XU4 N012 N007 DAD_5V 0 V_termination level.2 Avol=1Meg GBW=10Meg Slew=10Meg ilimit=25m rail=0 Vos=0 phimargin=45 en=0 enk=0 in=0 ink=0 Rin=500Meg
+R13 N012 DAD_5V 4.5k
+R14 N012 0 100
+XU5 N015 N008 DAD_5V LT1117
+R1 N008 N015 1k
+R2 N015 0 2360
+Q1 N008 N013 N009 0 NPN
+R15 N013 V_schmitt 1k
+R3 Vcc N005 1k
+D1 N005 V_charger D
+D2 Vcv V_charger D
+R6 N014 V_termination 1k
+R_batteryLoadTest Vref_4_2 N010 400
+R_testLoad V_charger 0 1000
+XU3 N011 N006 DAD_5V 0 N007 level.2 Avol=1Meg GBW=10Meg Slew=10Meg ilimit=25m rail=0 Vos=0 phimargin=45 en=0 enk=0 in=0 ink=0 Rin=500Meg
+Q2 Vcv N014 N009 0 PNP
+.model D D
+.lib C:\Users\Daniel\Documents\LTspiceXVII\lib\cmp\standard.dio
+.model NPN NPN
+.model PNP PNP
+.lib C:\Users\Daniel\Documents\LTspiceXVII\lib\cmp\standard.bjt
+.tran 25m
+* Constant Current Source (CC)
+* Constant Voltage Supply (CV)
+* 3.7 - 4.2V Threshold Detector (CC/CV Switching)
+* 2.7V
+* Direct compare using open loop gain (A) to swing output quicker (Also inverts)
+* Schmitt = LOW, CC current = ON
+* Schmitt = HIGH, CV current = ON
+* 3.7 - 4.2 V Triggers
+* high power shunt resistor (I_battery)
+* High when I_shunt <= 0.1C
+* Termination current sensing circuit
+* Vcv = 4.2V + 0.7V (accounts for diode drop)
+* Icc = 0.1C (1.1mA in this circuit)
+* Termination = LOW, CV current = ON
+* Low-side shunt removes common mode rejection ration (CMRR) with low tolerance resistors
+.lib LT1117.lib
+.lib UniversalOpamps2.sub
+.backanno
+.end
