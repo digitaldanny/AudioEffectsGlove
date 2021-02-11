@@ -1,0 +1,21 @@
+Circuit: * C:\Users\Daniel\Desktop\SW_Projects\GestureControl\ltspice\Flex Sensor to ADC\Flex Sensor to ADC.asc
+
+Direct Newton iteration for .op point succeeded.
+
+Date: Thu Feb 11 16:13:02 2021
+Total elapsed time: 0.046 seconds.
+
+tnom = 27
+temp = 27
+method = modified trap
+totiter = 2386
+traniter = 2347
+tranpoints = 1094
+accept = 1077
+rejected = 17
+matrix size = 18
+fillins = 7
+solver = Normal
+Matrix Compiler1: 1.09 KB object code size  0.2/0.1/[0.1]
+Matrix Compiler2: 1.68 KB object code size  0.2/0.2/[0.2]
+
