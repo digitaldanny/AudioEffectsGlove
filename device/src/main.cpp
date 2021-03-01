@@ -1,26 +1,11 @@
 #include <stdio.h>
 #include "build_switches.h"
 #include "unit_tests.h"
-
-#if TARGET_HW_C2000
-extern "C" {
- #include "device.h"
-}
-#endif // TARGET_HW_C2000
+#include "setup_target_hw.h"
 
 int main()
 {
-#if TARGET_HW_C2000
-    Device_init();                  // Initialize device clock and peripherals
-    Device_initGPIO();              // Disable pin locks and enable internal pullups.
-    Interrupt_initModule();         // Initialize PIE and clear PIE registers. Disables CPU interrupts.
-    Interrupt_initVectorTable();    // Initialize the PIE vector table with pointers to the shell ISRs
-
-    // More documentation on these registers here: https://www.ti.com/lit/ug/spru430f/spru430f.pdf
-    EALLOW; // Enable modifying/reading protected registers.
-    EINT;   // Enable Global Interrupt (INTM)
-    ERTM;   // Enable realtime interrupt (DBGM)
-#endif
+    setupTargetHw();
 
 #if ENABLE_UNIT_TEST_WIRELESS_API
     unitTest_wirelessApi();
@@ -51,11 +36,43 @@ int main()
 #endif // ENABLE_UNIT_TEST_FLEX_SENSORS
 
 #if ENABLE_MAIN_V1
-    // Quick test to make sure program runs on C2000
+    // Quick test to make sure program runs on MSP432
     int variable1 = 0;
-    variable1++;
-    while(1);
+    while(1)
+    {
+        variable1++;
+    }
 #endif // ENABLE_MAIN_V1
 
     return 0;
+}
+
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: setupTargetHw
+ * Set up "non-module" hardware registers.
+ * Ex of included inits.) Set clock speed to 48 MHz, disable WDT
+ * Ex of inits NOT included.) Configuring UART to transmit data over Bluetooth
+ *
+ * INPUTS: None
+ * RETURN: None
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
+void setupTargetHw()
+{
+#if TARGET_HW_C2000
+    Device_init();                  // Initialize device clock and peripherals
+    Device_initGPIO();              // Disable pin locks and enable internal pullups.
+    Interrupt_initModule();         // Initialize PIE and clear PIE registers. Disables CPU interrupts.
+    Interrupt_initVectorTable();    // Initialize the PIE vector table with pointers to the shell ISRs
+
+    // More documentation on these registers here: https://www.ti.com/lit/ug/spru430f/spru430f.pdf
+    EALLOW; // Enable modifying/reading protected registers.
+    EINT;   // Enable Global Interrupt (INTM)
+    ERTM;   // Enable realtime interrupt (DBGM)
+#endif // TARGET_HW_C2000
+
+#if TARGET_HW_MSP432
+    WDT_A_holdTimer(); // Halting the Watchdog
+#endif // TARGET_HW_MSP432
 }

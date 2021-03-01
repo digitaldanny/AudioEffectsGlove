@@ -30,6 +30,8 @@ namespace Uart {
 #if ENABLE_UART_C2000
     namespace C2000 {
         bool Init               ();
+        int Send                (uint16_t data);
+        int Recv                (uint16_t* data);
     }
 #endif // ENABLE_UART_C2000
 }
