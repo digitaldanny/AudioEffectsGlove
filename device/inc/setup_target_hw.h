@@ -15,6 +15,8 @@
 #ifndef _SETUP_TARGET_HARDWARE
 #define _SETUP_TARGET_HARDWARE
 
+#include "build_switches.h"
+
 #if TARGET_HW_C2000
 extern "C" {
  #include "device.h"
