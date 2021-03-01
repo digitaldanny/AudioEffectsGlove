@@ -3,9 +3,16 @@
 #include "unit_tests.h"
 #include "setup_target_hw.h"
 
+/// DEBUG **********
+#include "lcd_64x48_bitmap.h"
+/// DEBUG **********
+
 int main()
 {
     setupTargetHw();
+
+    lcd_setup();
+    lcd_loop();
 
 #if ENABLE_UNIT_TEST_WIRELESS_API
     unitTest_wirelessApi();
