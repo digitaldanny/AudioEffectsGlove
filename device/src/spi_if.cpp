@@ -102,7 +102,7 @@ uint8_t Spi::MSP432::transferByte(uint8_t data)
  * - Sets global flag to "true" to notify main program that response was received.
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 */
-void EUSCIB0_IRQHandler(void)
+extern "C" void EUSCIB0_IRQHandler(void)
 {
     uint32_t status = SPI_getEnabledInterruptStatus(EUSCI_B0_BASE);
 
