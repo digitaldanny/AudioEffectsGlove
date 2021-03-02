@@ -97,17 +97,6 @@
  *
  */
 
-#define CLR_MOSI  GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN6)   // P1.6
-#define SET_MOSI  GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN6)
-#define CLR_SCK   GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN5)   // P1.5
-#define SET_SCK   GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN5)
-#define CLR_RS    GPIO_setOutputLowOnPin(GPIO_PORT_P2, GPIO_PIN3)   // P2.3
-#define SET_RS    GPIO_setOutputHighOnPin(GPIO_PORT_P2, GPIO_PIN3)
-#define CLR_RESET GPIO_setOutputLowOnPin(GPIO_PORT_P5, GPIO_PIN1)   // P5.1
-#define SET_RESET GPIO_setOutputHighOnPin(GPIO_PORT_P5, GPIO_PIN1)
-#define CLR_CS    GPIO_setOutputLowOnPin(GPIO_PORT_P3, GPIO_PIN5)   // P3.5
-#define SET_CS    GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN5)
-
 /*
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
  * DESCRIPTION: _delay_ms
@@ -125,11 +114,22 @@ void _delay_ms(uint32_t ms)
 
     // Wait for timer to finish
     Timer32_haltTimer(TIMER32_0_BASE);
-    Timer32_setCount(TIMER32_0_BASE, 32000*ms);
+    Timer32_setCount(TIMER32_0_BASE, 3*32000*ms);
     Timer32_startTimer(TIMER32_0_BASE, true);
 
     while(Timer32_getValue(TIMER32_0_BASE) > 0);
 }
+
+#define CLR_MOSI  GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN6)  // P1.6
+#define SET_MOSI  GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN6)
+#define CLR_SCK   GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN5)  // P1.5
+#define SET_SCK   GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN5)
+#define CLR_RS    GPIO_setOutputLowOnPin(GPIO_PORT_P2, GPIO_PIN3)  // P2.3
+#define SET_RS    GPIO_setOutputHighOnPin(GPIO_PORT_P2, GPIO_PIN3)
+#define CLR_RESET GPIO_setOutputLowOnPin(GPIO_PORT_P5, GPIO_PIN1); _delay_ms(1)  // P5.1
+#define SET_RESET GPIO_setOutputHighOnPin(GPIO_PORT_P5, GPIO_PIN1); _delay_ms(1)
+#define CLR_CS    GPIO_setOutputLowOnPin(GPIO_PORT_P3, GPIO_PIN5); _delay_ms(1)  // P3.5
+#define SET_CS    GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN5); _delay_ms(1)
 
 /*
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
@@ -262,7 +262,7 @@ void show_64_x_48_bitmap(const SCREEN_IMAGE *OLED_image)
       SPI.transfer(OLED_image->bitmap_data[row][column]); // MSP432
       }
     // Deselect the LCD controller
-    SET_CS;    
+    SET_CS;
     }
   }
 //============================================================================
@@ -426,15 +426,28 @@ void  lcd_loop(void)
 
 void lcd_test()
 {
-    lcd_setup();
-    volatile char rx = 'X';
-    char testArray[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
-    while(true)
-    {
-        for (int i = 0; i < 16; i++)
-        {
-            SPI_sendData((uint8_t)testArray[3]);
-            _delay_ms(1);
-        }
-    }
+    //Display is offest by 32 columns
+    //(only 64 used of a possible 128, 32 discarded each side)
+    Set_Address(32,123);
+
+    // Select the LCD's data register
+    SET_RS;
+    // Select the LCD controller
+    CLR_CS;
+    for(int column=0;column<256;column++)
+      {
+      //Read this byte from the program memory / flash,
+      //Send the data via SPI:
+      //SPI.transfer(pgm_read_byte( &(OLED_image->bitmap_data[row][column]) )); // Arduino
+      uint8_t d = 0x3C;
+      SPI.transfer(d); // MSP432
+
+      uint8_t c = 0xAF;
+      SPI_sendCommand(c);
+
+      c = 0xAE;
+      SPI_sendCommand(c);
+      }
+    // Deselect the LCD controller
+    SET_CS;
 }

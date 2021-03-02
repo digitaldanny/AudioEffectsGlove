@@ -66,7 +66,7 @@ namespace Spi
     {
             EUSCI_B_SPI_CLOCKSOURCE_SMCLK,
             48000000,
-            500000,
+            12000,
             EUSCI_B_SPI_MSB_FIRST,
             EUSCI_B_SPI_PHASE_DATA_CHANGED_ONFIRST_CAPTURED_ON_NEXT,
             EUSCI_B_SPI_CLOCKPOLARITY_INACTIVITY_HIGH,

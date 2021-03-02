@@ -5,16 +5,18 @@
 
 /// DEBUG **********
 #include "lcd_64x48_bitmap.h"
-//#include "spi_if.h"
 /// DEBUG **********
 
 int main()
 {
     setupTargetHw();
-    lcd_test();
 
-    //lcd_setup();
-    //lcd_loop();
+    lcd_setup();
+    while(true)
+    {
+        lcd_test();
+    }
+    lcd_loop();
 
 #if ENABLE_UNIT_TEST_WIRELESS_API
     unitTest_wirelessApi();
