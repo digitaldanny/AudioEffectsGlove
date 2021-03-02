@@ -1,6 +1,7 @@
 #ifndef __bitmaps_h__
 #define __bitmaps_h__
 
+void lcd_test();
 void lcd_setup( void );
 void lcd_loop(void);
 

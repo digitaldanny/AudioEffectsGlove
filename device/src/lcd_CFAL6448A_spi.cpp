@@ -33,8 +33,8 @@
 //
 //For more information, please refer to <http://unlicense.org/>
 //===========================================================================
-#include <SPI.h>
-#include "lcd_64x48_bitmap.h"
+//#include <SPI.h>
+//#include "bitmap.h"
 //============================================================================
 // The CFAL6448A-066B is a 3.3v device. You need a 3.3v Arduino to operate this
 // code properly. We used a seeedunio v4.2 set to 3.3v:
@@ -59,22 +59,7 @@
 //
 
 /*
- * MODIFICATIONS 03/01/2021
- * Author: Daniel Hamilton
- * Goal: Updating drivers to support Texas Instruments MSP432.
- *
- * LCD SPI & control lines
- *   HEADER   | Color  | LCD
- * -----------+--------+-------------------------
- *  P1.6      | Brown  | LCD_MOSI   (hardware SPI)
- *  P1.5      | Red    | LCD_SCK    (hardware SPI)
- *  P?.?      | Orange | LCD_RS     (gpio)
- *  P?.?      | Yellow | LCD_RESET  (gpio)
- *  P?.?      | Green  | LCD_CS_NOT (GPIO or SPI SS)
- *  P1.7      | N/A    | not used   (would be MISO)
- *
- */
-
+// ARDUINO IMPLEMENTATION
 #define CLR_RS    (PORTB &= ~(0x01))
 #define SET_RS    (PORTB |=  (0x01))
 #define CLR_RESET (PORTB &= ~(0x02))
@@ -85,6 +70,84 @@
 #define SET_MOSI  (PORTB |=  (0x08))
 #define CLR_SCK   (PORTB &= ~(0x20))
 #define SET_SCK   (PORTB |=  (0x20))
+*/
+
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * MSP432 PORT (03/01/2021)
+ * Author: Daniel Hamilton
+ * Goal: Updating drivers to support Texas Instruments MSP432.
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ */
+
+#include "spi_if.h"
+#include "lcd_64x48_bitmap.h"
+
+/*
+ * LCD SPI & control lines
+ *   HEADER   | Color  | LCD
+ * -----------+--------+-------------------------
+ *  P1.6      | Brown  | LCD_MOSI   (hardware SPI)
+ *  P1.5      | Red    | LCD_SCK    (hardware SPI)
+ *  P2.3      | Orange | LCD_RS     (gpio)
+ *  P5.1      | Yellow | LCD_RESET  (gpio)
+ *  P3.5      | Green  | LCD_CS_NOT (GPIO or SPI SS)
+ *  P1.7      | N/A    | not used   (would be MISO)
+ *
+ */
+
+#define CLR_MOSI  GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN6)   // P1.6
+#define SET_MOSI  GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN6)
+#define CLR_SCK   GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN5)   // P1.5
+#define SET_SCK   GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN5)
+#define CLR_RS    GPIO_setOutputLowOnPin(GPIO_PORT_P2, GPIO_PIN3)   // P2.3
+#define SET_RS    GPIO_setOutputHighOnPin(GPIO_PORT_P2, GPIO_PIN3)
+#define CLR_RESET GPIO_setOutputLowOnPin(GPIO_PORT_P5, GPIO_PIN1)   // P5.1
+#define SET_RESET GPIO_setOutputHighOnPin(GPIO_PORT_P5, GPIO_PIN1)
+#define CLR_CS    GPIO_setOutputLowOnPin(GPIO_PORT_P3, GPIO_PIN5)   // P3.5
+#define SET_CS    GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN5)
+
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: _delay_ms
+ * Software delay in milliseconds (rough approximation).
+ *
+ * INPUTS:
+ * @ms - Number of milliseconds that software delay should last.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
+void _delay_ms(uint32_t ms)
+{
+    // Initialize the timer delay
+    Timer32_initModule( TIMER32_0_BASE, TIMER32_PRESCALER_1, TIMER32_32BIT, TIMER32_PERIODIC_MODE);
+    Timer32_disableInterrupt(TIMER32_0_BASE);
+
+    // Wait for timer to finish
+    Timer32_haltTimer(TIMER32_0_BASE);
+    Timer32_setCount(TIMER32_0_BASE, 32000*ms);
+    Timer32_startTimer(TIMER32_0_BASE, true);
+
+    while(Timer32_getValue(TIMER32_0_BASE) > 0);
+}
+
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: Spi_c
+ * This class simply calls the SPI functions in "spi_if." The need for this class
+ * comes from porting the Arduino drivers for this LCD to the MSP432. In an attempt
+ * to modify as little code as possible, this file requires an object instantiation
+ * called "SPI"
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
+class Spi_c
+{
+public:
+    void begin() { Spi::init(); }
+    uint8_t transfer(uint8_t data) { return Spi::transferByte(data); }
+};
+static Spi_c SPI; // <- Instantiation here.
+
 //============================================================================
 #define NUMBER_OF_SCREENS (13)
 #define GEAR_START_SCREEN (5)
@@ -195,7 +258,8 @@ void show_64_x_48_bitmap(const SCREEN_IMAGE *OLED_image)
       {
       //Read this byte from the program memory / flash,
       //Send the data via SPI:
-      SPI.transfer(pgm_read_byte( &(OLED_image  ->bitmap_data[row][column]) ));
+      //SPI.transfer(pgm_read_byte( &(OLED_image->bitmap_data[row][column]) )); // Arduino
+      SPI.transfer(OLED_image->bitmap_data[row][column]); // MSP432
       }
     // Deselect the LCD controller
     SET_CS;    
@@ -285,8 +349,14 @@ void lcd_setup( void )
   // #11/D11    |  PB3 | LCD_MOSI   (hardware SPI)
   // #12/D12    |  PB4 | not used   (would be MISO)
   // #13/D13    |  PB5 | LCD_SCK    (hardware SPI)
+
   //Set the control lines to output
-  DDRB |= 0x2F;
+  //DDRB |= 0x2F;
+  MAP_GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN6);
+  MAP_GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN5);
+  MAP_GPIO_setAsOutputPin(GPIO_PORT_P2, GPIO_PIN3);
+  MAP_GPIO_setAsOutputPin(GPIO_PORT_P5, GPIO_PIN1);
+  MAP_GPIO_setAsOutputPin(GPIO_PORT_P3, GPIO_PIN5);
 
   //Drive the control lines to a reasonable starting state.
   CLR_RESET;
@@ -298,7 +368,8 @@ void lcd_setup( void )
   // Initialize SPI. By default the clock is 4MHz.
   SPI.begin();
   //Bump the clock to 8MHz. Appears to be the maximum.
-  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+  //SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+
 
   //Fire up the SPI OLED
   Initialize_CFAL6448A();
@@ -313,7 +384,8 @@ void  lcd_loop(void)
   //Put up some bitmaps from flash
   for(current_screen=0;current_screen<GEAR_START_SCREEN;current_screen++)
     {
-    show_64_x_48_bitmap((SCREEN_IMAGE *)pgm_read_word(&screens[current_screen]));
+    //show_64_x_48_bitmap((SCREEN_IMAGE *)pgm_read_word(&screens[current_screen])); // Arduino
+    show_64_x_48_bitmap((SCREEN_IMAGE*)&screens[current_screen]); // MSP432
     //Wait a bit . . .
     _delay_ms(1500);
     if(current_screen < 2)
@@ -331,7 +403,7 @@ void  lcd_loop(void)
       {
       for(current_screen=GEAR_START_SCREEN;current_screen<NUMBER_OF_SCREENS;current_screen++)
         {
-        show_64_x_48_bitmap((SCREEN_IMAGE *)pgm_read_word(&screens[current_screen]));
+          show_64_x_48_bitmap((SCREEN_IMAGE*)&screens[current_screen]); // MSP432
         _delay_ms(20);        
         }
       }
@@ -343,7 +415,7 @@ void  lcd_loop(void)
       {
       for(current_screen=NUMBER_OF_SCREENS-1;GEAR_START_SCREEN<=current_screen;current_screen--)
         {
-        show_64_x_48_bitmap((SCREEN_IMAGE *)pgm_read_word(&screens[current_screen]));
+          show_64_x_48_bitmap((SCREEN_IMAGE*)&screens[current_screen]); // MSP432
         _delay_ms(20);        
         }
       }
@@ -352,3 +424,17 @@ void  lcd_loop(void)
   }
 //============================================================================
 
+void lcd_test()
+{
+    lcd_setup();
+    volatile char rx = 'X';
+    char testArray[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
+    while(true)
+    {
+        for (int i = 0; i < 16; i++)
+        {
+            SPI_sendData((uint8_t)testArray[3]);
+            _delay_ms(1);
+        }
+    }
+}

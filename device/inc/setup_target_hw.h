@@ -1,7 +1,9 @@
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
  * DESCRIPTION: setup_target_hw.h
- * This file contains functions to initialize **non-module** target hardware.
+ * This file contains headers/functions to initialize **non-module** target hardware
+ * and common helper functions for hardware setup.
+ *
  * Examples of inits in this file) Setting clock speed, disabling WDT
  * Examples of inits NOT in this file) Configuring UART for transmitting Bluetooth data
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
