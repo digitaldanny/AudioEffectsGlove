@@ -11,8 +11,6 @@ int main()
 {
     setupTargetHw();
 
-
-
     // lcd_setup();
     // while(true)
     // {
@@ -32,8 +30,8 @@ int main()
     unitTest_mux();
 #endif // ENABLE_UNIT_TEST_MUX
 
-#if ENABLE_UNIT_TEST_MUX_C2000
-    unitTest_muxC2000();
+#if ENABLE_UNIT_TEST_MUX_LP
+    unitTest_muxLp();
 #endif // ENABLE_UNIT_TEST_MUX_C2000
 
 #if ENABLE_UNIT_TEST_ADC

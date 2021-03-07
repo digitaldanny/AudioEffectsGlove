@@ -13,10 +13,18 @@
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
-#if ENABLE_MUX_PYTHON
+#if TARGET_HW_PYTHON_CAPABLE
 static PyObject *pModule;      // mux module                
 static PyObject* pMuxObj;      // mux.Cd4051be object
 #endif
+
+#if TARGET_HW_MSP432
+static pinPort_t muxPins[MUX_NUM_SEL_LINES] = {
+    [0] = {GPIO_PORT_P3, GPIO_PIN7},
+    [1] = {GPIO_PORT_P4, GPIO_PIN1},
+    [2] = {GPIO_PORT_P4, GPIO_PIN6}
+};
+#endif // TARGET_HW_MSP432
 
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -34,10 +42,12 @@ static PyObject* pMuxObj;      // mux.Cd4051be object
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 */
 bool Mux::Init() {
-#if ENABLE_MUX_PYTHON
+#if TARGET_HW_PYTHON_CAPABLE
     return Mux::Python::Init();
 #elif ENABLE_MUX_C2000
     return Mux::C2000::Init();
+#elif TARGET_HW_MSP432
+    return Mux::MSP432::Init();
 #else
     return false;
 #endif // ENABLE_MUX_PYTHON
@@ -59,14 +69,67 @@ bool Mux::Init() {
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 */
 bool Mux::SelectMuxChannel(int mux_channel) {
-#if ENABLE_MUX_PYTHON
+#if TARGET_HW_PYTHON_CAPABLE
     return Mux::Python::SelectMuxChannel(mux_channel);
-#elif ENABLE_MUX_C2000
+#elif TARGET_HW_C2000
     return Mux::C2000::SelectMuxChannel(mux_channel);
+#elif TARGET_HW_MSP432
+    return Mux::MSP432::SelectMuxChannel(mux_channel);
 #else
     return false;
 #endif // ENABLE_MUX_PYTHON
 }
+
+/*
+* +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+* MSP432 HANDLERS
+* These functions are the MSP432 dev board specific implementations of mux.cpp.
+* For more details about what each function does, read the function
+* descriptions in the "TOP LEVEL FUNCTIONS" section above.
+* +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+#if TARGET_HW_MSP432
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * SUMMARY: Init
+ * This function initializes 3 GPIO as outputs for select
+ * line control on the MCP mux (CD4051BE IC).
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ */
+bool Mux::MSP432::Init() {
+    for (int p = 0; p < MUX_NUM_SEL_LINES; p++)
+    {
+        GPIO_setAsOutputPin(muxPins[p].port, muxPins[p].pin);
+    }
+    return true;
+}
+#endif // TARGET_HW_MSP432
+
+#if TARGET_HW_MSP432
+bool Mux::MSP432::SelectMuxChannel(int mux_channel) {
+
+    // Check that the provided mux channel is within the valid channel range.
+    if (mux_channel < MUX_CHAN_MIN || mux_channel > MUX_CHAN_MAX)
+    {
+        /* provided mux channel is outside of valid channel range */
+        return false;
+    }
+
+    // Iterate through all mux select lines and enable/disable lines
+    // by decoding the mux channel.
+    // Ex.) Mux channel 0 turns on GPIO 0 and turns off GPIO 1-7
+    for (int p = 0; p < MUX_NUM_SEL_LINES; p++)
+    {
+        if (p == mux_channel)
+            GPIO_setOutputHighOnPin(muxPins[p].port, muxPins[p].pin);
+        else
+            GPIO_setOutputLowOnPin(muxPins[p].port, muxPins[p].pin);
+    }
+
+    return true;
+}
+#endif // TARGET_HW_MSP432
 
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -77,7 +140,7 @@ bool Mux::SelectMuxChannel(int mux_channel) {
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
-#if ENABLE_MUX_C2000
+#if TARGET_HW_C2000
 
 /*
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
@@ -135,7 +198,7 @@ bool Mux::C2000::SelectMuxChannel(int mux_channel) {
     return true;
 }
 
-#endif // ENABLE_MUX_C2000
+#endif // TARGET_HW_C2000
 
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -145,7 +208,7 @@ bool Mux::C2000::SelectMuxChannel(int mux_channel) {
 * descriptions in the "TOP LEVEL FUNCTIONS" section above.
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
-#if ENABLE_MUX_PYTHON
+#if TARGET_HW_PYTHON_CAPABLE
 
 bool Mux::Python::Init() {
 

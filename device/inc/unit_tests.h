@@ -15,8 +15,8 @@ int unitTest_nxpApi();
 int unitTest_mux();
 #endif // ENABLE_UNIT_TEST_MUX
 
-#if ENABLE_UNIT_TEST_MUX_C2000
-int unitTest_muxC2000();
+#if ENABLE_UNIT_TEST_MUX_LP
+int unitTest_muxLp();
 #endif // ENABLE_UNIT_TEST_MUX_C2000
 
 #if ENABLE_UNIT_TEST_ADC
