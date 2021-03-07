@@ -11,12 +11,14 @@ int main()
 {
     setupTargetHw();
 
-    lcd_setup();
-    while(true)
-    {
-        lcd_test();
-    }
-    lcd_loop();
+
+
+    // lcd_setup();
+    // while(true)
+    // {
+    //     lcd_test();
+    // }
+    // lcd_loop();
 
 #if ENABLE_UNIT_TEST_WIRELESS_API
     unitTest_wirelessApi();
@@ -111,20 +113,13 @@ void setupTargetHw()
     MAP_FlashCtl_setWaitState(FLASH_BANK0, 2);
     MAP_FlashCtl_setWaitState(FLASH_BANK1, 2);
 
-    /* Danny added this for Wi-Fi */
-    FLCTL->BANK0_RDCTL |= (FLCTL_BANK0_RDCTL_BUFI | FLCTL_BANK0_RDCTL_BUFD );
-    FLCTL->BANK1_RDCTL |= (FLCTL_BANK1_RDCTL_BUFI | FLCTL_BANK1_RDCTL_BUFD );
+    /* Setting DCO to 48MHz  */
+    MAP_PCM_setPowerState(PCM_AM_LDO_VCORE1);
+    MAP_CS_setDCOCenteredFrequency(CS_DCO_FREQUENCY_48);
 
-    /* Start HFXT */
-    MAP_CS_startHFXT(0);
+    /* Enabling the FPU for floating point operation */
+    // MAP_FPU_enableModule();
+    // MAP_FPU_enableLazyStacking();
 
-    /* Initialize MCLK to HFXT */
-    MAP_CS_initClockSignal(CS_MCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_1);
-
-    /* Initialize HSMCLK to HFXT/2 */
-    MAP_CS_initClockSignal(CS_HSMCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_2);
-
-    /* Initialize SMCLK to HFXT/4 */
-    MAP_CS_initClockSignal(CS_SMCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_4);
 #endif // TARGET_HW_MSP432
 }
