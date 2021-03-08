@@ -3,12 +3,10 @@
 
 // Common target includes
 #include "build_switches.h"
+#include "target_hw_common.h"
 #include <stdio.h>
 
 #if ENABLE_ADC_C2000
-extern "C" {
- #include <device_headers/device.h>
-}
  #include "string.h"
 #endif // ENABLE_ADC_C2000
 
@@ -71,7 +69,14 @@ typedef struct {
 namespace Adc {
 
     bool Init               ();
-    int ReadAdcChannel      (int adc_channel);
+    uint16_t ReadAdcChannel      (uint8_t adc_channel);
+
+#if TARGET_HW_MSP432
+    namespace MSP432 {
+        bool Init               ();
+        uint16_t ReadAdcChannel ();
+    }
+#endif // TARGET_HW_MSP432
 
 #if ENABLE_ADC_C2000
     namespace C2000 {

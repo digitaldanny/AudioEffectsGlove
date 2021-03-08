@@ -104,8 +104,11 @@ void setupTargetHw()
     MAP_CS_setDCOCenteredFrequency(CS_DCO_FREQUENCY_48);
 
     /* Enabling the FPU for floating point operation */
-    // MAP_FPU_enableModule();
-    // MAP_FPU_enableLazyStacking();
+    MAP_FPU_enableModule();
+    MAP_FPU_enableLazyStacking();
+
+    /* Enabling interrupts */
+    MAP_Interrupt_enableMaster();
 
 #endif // TARGET_HW_MSP432
 }

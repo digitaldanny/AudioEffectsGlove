@@ -27,6 +27,10 @@ int unitTest_adc();
 int unitTest_adcC2000();
 #endif // ENABLE_UNIT_TEST_ADC_C2000
 
+#if ENABLE_UNIT_TEST_ADC_MSP432
+int unitTest_adcMsp432();
+#endif // ENABLE_UNIT_TEST_ADC_MSP432
+
 #if ENABLE_UNIT_TEST_FLEX_SENSORS
 int unitTest_flexSensors();
 #endif // ENABLE_UNIT_TEST_FLEX_SENSORS

@@ -1,4 +1,6 @@
-#include <adc_if.h>
+#include "build_switches.h"
+#include "target_hw_common.h"
+#include "adc_if.h"
 
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -35,6 +37,8 @@ bool Adc::Init() {
     return Adc::Python::Init();
 #elif ENABLE_ADC_C2000
     return Adc::C2000::Init();
+#elif TARGET_HW_MSP432
+    return Adc::MSP432::Init();
 #else
     return false;
 #endif // ENABLE_ADC_API_PYTHON
@@ -54,15 +58,90 @@ bool Adc::Init() {
  * int - ADC reading will be a value from 0-1023. -1 means that the ADC capture failed.
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 */
-int Adc::ReadAdcChannel(int adc_channel) {
+uint16_t Adc::ReadAdcChannel(uint8_t adc_channel) {
 #if ENABLE_ADC_PYTHON
     return Adc::Python::ReadAdcChannel(adc_channel);
 #elif ENABLE_ADC_C2000
     return Adc::C2000::ReadAdcChannel(adc_channel);
+#elif TARGET_HW_MSP432
+    return Adc::MSP432::ReadAdcChannel();
 #else
     return false;
 #endif // ENABLE_ADC_API_PYTHON
 }
+
+/*
+* +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+* MSP432 HANDLERS
+* +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+#if TARGET_HW_MSP432
+static volatile uint16_t adcReading;
+static volatile bool flagAdcReady;
+#endif // TARGET_HW_MSP432
+
+#if TARGET_HW_MSP432
+bool Adc::MSP432::Init() {
+    /* Initializing ADC (MCLK/1/4) */
+    MAP_ADC14_enableModule();
+    MAP_ADC14_initModule(ADC_CLOCKSOURCE_MCLK, ADC_PREDIVIDER_1, ADC_DIVIDER_4,
+            0);
+
+    /* Configuring GPIOs (5.5 A0) */
+    MAP_GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P5, GPIO_PIN5,
+    GPIO_TERTIARY_MODULE_FUNCTION);
+
+    /* Configuring ADC Memory */
+    MAP_ADC14_configureSingleSampleMode(ADC_MEM0, true);
+    MAP_ADC14_configureConversionMemory(ADC_MEM0, ADC_VREFPOS_AVCC_VREFNEG_VSS,
+    ADC_INPUT_A0, false);
+
+    /* Configuring Sample Timer */
+    MAP_ADC14_enableSampleTimer(ADC_MANUAL_ITERATION);
+
+    /* Enabling/Toggling Conversion */
+    MAP_ADC14_enableConversion();
+
+    /* Enabling interrupts */
+    MAP_ADC14_enableInterrupt(ADC_INT0);
+    MAP_Interrupt_enableInterrupt(INT_ADC14);
+    return true;
+}
+
+uint16_t Adc::MSP432::ReadAdcChannel() {
+
+    // Clear conversion ready flag
+    flagAdcReady = false;
+
+    // Trigger ADC conversion
+    MAP_ADC14_toggleConversionTrigger();
+
+    // Wait until the ADC interrupt sets the adc conversion flag
+    // before returning the captured adc value.
+    while (!flagAdcReady);
+    return adcReading;
+}
+
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: ADC14_IRQHandler
+ * ADC Interrupt Handler. This handler is called whenever there is a conversion
+ * that is finished for ADC_MEM0.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ */
+extern "C" void ADC14_IRQHandler(void)
+{
+    uint64_t status = MAP_ADC14_getEnabledInterruptStatus();
+    MAP_ADC14_clearInterruptFlag(status);
+
+    if (ADC_INT0 & status)
+    {
+        adcReading = MAP_ADC14_getResult(ADC_MEM0);
+        flagAdcReady = true;
+    }
+}
+#endif // TARGET_HW_MSP432
 
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+

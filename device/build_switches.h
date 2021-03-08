@@ -32,9 +32,10 @@
 #define ENABLE_UNIT_TEST_WIRELESS_API   (0 & ENABLE_UNIT_TEST)   // Issue #8: Enables unit test for the wireless API.
 #define ENABLE_UNIT_TEST_NXP_API        (0 & ENABLE_UNIT_TEST)   // Issue #2: Enables unit test for the gyro/accel/mag sensor pack reading.
 #define ENABLE_UNIT_TEST_MUX            (0 & ENABLE_UNIT_TEST)   // Issue #7: Enables unit test for setting mux channels.
-#define ENABLE_UNIT_TEST_MUX_LP         (1 & ENABLE_UNIT_TEST)   // Issue #15: Enables unit test for setting mux channels on the C2000 dev board.
+#define ENABLE_UNIT_TEST_MUX_LP         (0 & ENABLE_UNIT_TEST)   // Issue #15: Enables unit test for setting mux channels on the C2000 dev board.
 #define ENABLE_UNIT_TEST_ADC            (0 & ENABLE_UNIT_TEST)   // Issue #7: Enables unit test for reading adc channels.
 #define ENABLE_UNIT_TEST_ADC_C2000      (0 & ENABLE_UNIT_TEST)   // Issue #14: Enables unit test for reading both adc channels at the same time.
+#define ENABLE_UNIT_TEST_ADC_MSP432     (1 & ENABLE_UNIT_TEST)   // Issue #36: Enables unit test for reading ADC values from flex amplifier.
 #define ENABLE_UNIT_TEST_UART_C2000     (0 & ENABLE_UNIT_TEST)   // Issue #21: Enables UART (or SCI) loopback test for C2000 dev board using GPIO56 (TX) and GPIO139 (RX).
 #define ENABLE_UNIT_TEST_FLEX_SENSORS   (0 & ENABLE_UNIT_TEST)   // Issue #7: Enables unit test for reading all 10 flex sensor voltage levels.
 #define ENABLE_MAIN_V1                  (1)   // Issue #13: Enables main program that will be running
@@ -47,11 +48,5 @@
 #define ENABLE_WIRELESS_API_PYTHON  (0 & TARGET_HW_PYTHON_CAPABLE) // Issue #8: Enables calls to server.py for sending/receiving client requests.
 
 #define ENABLE_UART_C2000 (1 & TARGET_HW_C2000) // Issue #21: Enables UART module for transmitting data from C2000 to HC-05 (RS232 Bluetooth chip).
-
-#define ENABLE_ADC_PYTHON       (1 & TARGET_HW_PYTHON_CAPABLE)  // Issue #7: Enables Python module for reading from specific ADC channels.
-#define ENABLE_ADC_C2000        (1 & TARGET_HW_C2000)           // Issue #14: Enables C2000 ADC pins.
-#if (ENABLE_ADC_PYTHON + ENABLE_ADC_C2000) > 1
- #error ADC only allows 1 implementation to be active at a time.
-#endif
 
 #endif
