@@ -1,4 +1,4 @@
-Circuit: * C:\Users\Daniel\Desktop\SW_Projects\GestureControl\ltspice\CCCV Battery Charger.asc
+Circuit: * C:\Users\Daniel\Desktop\SW_Projects\GestureControl\ltspice\CCCV Battery Charger\CCCV Battery Charger.asc
 
 WARNING: Less than two connections to node VREF_4_15.  This node is used by V1.
 WARNING: Less than two connections to node VREF_3_9.  This node is used by V2.
@@ -10,38 +10,42 @@ Gmin = 0.115292
 Gmin = 0.0123794
 Gmin = 0.00132923
 vernier = 0.5
-vernier = 0.666667
-Gmin = 0.000404641
-vernier = 0.888888
-Gmin = 6.86413e-005
+vernier = 0.25
+Gmin = 0.000630435
+vernier = 0.333333
+vernier = 0.444444
+Gmin = 0.00027983
+vernier = 0.592592
+Gmin = 8.01452e-005
+vernier = 0.790123
 vernier = 1
-Gmin = 7.53781e-006
-Gmin = 8.09366e-007
-Gmin = 8.6905e-008
-Gmin = 9.33136e-009
-Gmin = 1.00195e-009
-Gmin = 1.07583e-010
-Gmin = 1.15517e-011
-Gmin = 1.24035e-012
-Gmin = 1.33182e-013
+Gmin = 1.11306e-005
+Gmin = 1.19514e-006
+Gmin = 1.28327e-007
+Gmin = 1.3779e-008
+Gmin = 1.47951e-009
+Gmin = 1.58861e-010
+Gmin = 1.70576e-011
+Gmin = 1.83154e-012
+Gmin = 1.9666e-013
 Gmin = 0
 Gmin stepping succeeded in finding the operating point.
 
 
-Date: Wed Feb 10 15:01:37 2021
-Total elapsed time: 0.121 seconds.
+Date: Thu Feb 25 23:34:51 2021
+Total elapsed time: 0.156 seconds.
 
 tnom = 27
 temp = 27
 method = modified trap
-totiter = 3602
-traniter = 2874
-tranpoints = 1303
-accept = 1226
-rejected = 77
-matrix size = 37
-fillins = 12
+totiter = 3740
+traniter = 2927
+tranpoints = 1299
+accept = 1223
+rejected = 76
+matrix size = 35
+fillins = 6
 solver = Normal
-Matrix Compiler1: 2.25 KB object code size  0.6/0.4/[0.1]
-Matrix Compiler2: 3.37 KB object code size  0.4/0.6/[0.3]
+Matrix Compiler1: 1.97 KB object code size  0.5/0.4/[0.1]
+Matrix Compiler2: 3.08 KB object code size  0.4/0.6/[0.3]
 
