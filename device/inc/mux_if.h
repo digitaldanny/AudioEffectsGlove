@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 #if TARGET_HW_MSP432
- #include "setup_target_hw.h"
+ #include <target_hw_common.h>
 #endif // TARGET_HW_MSP432
 
 /*

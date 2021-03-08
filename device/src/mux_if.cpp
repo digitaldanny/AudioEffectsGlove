@@ -121,7 +121,7 @@ bool Mux::MSP432::SelectMuxChannel(int mux_channel) {
     // Ex.) Mux channel 0 turns on GPIO 0 and turns off GPIO 1-7
     for (int p = 0; p < MUX_NUM_SEL_LINES; p++)
     {
-        if (p == mux_channel)
+        if (mux_channel & (1<<p))
             GPIO_setOutputHighOnPin(muxPins[p].port, muxPins[p].pin);
         else
             GPIO_setOutputLowOnPin(muxPins[p].port, muxPins[p].pin);
