@@ -41,7 +41,7 @@ void delayMs(uint32_t ms)
 
     // Wait for timer to finish
     Timer32_haltTimer(TIMER32_0_BASE);
-    Timer32_setCount(TIMER32_0_BASE, 3*32000*ms);
+    Timer32_setCount(TIMER32_0_BASE, 10*32000*ms);
     Timer32_startTimer(TIMER32_0_BASE, true);
 
     while(Timer32_getValue(TIMER32_0_BASE) > 0);
@@ -99,9 +99,17 @@ void setupTargetHw()
     MAP_FlashCtl_setWaitState(FLASH_BANK0, 2);
     MAP_FlashCtl_setWaitState(FLASH_BANK1, 2);
 
-    /* Setting DCO to 48MHz  */
-    MAP_PCM_setPowerState(PCM_AM_LDO_VCORE1);
-    MAP_CS_setDCOCenteredFrequency(CS_DCO_FREQUENCY_48);
+    /* Start HFXT */
+    MAP_CS_startHFXT(0);
+
+    /* Initialize MCLK to HFXT (48Mhz) */
+    MAP_CS_initClockSignal(CS_MCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_1);
+
+    /* Initialize HSMCLK to HFXT/2 (24Mhz) */
+    MAP_CS_initClockSignal(CS_HSMCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_2);
+
+    /* Initialize SMCLK to HFXT/4 (12Mhz) */
+    MAP_CS_initClockSignal(CS_SMCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_4);
 
     /* Enabling the FPU for floating point operation */
     MAP_FPU_enableModule();

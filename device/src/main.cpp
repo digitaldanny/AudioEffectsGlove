@@ -43,9 +43,20 @@ int main()
     unitTest_adcC2000();
 #endif // ENABLE_UNIT_TEST_ADC_C2000
 
+#if ENABLE_UNIT_TEST_ADC_MSP432
+    unitTest_adcMsp432();
+#endif // ENABLE_UNIT_TEST_ADC_MSP432
+
 #if ENABLE_UNIT_TEST_FLEX_SENSORS
     unitTest_flexSensors();
 #endif // ENABLE_UNIT_TEST_FLEX_SENSORS
+
+#if ENABLE_UNIT_TEST_HC05_DEVICE_NAME
+    while (1)
+    {
+        unitTest_hc05DeviceName();
+    }
+#endif // ENABLE_UNIT_TEST_HC05_DEVICE_NAME
 
 #if ENABLE_MAIN_V1
     // Quick test to make sure program runs on MSP432
@@ -56,5 +67,8 @@ int main()
     }
 #endif // ENABLE_MAIN_V1
 
-    return 0;
+    while (1)
+    {
+        MAP_PCM_gotoLPM0();
+    }
 }

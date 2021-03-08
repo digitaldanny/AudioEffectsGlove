@@ -35,4 +35,8 @@ int unitTest_adcMsp432();
 int unitTest_flexSensors();
 #endif // ENABLE_UNIT_TEST_FLEX_SENSORS
 
-#endif
+#if ENABLE_UNIT_TEST_HC05_DEVICE_NAME
+int unitTest_hc05DeviceName();
+#endif // ENABLE_UNIT_TEST_HC05_DEVICE_NAME
+
+#endif // _SRC_UNIT_TESTS
