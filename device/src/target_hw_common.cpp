@@ -19,9 +19,52 @@
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * GLOBALS
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+const systemIO_t systemIO = {
+  .pinExternalHwPower = {GPIO_PORT_P4, GPIO_PIN7}
+};
+
+volatile systemInfo_t systemInfo;
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
  * FUNCTION IMPLEMENTATIONS
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
+
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: setExternalHwPower
+ * This function enables/disables power to hardware on the Glove PCB.
+ *
+ * Hardware that is controlled with this function includes:
+ * - HC-05 Bluetooth Module
+ * - Flex sensor circuitry (amplifier, LPF)
+ * - MPU6500 Gyro/Accelerometer
+ * - CFAL6448A LCD
+ *
+ * INPUTS:
+ * @enable - If true, enable power to the external hardware. False disables power.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
+void setExternalHwPower(bool enable)
+{
+    // Set GPIO output (active low - set low to enable power)
+    if (enable)
+    {
+        GPIO_setOutputLowOnPin(SYSIO_PIN_EXTERNALHWPOWER_PORT, SYSIO_PIN_EXTERNALHWPOWER_PIN);
+    }
+    else
+    {
+        GPIO_setOutputHighOnPin(SYSIO_PIN_EXTERNALHWPOWER_PORT, SYSIO_PIN_EXTERNALHWPOWER_PIN);
+    }
+
+    // Update system variable
+    SYSINFO_EXTERNALHWPOWER_ENABLE = enable;
+}
 
 /*
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
@@ -61,6 +104,9 @@ void delayMs(uint32_t ms)
 */
 void setupTargetHw()
 {
+    // Initialize system info struct
+    memset((void*)&systemInfo, 0, sizeof(systemInfo_t));
+
 #if TARGET_HW_C2000
     Device_init();                  // Initialize device clock and peripherals
     Device_initGPIO();              // Disable pin locks and enable internal pullups.

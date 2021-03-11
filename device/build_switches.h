@@ -37,8 +37,10 @@
 #define ENABLE_UNIT_TEST_ADC_C2000      (0 & ENABLE_UNIT_TEST)   // Issue #14: Enables unit test for reading both adc channels at the same time.
 #define ENABLE_UNIT_TEST_ADC_MSP432     (0 & ENABLE_UNIT_TEST)   // Issue #36: Enables unit test for reading ADC values from flex amplifier.
 #define ENABLE_UNIT_TEST_FLEX_SENSORS   (0 & ENABLE_UNIT_TEST)   // Issue #7: Enables unit test for reading all 10 flex sensor voltage levels.
-#define ENABLE_UNIT_TEST_HC05_DEVICE_NAME (1 & ENABLE_UNIT_TEST)   // Issue #37: Enable test to read back HC-05 "NAME" register (returns "HC-05" by default)
-#define ENABLE_MAIN_V1                  (1)   // Issue #13: Enables main program that will be running
+#define ENABLE_UNIT_TEST_HC05_DEVICE_NAME (0 & ENABLE_UNIT_TEST)   // Issue #37: Enable test to read back HC-05 "NAME" register (returns "HC-05" by default)
+#define ENABLE_UNIT_TEST_I2C            (0 & ENABLE_UNIT_TEST)   // Issue #39: Enable basic I2C write/read test to be read on logic analyzer.
+#define ENABLE_UNIT_TEST_EXT_PWR_SWITCH (1 & ENABLE_UNIT_TEST)  // Issue #45: Enable test that toggles external power switch. Power output be manually validated with DAD board.
+#define ENABLE_MAIN_V1                  (0)   // Issue #13: Enables main program that will be running
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
