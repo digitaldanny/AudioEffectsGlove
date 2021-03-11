@@ -3,6 +3,10 @@
 
 #include "build_switches.h"
 
+#if ENABLE_UNIT_TEST_EXT_PWR_SWITCH
+void unitTest_enableExternalHwPower();
+#endif // ENABLE_UNIT_TEST_EXT_PWR_SWITCH
+
 #if ENABLE_UNIT_TEST_WIRELESS_API
 int unitTest_wirelessApi();
 #endif // ENABLE_UNIT_TEST_WIRELESS_API

@@ -37,6 +37,20 @@ volatile systemInfo_t systemInfo;
 
 /*
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: initExternalHwPower
+ * This function initializes uC IO pin as an output GPIO to control the external
+ * glove hardware power enable.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
+void initExternalHwPower()
+{
+    // Configure GPIO as output pin with the power disabled by default.
+    setExternalHwPower(false);
+    MAP_GPIO_setAsOutputPin(SYSIO_PIN_EXTERNALHWPOWER_PORT, SYSIO_PIN_EXTERNALHWPOWER_PIN);
+}
+
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
  * DESCRIPTION: setExternalHwPower
  * This function enables/disables power to hardware on the Glove PCB.
  *

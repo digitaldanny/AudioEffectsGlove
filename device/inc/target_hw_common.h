@@ -125,6 +125,7 @@ extern const systemIO_t systemIO;
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
+void initExternalHwPower();
 void setupTargetHw();
 void delayMs(uint32_t ms);
 void setExternalHwPower(bool enable);

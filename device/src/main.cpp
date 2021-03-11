@@ -21,21 +21,6 @@ int main()
     // }
     // lcd_loop();
 
-#if ENABLE_UNIT_TEST_EXT_PWR_SWITCH
-    // Configure GPIO as output pin - TODO: Move this into a different function
-    GPIO_setOutputLowOnPin(SYSIO_PIN_EXTERNALHWPOWER_PORT, SYSIO_PIN_EXTERNALHWPOWER_PIN);
-    MAP_GPIO_setAsOutputPin(SYSIO_PIN_EXTERNALHWPOWER_PORT, SYSIO_PIN_EXTERNALHWPOWER_PIN);
-
-    while(true)
-    {
-        setExternalHwPower(true);
-        delayMs(1);
-
-        setExternalHwPower(false);
-        delayMs(1);
-    }
-#endif // ENABLE_UNIT_TEST_EXT_PWR_SWITCH
-
 #if ENABLE_UNIT_TEST_I2C
     I2c::init();
     while (true)
@@ -53,6 +38,10 @@ int main()
     //{
     //    mpu6500TestConnection();
     //}
+
+#if ENABLE_UNIT_TEST_EXT_PWR_SWITCH
+    unitTest_enableExternalHwPower();
+#endif // ENABLE_UNIT_TEST_EXT_PWR_SWITCH
 
 #if ENABLE_UNIT_TEST_WIRELESS_API
     unitTest_wirelessApi();
