@@ -5,7 +5,6 @@
 #include "unit_tests.h"
 #include "target_hw_common.h"
 
-// Enable test that toggles external power switch. Power output be manually validated with DAD board.
 /*
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
  * DESCRIPTION: unitTest_enableExternalHwPower
@@ -25,7 +24,7 @@ void unitTest_enableExternalHwPower()
 
         // disable power switch
         setExternalHwPower(false);
-        delayMs(1);
+         delayMs(1);
     }
 }
 #endif // ENABLE_UNIT_TEST_EXT_PWR_SWITCH
