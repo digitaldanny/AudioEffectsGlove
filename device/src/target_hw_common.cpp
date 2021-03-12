@@ -24,7 +24,8 @@
 */
 
 const systemIO_t systemIO = {
-  .pinExternalHwPower = {GPIO_PORT_P4, GPIO_PIN7}
+  .externalHwPower = {GPIO_PORT_P4, GPIO_PIN7},
+  .bluetoothEn = {GPIO_PORT_P5, GPIO_PIN0}
 };
 
 volatile systemInfo_t systemInfo;

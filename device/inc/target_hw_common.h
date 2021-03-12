@@ -42,8 +42,11 @@ extern "C" {
 #define SYSINFO_EXTERNALHWPOWER_ENABLE  systemInfo.externalHwPowerEnable
 
 /// SYSTEM IO DEFINES ///
-#define SYSIO_PIN_EXTERNALHWPOWER_PORT  systemIO.pinExternalHwPower.port
-#define SYSIO_PIN_EXTERNALHWPOWER_PIN   systemIO.pinExternalHwPower.pin
+#define SYSIO_PIN_EXTERNALHWPOWER_PORT  systemIO.externalHwPower.port
+#define SYSIO_PIN_EXTERNALHWPOWER_PIN   systemIO.externalHwPower.pin
+
+#define SYSIO_PIN_BLUETOOTHENABLE_PORT  systemIO.bluetoothEn.port
+#define SYSIO_PIN_BLUETOOTHENABLE_PIN   systemIO.bluetoothEn.pin
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -76,12 +79,8 @@ typedef struct
  *  Is power enabled for other hardware (HC-05, MPU6500, Flex Sensors, etc)?
  *
  * TODO:
- * - ADC14 pin for mux output
- * - 3 GPIO pins for mux control
- * - 3 SPI lines for LCD
- * - 2 GPIO for RS and CS lines on LCD
- * - 2 I2C lines for MPU6500
- * - 2 UART lines for HC-05
+ * - Add field for timer32 in use
+ * - Add field for target configured
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
  */
 typedef struct
@@ -97,17 +96,24 @@ typedef struct
  * state.
  *
  * FIELD DESCRIPTIONS:
- * @pinExternalHwPower - Issue #45
+ * @externalHwPower - Issue #45
  *  GPIO pin to control power enable for external hardware (LCD, MPU6500, HC-05, etc)
+ * @bluetoothEn - Issue #37
+ *  GPIO pin to control whether HC-05 module operates in data or command mode.
  *
  * TODO:
- * - Add field for timer32 in use
- * - Add field for target configured
+ * - ADC14 pin for mux output
+ * - 3 GPIO pins for mux control
+ * - 3 SPI lines for LCD
+ * - 2 GPIO for RS and CS lines on LCD
+ * - 2 I2C lines for MPU6500
+ * - 2 UART lines for HC-05
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
  */
 typedef struct
 {
-    pinPort_t pinExternalHwPower;
+    pinPort_t externalHwPower;
+    pinPort_t bluetoothEn;
 } systemIO_t;
 
 /*
