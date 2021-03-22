@@ -14,8 +14,8 @@
  * INCLUDES
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
+#include <target_hw_common.h>
 #include "build_switches.h"
-#include "setup_target_hw.h"
 
 namespace Spi
 {
@@ -39,43 +39,6 @@ namespace Spi
         bool flagSpiReady;
         uint8_t data;
     } spiRxData_t;
-
-    /*
-     * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
-     * NAMESPACE VARIABLES
-     * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
-    */
-
-#ifdef TARGET_HW_MSP432
-    /*
-     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-     * DESCRIPTION: spiMasterConfig
-     * Configurations for EUSCI_B0 pins (P1.5-P1.7) for 3-wire master SPI.
-     *
-     * DETAILS:
-     * - SMCLK Clock Source
-     * - SMCLK = DCO = 48MHZ
-     * - SPICLK = 500khz
-     * - MSB First
-     * - Phase
-     * - High polarity (high when inactive)
-     * - 3-Wire SPI Mode
-     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-    */
-    const eUSCI_SPI_MasterConfig spiMasterConfig =
-    {
-            EUSCI_B_SPI_CLOCKSOURCE_SMCLK,
-            48000000,
-            12000,
-            EUSCI_B_SPI_MSB_FIRST,
-            EUSCI_B_SPI_PHASE_DATA_CHANGED_ONFIRST_CAPTURED_ON_NEXT,
-            EUSCI_B_SPI_CLOCKPOLARITY_INACTIVITY_HIGH,
-            EUSCI_B_SPI_3PIN
-    };
-
-    volatile spiRxData_t spiRxData; // Contains response data from SPI slave
-
-#endif // TARGET_HW_MSP432
 
     /*
      * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+

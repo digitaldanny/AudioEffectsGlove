@@ -8,6 +8,43 @@
 #include "spi_if.h"
 
 /*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * GLOBALS
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+#ifdef TARGET_HW_MSP432
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: spiMasterConfig
+ * Configurations for EUSCI_B0 pins (P1.5-P1.7) for 3-wire master SPI.
+ *
+ * DETAILS:
+ * - SMCLK Clock Source
+ * - SMCLK = DCO = 48MHZ
+ * - SPICLK = 500khz
+ * - MSB First
+ * - Phase
+ * - High polarity (high when inactive)
+ * - 3-Wire SPI Mode
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
+static const eUSCI_SPI_MasterConfig spiMasterConfig =
+{
+        EUSCI_B_SPI_CLOCKSOURCE_SMCLK,
+        12000000,
+        8000000,
+        EUSCI_B_SPI_MSB_FIRST,
+        EUSCI_B_SPI_PHASE_DATA_CHANGED_ONFIRST_CAPTURED_ON_NEXT,
+        EUSCI_B_SPI_CLOCKPOLARITY_INACTIVITY_HIGH,
+        EUSCI_B_SPI_3PIN
+};
+
+static volatile Spi::spiRxData_t spiRxData; // Contains response data from SPI slave
+
+#endif // TARGET_HW_MSP432
+
+/*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 * TOP LEVEL FUNCTIONS
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -86,6 +123,8 @@ uint8_t Spi::MSP432::transferByte(uint8_t data)
     SPI_transmitData(EUSCI_B0_BASE, data);
 
     /* Wait for IRQ handler to receive and store returned data */
+
+
     while (!spiRxData.flagSpiReady);
 
     return spiRxData.data;
@@ -111,10 +150,10 @@ extern "C" void EUSCIB0_IRQHandler(void)
     if(status & EUSCI_B_SPI_RECEIVE_INTERRUPT)
     {
         // Store the slave response into global variable
-        Spi::spiRxData.data = SPI_receiveData(EUSCI_B0_BASE);
+        spiRxData.data = SPI_receiveData(EUSCI_B0_BASE);
 
         // Notify main program that SPI response has been received
-        Spi::spiRxData.flagSpiReady = true;
+        spiRxData.flagSpiReady = true;
     }
 
 }
