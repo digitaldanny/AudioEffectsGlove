@@ -14,12 +14,13 @@ int main()
 {
     setupTargetHw();
 
-    // lcd_setup();
+    //lcd_setup();
     // while(true)
     // {
     //     lcd_test();
     // }
-    // lcd_loop();
+   //lcd_loop();
+
 
 #if ENABLE_UNIT_TEST_I2C
     I2c::init();
@@ -33,11 +34,12 @@ int main()
     }
 #endif // ENABLE_UNIT_TEST_I2C
 
-    //mpu6500Init();
-    //while(true)
-    //{
-    //    mpu6500TestConnection();
-    //}
+    I2c::init();
+    mpu6500Init();
+    while(true)
+    {
+        mpu6500TestConnection();
+    }
 
 #if ENABLE_UNIT_TEST_EXT_PWR_SWITCH
     unitTest_enableExternalHwPower();

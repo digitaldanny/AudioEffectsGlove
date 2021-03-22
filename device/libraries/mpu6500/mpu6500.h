@@ -31,7 +31,22 @@ THE SOFTWARE.
 #ifndef _MPU6500_H_
 #define _MPU6500_H_
 
+///////////////////////////////////////////////// ADDED 03/09
 #include "target_hw_common.h"
+#include "i2c_if.h"
+
+int8_t i2cdev_readBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data);
+int8_t i2cdev_readBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data);
+int8_t i2cdev_readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data);
+int8_t i2cdev_readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
+
+bool i2cdev_writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data);
+bool i2cdev_writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data);
+bool i2cdev_writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data);
+bool i2cdev_writeWord(uint8_t devAddr, uint8_t regAddr, uint16_t data);
+bool i2cdev_writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
+bool i2cdev_writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_t *data);
+///////////////////////////////////////////////// ADDED 03/09
 
 #define MPU6500_ADDRESS_AD0_LOW     0x68 // address pin low (GND), default for InvenSense evaluation board
 #define MPU6500_ADDRESS_AD0_HIGH    0x69 // address pin high (VCC)

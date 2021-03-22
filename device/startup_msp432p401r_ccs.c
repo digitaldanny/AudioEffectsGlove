@@ -58,6 +58,7 @@ extern unsigned long __STACK_END;
 extern void EUSCIB0_IRQHandler(void);
 extern void ADC14_IRQHandler(void);
 extern void EUSCIA2_IRQHandler(void);
+extern void EUSCIB1_IRQHandler(void);
 
 
 /* Interrupt vector table.  Note that the proper constructs must be placed on this to  */
@@ -105,7 +106,7 @@ void (* const interruptVectors[])(void) =
     EUSCIA2_IRQHandler,                     /* EUSCIA2 ISR               */
     defaultISR,                             /* EUSCIA3 ISR               */
     EUSCIB0_IRQHandler,                     /* EUSCIB0 ISR               */
-    defaultISR,                             /* EUSCIB1 ISR               */
+    EUSCIB1_IRQHandler,                     /* EUSCIB1 ISR               */
     defaultISR,                             /* EUSCIB2 ISR               */
     defaultISR,                             /* EUSCIB3 ISR               */
     ADC14_IRQHandler,                       /* ADC14 ISR                 */

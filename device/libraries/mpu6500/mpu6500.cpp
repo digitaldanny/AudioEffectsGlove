@@ -31,7 +31,6 @@
 
 ////////// Changed 03/09/2021
 #include "mpu6500.h"
-#include "target_hw_common.h"
 ////////// Changed 03/09/2021
 
 static uint8_t devAddr;
@@ -87,19 +86,30 @@ static const unsigned short mpu6500StTb[256] = {
 
 int8_t i2cdev_readBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data)
 {
-    return -1;
+    uint8_t b;
+    bool ret = i2cdev_readByte(devAddr, regAddr, &b);
+    *data = b & (1 << bitNum);
+    return ret;
 }
 int8_t i2cdev_readBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data)
 {
-    return -1;
+    uint8_t b;
+    if (i2cdev_readByte(devAddr, regAddr, &b)) {
+        uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
+        b &= mask;
+        b >>= (bitStart - length + 1);
+        *data = b;
+        return true;
+    }
+    return false;
 }
 int8_t i2cdev_readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data)
 {
-    return -1;
+    return (int8_t)I2c::read(devAddr, regAddr, 1, data);
 }
 int8_t i2cdev_readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data)
 {
-    return -1;
+    return (int8_t)I2c::read(devAddr, regAddr, length, data);
 }
 
 bool i2cdev_writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data)
@@ -128,7 +138,7 @@ void mpu6500Init(void)
   if (isInit)
     return;
 
-  devAddr = MPU6500_ADDRESS_AD0_LOW;
+  devAddr = MPU6500_DEFAULT_ADDRESS;
 
   isInit = true;
 }

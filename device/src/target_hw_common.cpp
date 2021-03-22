@@ -24,8 +24,10 @@
 */
 
 const systemIO_t systemIO = {
-  .externalHwPower = {GPIO_PORT_P4, GPIO_PIN7},
-  .bluetoothEn = {GPIO_PORT_P5, GPIO_PIN0}
+  .externalHwPower = {GPIO_PORT_P4, GPIO_PIN7}, // P4.7
+  .bluetoothEn = {GPIO_PORT_P5, GPIO_PIN0}, // P5.0
+  .i2cSda = {GPIO_PORT_P6, GPIO_PIN4}, // P6.4
+  .i2cScl = {GPIO_PORT_P6, GPIO_PIN5} // P6.5
 };
 
 volatile systemInfo_t systemInfo;
@@ -137,7 +139,7 @@ void setupTargetHw()
 #if TARGET_HW_MSP432
 
     /* Halting watchdog timer */
-    WDT_A_holdTimer();
+    //WDT_A_holdTimer();
 
     /*
      * Initializes Core Clock to Maximum Frequency with highest accuracy
