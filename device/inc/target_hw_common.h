@@ -140,6 +140,7 @@ extern const systemIO_t systemIO;
 
 void initExternalHwPower();
 void setupTargetHw();
+void delayUs(uint32_t us);
 void delayMs(uint32_t ms);
 void setExternalHwPower(bool enable);
 

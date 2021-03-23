@@ -98,6 +98,23 @@ void setExternalHwPower(bool enable)
 */
 void delayMs(uint32_t ms)
 {
+    for (int i = 0; i < 1000; i++)
+    {
+        delayUs(1);
+    }
+}
+
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: delayUs
+ * Software delay in microseconds (rough approximation).
+ *
+ * INPUTS:
+ * @ms - Number of microseconds that software delay should last.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
+void delayUs(uint32_t us)
+{
 #if TARGET_HW_MSP432
     // Initialize the timer delay
     Timer32_initModule( TIMER32_0_BASE, TIMER32_PRESCALER_1, TIMER32_32BIT, TIMER32_PERIODIC_MODE);
@@ -105,7 +122,7 @@ void delayMs(uint32_t ms)
 
     // Wait for timer to finish
     Timer32_haltTimer(TIMER32_0_BASE);
-    Timer32_setCount(TIMER32_0_BASE, 10*32000*ms);
+    Timer32_setCount(TIMER32_0_BASE, 32*us);
     Timer32_startTimer(TIMER32_0_BASE, true);
 
     while(Timer32_getValue(TIMER32_0_BASE) > 0);
