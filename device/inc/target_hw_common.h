@@ -116,6 +116,11 @@ typedef struct
     pinPort_t bluetoothEn;
     pinPort_t i2cSda;
     pinPort_t i2cScl;
+    pinPort_t spiMiso;
+    pinPort_t spiMosi;
+    pinPort_t spiClk;
+    pinPort_t spiCs1;
+    pinPort_t spiCs2;
 } systemIO_t;
 
 /*

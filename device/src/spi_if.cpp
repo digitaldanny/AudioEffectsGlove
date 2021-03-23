@@ -40,6 +40,17 @@ static const eUSCI_SPI_MasterConfig spiMasterConfig =
         EUSCI_B_SPI_3PIN
 };
 
+static const eUSCI_SPI_MasterConfig spiMasterImuConfig =
+{
+        EUSCI_B_SPI_CLOCKSOURCE_SMCLK,
+        12000000,
+        100000,
+        EUSCI_B_SPI_MSB_FIRST,
+        EUSCI_B_SPI_PHASE_DATA_CHANGED_ONFIRST_CAPTURED_ON_NEXT,
+        EUSCI_B_SPI_CLOCKPOLARITY_INACTIVITY_LOW,
+        EUSCI_B_SPI_3PIN
+};
+
 static volatile Spi::spiRxData_t spiRxData; // Contains response data from SPI slave
 
 #endif // TARGET_HW_MSP432
@@ -86,11 +97,13 @@ uint8_t Spi::transferByte(uint8_t data)
 void Spi::MSP432::init()
 {
     /* Selecting P1.5 P1.6 and P1.7 in SPI mode */
-    GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P1,
-            GPIO_PIN5 | GPIO_PIN6 | GPIO_PIN7, GPIO_PRIMARY_MODULE_FUNCTION);
+    GPIO_setAsPeripheralModuleFunctionInputPin(systemIO.spiClk.port,
+        systemIO.spiClk.pin | systemIO.spiMosi.pin | systemIO.spiMiso.pin,
+        GPIO_PRIMARY_MODULE_FUNCTION);
 
     /* Configuring SPI in 3wire master mode */
-    SPI_initMaster(EUSCI_B0_BASE, &spiMasterConfig);
+    //SPI_initMaster(EUSCI_B0_BASE, &spiMasterConfig);
+    SPI_initMaster(EUSCI_B0_BASE, &spiMasterImuConfig);
 
     /* Enable SPI module */
     SPI_enableModule(EUSCI_B0_BASE);
@@ -114,17 +127,15 @@ void Spi::MSP432::init()
 */
 uint8_t Spi::MSP432::transferByte(uint8_t data)
 {
+    spiRxData.flagSpiReady = false;
+
     /* Polling to see if the TX buffer is ready */
     while (!SPI_getInterruptStatus(EUSCI_B0_BASE,EUSCI_B_SPI_TRANSMIT_INTERRUPT));
-
-    spiRxData.flagSpiReady = false;
 
     /* Transmitting data to slave */
     SPI_transmitData(EUSCI_B0_BASE, data);
 
     /* Wait for IRQ handler to receive and store returned data */
-
-
     while (!spiRxData.flagSpiReady);
 
     return spiRxData.data;
@@ -149,11 +160,17 @@ extern "C" void EUSCIB0_IRQHandler(void)
 
     if(status & EUSCI_B_SPI_RECEIVE_INTERRUPT)
     {
+        /* USCI_B0 TX buffer ready? */
+        while (!(SPI_getInterruptStatus(EUSCI_B0_BASE, EUSCI_B_SPI_TRANSMIT_INTERRUPT)));
+
         // Store the slave response into global variable
         spiRxData.data = SPI_receiveData(EUSCI_B0_BASE);
 
         // Notify main program that SPI response has been received
         spiRxData.flagSpiReady = true;
+
+        /* Delay between transmissions for slave to process information */
+        for(int jj=50;jj<500;jj++);
     }
 
 }

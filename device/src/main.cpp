@@ -8,6 +8,10 @@
 #include "lcd_64x48_bitmap.h"
 #include "mpu6500.h"
 #include "i2c_if.h"
+#include "spi_if.h"
+
+#define CLR_CS    GPIO_setOutputLowOnPin(systemIO.spiCs1.port, systemIO.spiCs1.pin)  // P3.5
+#define SET_CS    GPIO_setOutputHighOnPin(systemIO.spiCs1.port, systemIO.spiCs1.pin)
 /// DEBUG **********
 
 int main()
@@ -34,11 +38,37 @@ int main()
     }
 #endif // ENABLE_UNIT_TEST_I2C
 
+    MAP_GPIO_setAsOutputPin(systemIO.spiCs1.port, systemIO.spiCs1.pin);
+
+    //Drive the control lines to a reasonable starting state.
+    SET_CS;
+
+    uint8_t rx = 0;
+    Spi::init();
+    while (true)
+    {
+        // MPU6500_RA_WHO_AM_I
+        CLR_CS;
+        delayMs(1);
+        rx = Spi::transferByte(0x80 | MPU6500_RA_WHO_AM_I);
+        for (int i = 0; i < 5; i++)
+        {
+            rx = Spi::transferByte(0x12); // garbage
+            if (rx > 0)
+            {
+                rx++;
+            }
+        }
+        SET_CS;
+        delayMs(1);
+    }
+
     I2c::init();
     mpu6500Init();
     while(true)
     {
         mpu6500TestConnection();
+        delayMs(1);
     }
 
 #if ENABLE_UNIT_TEST_EXT_PWR_SWITCH

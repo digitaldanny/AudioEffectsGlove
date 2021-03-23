@@ -50,7 +50,7 @@ bool i2cdev_writeWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint16_
 
 #define MPU6500_ADDRESS_AD0_LOW     0x68 // address pin low (GND), default for InvenSense evaluation board
 #define MPU6500_ADDRESS_AD0_HIGH    0x69 // address pin high (VCC)
-#define MPU6500_DEFAULT_ADDRESS     MPU6500_ADDRESS_AD0_LOW
+#define MPU6500_DEFAULT_ADDRESS     (MPU6500_ADDRESS_AD0_LOW)
 
 //Product ID Description for MPU6500:  | High 4 bits  | Low 4 bits        |
 //                                     | Product Name | Product Revision  |
