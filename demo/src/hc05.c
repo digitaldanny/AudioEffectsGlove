@@ -12,15 +12,11 @@
  *
 */
 
-// Send data for SCI-C
-volatile uint16_t sDataA[SCI_MAX_BUFFER_LENGTH];
-
-// Received data for SCI-C
-volatile uint16_t rDataA[SCI_MAX_BUFFER_LENGTH];
+volatile uint16_t rDataA[SCI_MAX_BUFFER_LENGTH]; // Received data buffer for SCI-C
 
 // Used for checking the received data
 volatile uint16_t rDataPointA;
-volatile bool flagRxReady;
+volatile uint16_t rxLenSinceTx; // how many bytes have been received since last TX?
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -35,23 +31,27 @@ void initHc05()
 
 bool writeHc05(uint16_t* msg, uint16_t len)
 {
-    flagRxReady = false;
+    // Flush RX buffer for next read
+    SCI_resetRxFIFO(SCIC_BASE);
 
-    SCI_writeCharArray(SCIC_BASE, (const uint16_t * const)msg, len);
+    // Reset RX buffer and length for each transfer
+    memset((void*)rDataA, 0, rxLenSinceTx);
+    rxLenSinceTx = 0;
 
-    SCI_clearInterruptStatus(SCIC_BASE, SCI_INT_TXFF);
+    // Write all data in msg buffer
+    SCI_writeCharArray(SCIC_BASE, (const uint16_t *)msg, len);
 
-    //
     // Issue PIE ACK
-    //
+    SCI_clearInterruptStatus(SCIC_BASE, SCI_INT_TXFF);
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP8);
-
     return true;
 }
 
 bool readHc05(uint16_t** rx, uint16_t len)
 {
-    while (!flagRxReady);
+    // Wait for expected number of bytes to be received
+    while (rxLenSinceTx < len);
+
     *rx = (uint16_t*)rDataA;
     return true;
 }
@@ -87,7 +87,6 @@ void initSCIC(void)
     // ISR functions found within this file.
     //
     Interrupt_register(INT_SCIC_RX, sciCRXFIFOISR);
-    Interrupt_register(INT_SCIC_TX, sciCTXFIFOISR);
 
     //
     // Initialize the Device Peripherals:
@@ -95,7 +94,6 @@ void initSCIC(void)
     initSCICFIFO();
 
     Interrupt_enable(INT_SCIC_RX);
-    Interrupt_enable(INT_SCIC_TX);
 
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP8); // is this the correct interrupt group?
 }
@@ -127,38 +125,18 @@ void initSCICFIFO(void)
 }
 
 //
-// sciaTXFIFOISR - SCIA Transmit FIFO ISR
-//
-__interrupt void sciCTXFIFOISR(void)
-{
-    uint16_t i;
-
-    SCI_writeCharArray(SCIC_BASE, sDataA, 1);
-
-    //
-    // Increment send data for next cycle
-    //
-    for(i = 0; i < 2; i++)
-    {
-        sDataA[i] = (sDataA[i] + 1) & 0x00FF;
-    }
-
-    SCI_clearInterruptStatus(SCIC_BASE, SCI_INT_TXFF);
-
-    //
-    // Issue PIE ACK
-    //
-    Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP8);
-}
-
-//
 // sciaRXFIFOISR - SCIA Receive FIFO ISR
 //
 __interrupt void sciCRXFIFOISR(void)
 {
-    SCI_readCharArray(SCIC_BASE, (uint16_t * const)rDataA, 1);
+    //SCI_readCharArray(SCIC_BASE, (uint16_t * const)rDataA, 1);
 
-    flagRxReady = true;
+    // Read all data available in the RX buffer
+    while (SCI_getRxFIFOStatus(SCIC_BASE)) //(SCI_isDataAvailableNonFIFO(SCIC_BASE))
+    {
+        rDataA[rxLenSinceTx] = SCI_readCharNonBlocking(SCIC_BASE);
+        rxLenSinceTx++;
+    }
 
     SCI_clearOverflowStatus(SCIC_BASE);
 
@@ -171,3 +149,54 @@ __interrupt void sciCRXFIFOISR(void)
 
     Example_PassCount++;
 }
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * UNIT TESTS
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: loopbackTest
+ * This test checks that the SCIC module can transmit and receive a full message
+ * back in a loopback test.
+ *
+ * Pin 139 (RX) must be connected to pin 56 (TX).
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
+#if ENABLE_SCIC_LOOPBACK_TEST
+bool loopbackTest()
+{
+    //char msg[] = "AT+NAME?\r\n";
+    char tx[] = "0123456789";
+    uint16_t msgLen = 10;
+    char* rx;
+
+    // INITIALIZE UART - BAUDRATE 38400
+    initHc05();
+
+    // Write out the message to TX pin
+    if (!writeHc05((uint16_t*)tx, msgLen))
+    {
+        while(1); // Write failed, trap CPU
+    }
+
+    // Read back the message from RX pin
+    if (!readHc05((uint16_t**)&rx, msgLen))
+    {
+        while(1); // Read failed, trap CPU
+    }
+
+    // Compare TX message to RX message.
+    for (int i = 0; i < msgLen; i++)
+    {
+        if (rx[i] != tx[i])
+        {
+            return false; // TX and RX messages do not match
+        }
+    }
+
+    return true;
+}
+#endif // ENABLE_SCIC_LOOPBACK_TEST

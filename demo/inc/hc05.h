@@ -8,6 +8,7 @@
 */
 #include "driverlib.h"
 #include "device.h"
+#include <string.h>
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -15,13 +16,20 @@
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
-#define SCI_MAX_BUFFER_LENGTH   100
+#define ENABLE_SCIC_LOOPBACK_TEST   1
+
+#define SCI_MAX_BUFFER_LENGTH       100
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
  * PROTOTYPES
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
+
+// Unit tests
+#if ENABLE_SCIC_LOOPBACK_TEST
+bool loopbackTest();
+#endif // ENABLE_SCIC_LOOPBACK_TEST
 
 // HC-05 API
 void initHc05();
