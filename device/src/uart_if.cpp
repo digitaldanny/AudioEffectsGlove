@@ -14,6 +14,8 @@
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
+volatile uartRxData_t uartRxData; // Stores data receives through UART
+
 #if TARGET_HW_MSP432
 /* UART Configuration Parameter. These are the configuration parameters to
  * make the eUSCI A UART module to operate with a 115200 baud rate. These
@@ -46,8 +48,6 @@ static const eUSCI_UART_Config uartConfig9600 =
        EUSCI_A_UART_MODE,                       // UART mode, 8 bit mode
        UART_OVERSAMPLING_CLK_12M_BAUDRATE_9600  // Oversampling
 };
-
-volatile uartRxData_t uartRxData;
 #endif // TARGET_HW_MSP432
 
 /*
@@ -104,10 +104,10 @@ bool Uart::recv(char** rxData)
 #if TARGET_HW_MSP432
 bool Uart::MSP432::init(const eUSCI_UART_Config* config)
 {
-    /* Selecting P3.2 and P3.3 in UART mode
-     * P3.2 -> MSP Rx
-     * P3.3 -> MSP Tx
-     */
+    /* Disable UART module to make changes */
+    MAP_UART_disableModule(EUSCI_A2_BASE);
+
+    /* Setting functionality mux for UART pins */
     MAP_GPIO_setAsPeripheralModuleFunctionInputPin(systemIO.uartTx.port,
          systemIO.uartTx.pin | systemIO.uartRx.pin,
          GPIO_PRIMARY_MODULE_FUNCTION);
@@ -115,12 +115,12 @@ bool Uart::MSP432::init(const eUSCI_UART_Config* config)
     /* Configuring UART Module */
     MAP_UART_initModule(EUSCI_A2_BASE, config);
 
-    /* Enable UART module */
-    MAP_UART_enableModule(EUSCI_A2_BASE);
-
     /* Enabling interrupts */
     MAP_UART_enableInterrupt(EUSCI_A2_BASE, EUSCI_A_UART_RECEIVE_INTERRUPT);
     MAP_Interrupt_enableInterrupt(INT_EUSCIA2);
+
+    /* Enable UART module */
+    MAP_UART_enableModule(EUSCI_A2_BASE);
     return true;
 }
 
