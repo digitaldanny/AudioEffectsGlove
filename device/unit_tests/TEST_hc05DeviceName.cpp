@@ -24,9 +24,10 @@
 int unitTest_hc05DeviceName()
 {
     char msg[] = "AT+NAME?\r\n";
-    char rxBuf[100] = {0};
-    char expected[] = "HC-05\r\n";
-    int lenExpectedMsg = 6;
+    char* rxBuf;
+    char expected[] = "+NAME:HC-05\r\n";
+    int lenExpectedMsg = 13;
+    bool passed = false;
 
     // Initialize HW modules
     initExternalHwPower();
@@ -35,15 +36,6 @@ int unitTest_hc05DeviceName()
     setExternalHwPower(false);
 #if TARGET_HW_MSP432
     WirelessApi::MSP432::SetMode(HC05MODE_CMD);
-#else
-    while(1); /* Setting cmd mode not implemented for other HW targets */
-#endif // TARGET_HW_MSP432
-    setExternalHwPower(true);
-
-    // Enable HC-05 CMD mode, which requires powering off the HC05 module first.
-    setExternalHwPower(false);
-#if TARGET_HW_MSP432
-    WirelessApi::MSP432::SetMode(HC05MODE_DATA);
 #else
     while(1); /* Setting cmd mode not implemented for other HW targets */
 #endif // TARGET_HW_MSP432
@@ -58,28 +50,28 @@ int unitTest_hc05DeviceName()
             while(1);
         }
 
-        delayMs(1);
-
         // Read back the HC-05 module response
-        if (!Uart::recv(rxBuf))
+        if (!Uart::recv(&rxBuf))
         {
             /* UART send failed */
             while(1);
         }
 
-        delayMs(1);
-
-        /*
-        // Check that the rx buffer matches the expected output
+        // Check that the rx buffer matches the expected output (test passed?)
         for (int i = 0; i < lenExpectedMsg; i++)
         {
             if (rxBuf[i] != expected[i])
-                return -1;
+            {
+                passed = false;
+            }
+            else
+            {
+                passed = true;
+            }
         }
-        */
-    }
 
-    return 0; // rx matches expected output
+        delayMs(1);
+    }
 }
 
 #endif // ENABLE_UNIT_TEST_MUX_LP

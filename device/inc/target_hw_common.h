@@ -114,6 +114,7 @@ typedef struct
 {
     pinPort_t externalHwPower;
     pinPort_t bluetoothEn;
+    pinPort_t bluetoothState;
     pinPort_t uartTx;
     pinPort_t uartRx;
     pinPort_t i2cSda;

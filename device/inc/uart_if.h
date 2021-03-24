@@ -17,6 +17,8 @@
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
+#define UART_BUFFER_MAX_LENGTH                      100
+
 // MSP432 SPECIFIC
 #define UART_BRDIV_CLK_12M_BAUDRATE_38400           19
 #define UART_UCXBRF_CLK_12M_BAUDRATE_38400          8
@@ -44,6 +46,23 @@ typedef enum
     BAUDRATE_9600
 } baudRate_e;
 
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: spiRxData_t
+ * Struct for storing data received from SPI slave.
+ *
+ * Field Description:
+ * @flagSpiReady - True if data has been received and stored into 'data' field.
+ * @data - Data received from the SPI slave.
+ * @idxBuffer - index of the buffer (used in RX interrupt so
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
+typedef struct  {
+    bool flagRxReady;
+    char rxBuffer[UART_BUFFER_MAX_LENGTH];
+    uint8_t idxBuffer;
+} uartRxData_t;
+
 namespace Uart {
 
     /*
@@ -54,13 +73,13 @@ namespace Uart {
 
     bool init (baudRate_e baudRate);
     bool send (char* txData);
-    bool recv (char* rxData);
+    bool recv (char** rxData);
 
 #if TARGET_HW_MSP432
     namespace MSP432 {
         bool init (const eUSCI_UART_Config* config);
         bool send (char* txData);
-        bool recv (char* rxData);
+        bool recv (char** rxData);
     }
 #endif // ENABLE_UART_C2000
 }

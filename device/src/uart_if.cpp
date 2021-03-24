@@ -47,8 +47,7 @@ static const eUSCI_UART_Config uartConfig9600 =
        UART_OVERSAMPLING_CLK_12M_BAUDRATE_9600  // Oversampling
 };
 
-static volatile char DEBUGRXBUF;
-static volatile bool flagRxReady;
+volatile uartRxData_t uartRxData;
 #endif // TARGET_HW_MSP432
 
 /*
@@ -87,7 +86,7 @@ bool Uart::send(char* txData)
 #endif
 }
 
-bool Uart::recv(char* rxData)
+bool Uart::recv(char** rxData)
 {
 #if TARGET_HW_MSP432
     return Uart::MSP432::recv(rxData);
@@ -128,7 +127,11 @@ bool Uart::MSP432::init(const eUSCI_UART_Config* config)
 bool Uart::MSP432::send(char* txData)
 {
     char* txPtr = txData;
-    flagRxReady = false;
+
+    // Reset received data structure for next read
+    uartRxData.flagRxReady = false;
+    uartRxData.idxBuffer = 0;
+    memset((void*)uartRxData.rxBuffer, 0, UART_BUFFER_MAX_LENGTH);
 
     // Transfer data from buffer until hitting end of string.
     while (*txPtr != '\0')
@@ -139,26 +142,44 @@ bool Uart::MSP432::send(char* txData)
     return true;
 }
 
-bool Uart::MSP432::recv(char* rxData)
+bool Uart::MSP432::recv(char** rxData)
 {
-    while (!flagRxReady);
-    return true; // @TODO - Should wait for entire message to be received from interrupt!!!
+    // Wait for rx buffer to be filled before reading data.
+    while (!uartRxData.flagRxReady);
+
+    // Point input buffer at the received buffer to be read by caller.
+    *rxData = (char*)&uartRxData.rxBuffer[0];
+
+    return true;
 }
 
-/* EUSCI A0 UART ISR - Echos data back to PC host */
 extern "C" void EUSCIA2_IRQHandler(void)
 {
+    char rx;
     uint32_t status = MAP_UART_getEnabledInterruptStatus(EUSCI_A2_BASE);
 
     MAP_UART_clearInterruptFlag(EUSCI_A2_BASE, status);
 
+    // Read the received data and store it in the next slot of the uart RX buffer.
     if(status & EUSCI_A_UART_RECEIVE_INTERRUPT_FLAG)
     {
-        DEBUGRXBUF = MAP_UART_receiveData(EUSCI_A2_BASE);
+        rx = MAP_UART_receiveData(EUSCI_A2_BASE);
+        uartRxData.rxBuffer[uartRxData.idxBuffer] = rx;
+        uartRxData.idxBuffer++;
+
+        // Signal that final byte of data was received when final character is \n
+        if (rx == '\n')
+        {
+            uartRxData.flagRxReady = true;
+        }
     }
 
-    // Final byte of data received when final character is \n
-    if (DEBUGRXBUF == '\n')
-        flagRxReady = true;
+    // Trap PC in the interrupt if buffer is about to overflow
+    if (uartRxData.idxBuffer >= UART_BUFFER_MAX_LENGTH-1)
+    {
+        /* ERROR: Should never be receiving message longer than the rx buffer length */
+        MAP_Interrupt_disableInterrupt(INT_EUSCIA2);
+        while(1);
+    }
 }
 #endif // TARGET_HW_MSP432

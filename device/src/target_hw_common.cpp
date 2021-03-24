@@ -26,6 +26,7 @@
 const systemIO_t systemIO = {
   .externalHwPower = {GPIO_PORT_P4, GPIO_PIN7}, // P4.7
   .bluetoothEn = {GPIO_PORT_P5, GPIO_PIN0}, // P5.0
+  .bluetoothState = {GPIO_PORT_P6, GPIO_PIN0}, // P6.0
   .uartTx = {GPIO_PORT_P3, GPIO_PIN3}, // P3.3
   .uartRx = {GPIO_PORT_P3, GPIO_PIN2}, // P3.2
   .i2cSda = {GPIO_PORT_P6, GPIO_PIN4}, // P6.4
@@ -87,7 +88,7 @@ void setExternalHwPower(bool enable)
 
     // Update system variable
     SYSINFO_EXTERNALHWPOWER_ENABLE = enable;
-    delayMs(1);
+    delayMs(50);
 }
 
 /*
