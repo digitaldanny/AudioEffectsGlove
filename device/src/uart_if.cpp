@@ -15,6 +15,7 @@
 */
 
 volatile uartRxData_t uartRxData; // Stores data receives through UART
+volatile int numInterrupts;
 
 #if TARGET_HW_MSP432
 /* UART Configuration Parameter. These are the configuration parameters to
@@ -115,19 +116,19 @@ bool Uart::MSP432::init(const eUSCI_UART_Config* config)
     /* Configuring UART Module */
     MAP_UART_initModule(EUSCI_A2_BASE, config);
 
+    /* Enable UART module */
+    MAP_UART_enableModule(EUSCI_A2_BASE);
+
     /* Enabling interrupts */
     MAP_UART_enableInterrupt(EUSCI_A2_BASE, EUSCI_A_UART_RECEIVE_INTERRUPT);
     MAP_Interrupt_enableInterrupt(INT_EUSCIA2);
-
-    /* Enable UART module */
-    MAP_UART_enableModule(EUSCI_A2_BASE);
     return true;
 }
 
 bool Uart::MSP432::send(char* txData)
 {
     char* txPtr = txData;
-
+    numInterrupts = 0;
     // Reset received data structure for next read
     uartRxData.flagRxReady = false;
     uartRxData.idxBuffer = 0;
@@ -157,7 +158,7 @@ extern "C" void EUSCIA2_IRQHandler(void)
 {
     char rx;
     uint32_t status = MAP_UART_getEnabledInterruptStatus(EUSCI_A2_BASE);
-
+    numInterrupts++;
     MAP_UART_clearInterruptFlag(EUSCI_A2_BASE, status);
 
     // Read the received data and store it in the next slot of the uart RX buffer.

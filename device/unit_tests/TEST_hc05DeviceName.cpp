@@ -32,7 +32,11 @@ int unitTest_hc05DeviceName()
     initExternalHwPower();
 
     // Enable HC-05 CMD mode (NOTE: This will power cycle the external hardware).
-    Hc05Api::SetMode(HC05MODE_CMD);
+    if (!Hc05Api::SetMode(HC05MODE_CMD))
+    {
+        // Trap CPU - HC05 init failed
+        while (1);
+    }
 
     while(1)
     {
