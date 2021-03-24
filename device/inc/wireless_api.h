@@ -9,7 +9,12 @@
 
 // Common target includes
 #include "build_switches.h"
+#include "target_hw_common.h"
 #include <stdio.h>
+
+#if TARGET_HW_MSP432
+#include "uart_if.h"
+#endif // TARGET_HW_MSP432
 
 #if ENABLE_WIRELESS_API_PYTHON
 #include "python_common.h"
@@ -38,12 +43,26 @@
 #define DISCONNECT_FUNC "__exit__"
 #endif // ENABLE_WIRELESS_API_PYTHON
 
-namespace WirelessApi {
+/*
+* +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+* ENUMS
+* +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
 
-    enum RequestType_e
-    {
-        REQ_INVALID = 0xDEADBEEF
-    };
+#if TARGET_HW_MSP432
+typedef enum
+{
+    HC05MODE_DATA,
+    HC05MODE_CMD
+} hc05Mode;
+#endif // TARGET_HW_MSP432
+
+typedef enum
+{
+    REQ_INVALID = 0xDEADBEEF
+} RequestType_e;
+
+namespace WirelessApi {
 
     /*
     * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -51,10 +70,21 @@ namespace WirelessApi {
     * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
     */
 
-    bool            ConnectToClient         (int port_num);
+    bool            Init                    ();
+    bool            ConnectToClient         (uint16_t port_num);
     bool            SendResponse            (char* data, int dataSizeInBytes);
     RequestType_e   RecvRequest             ();
     bool            DisconnectFromClient    ();
+
+#if TARGET_HW_MSP432
+    namespace MSP432{
+        bool            SetMode                 (hc05Mode mode);
+        //bool            ConnectToClient         (int port_num);
+        //bool            SendResponse            (char* data, int dataSizeInBytes);
+        //RequestType_e   RecvRequest             ();
+        //bool            DisconnectFromClient    ();
+    }
+#endif
 
     /*
     * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+

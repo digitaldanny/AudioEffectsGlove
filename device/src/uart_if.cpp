@@ -57,10 +57,22 @@ static volatile bool flagRxReady;
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
-bool Uart::init()
+bool Uart::init(baudRate_e baudRate)
 {
 #if TARGET_HW_MSP432
-    return Uart::MSP432::init();
+    if (baudRate == BAUDRATE_38400)
+    {
+        return Uart::MSP432::init(&uartConfig38400);
+    }
+    else if (baudRate == BAUDRATE_9600)
+    {
+        return Uart::MSP432::init(&uartConfig9600);
+    }
+    else
+    {
+        /* Configuration not implemented */
+        return false;
+    }
 #else
     return false;
 #endif
@@ -91,17 +103,18 @@ bool Uart::recv(char* rxData)
 */
 
 #if TARGET_HW_MSP432
-bool Uart::MSP432::init()
+bool Uart::MSP432::init(const eUSCI_UART_Config* config)
 {
     /* Selecting P3.2 and P3.3 in UART mode
      * P3.2 -> MSP Rx
      * P3.3 -> MSP Tx
      */
-    MAP_GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P3,
-             GPIO_PIN2 | GPIO_PIN3, GPIO_PRIMARY_MODULE_FUNCTION);
+    MAP_GPIO_setAsPeripheralModuleFunctionInputPin(systemIO.uartTx.port,
+         systemIO.uartTx.pin | systemIO.uartRx.pin,
+         GPIO_PRIMARY_MODULE_FUNCTION);
 
     /* Configuring UART Module */
-    MAP_UART_initModule(EUSCI_A2_BASE, &uartConfig38400);
+    MAP_UART_initModule(EUSCI_A2_BASE, config);
 
     /* Enable UART module */
     MAP_UART_enableModule(EUSCI_A2_BASE);

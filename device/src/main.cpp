@@ -119,10 +119,7 @@ int main()
 #endif // ENABLE_UNIT_TEST_FLEX_SENSORS
 
 #if ENABLE_UNIT_TEST_HC05_DEVICE_NAME
-    //while (1)
-    //{
-    //    unitTest_hc05DeviceName();
-    //}
+    unitTest_hc05DeviceName();
 #endif // ENABLE_UNIT_TEST_HC05_DEVICE_NAME
 
 #if ENABLE_MAIN_V1

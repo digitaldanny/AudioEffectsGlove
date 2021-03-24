@@ -35,19 +35,30 @@
 
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
-* PROTOTYPES
+* ENUMS
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
+typedef enum
+{
+    BAUDRATE_38400,
+    BAUDRATE_9600
+} baudRate_e;
 
 namespace Uart {
 
-    bool init ();
+    /*
+    * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+    * PROTOTYPES
+    * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+    */
+
+    bool init (baudRate_e baudRate);
     bool send (char* txData);
     bool recv (char* rxData);
 
 #if TARGET_HW_MSP432
     namespace MSP432 {
-        bool init ();
+        bool init (const eUSCI_UART_Config* config);
         bool send (char* txData);
         bool recv (char* rxData);
     }

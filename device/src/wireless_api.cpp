@@ -11,10 +11,20 @@
  * GLOBALS
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
+
 #if ENABLE_WIRELESS_API_PYTHON & TARGET_HW_PYTHON_CAPABLE
 static PyObject* pModule;      // server module                
 static PyObject* pSocketObj;   // server.ServerSocket object
 #endif
+
+bool WirelessApi::Init()
+{
+#if TARGET_HW_MSP432
+    return WirelessApi::MSP432::SetMode(HC05MODE_DATA);
+#else
+    return false;
+#endif
+}
 
 bool WirelessApi::ConnectToClient(int port_num)
 {
@@ -34,7 +44,7 @@ bool WirelessApi::SendResponse(char* data, int dataSizeInBytes)
 #endif
 }
 
-WirelessApi::RequestType_e WirelessApi::RecvRequest()
+RequestType_e WirelessApi::RecvRequest()
 {
 #if ENABLE_WIRELESS_API_PYTHON & TARGET_HW_PYTHON_CAPABLE
     return Python::RecvRequest();
@@ -51,6 +61,61 @@ bool WirelessApi::DisconnectFromClient()
     return false;
 #endif
 }
+
+/*
+* +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+* MSP432 HANDLERS
+* +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+#if TARGET_HW_MSP432
+
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: setExternalHwPower
+ * This function enables/disables power to hardware on the Glove PCB.
+ *
+ * Hardware that is controlled with this function includes:
+ * - HC-05 Bluetooth Module
+ * - Flex sensor circuitry (amplifier, LPF)
+ * - MPU6500 Gyro/Accelerometer
+ * - CFAL6448A LCD
+ *
+ * INPUTS:
+ * @enable - If true, enable power to the external hardware. False disables power.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
+bool WirelessApi::MSP432::SetMode(hc05Mode mode)
+{
+    baudRate_e baudRate;
+
+    // Determine required baudRate and EN setting to place HC-05 is expected mode.
+    if (mode == HC05MODE_DATA)
+    {
+        baudRate = BAUDRATE_9600;
+        GPIO_setOutputLowOnPin(systemIO.bluetoothEn.port, systemIO.bluetoothEn.pin);
+    }
+    else
+    {
+        baudRate = BAUDRATE_38400;
+        GPIO_setOutputHighOnPin(systemIO.bluetoothEn.port, systemIO.bluetoothEn.pin);
+    }
+
+    // Initialize UART TX/RX pins for communicating with the HC-05 module.
+    if (!Uart::init(baudRate))
+    {
+        /* Uart initializations failed */
+        while (1);
+    }
+
+    // Initialize a GPIO for controlling the HC-05 EN pin to select between
+    // Data/Command modes.
+    MAP_GPIO_setAsOutputPin(systemIO.bluetoothEn.port, systemIO.bluetoothEn.pin);
+
+    return true;
+}
+
+#endif // TARGET_HW_MSP432
 
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
