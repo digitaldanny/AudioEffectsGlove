@@ -13,7 +13,8 @@
 
 int main()
 {
-    setupTargetHw();
+    setupTargetHw(); // MSP432 configurations (clock speed, WDT disable, etc)
+    initExternalHwPower(); // Initialize external hardware power (off by default)
 
     //lcd_setup();
     // while(true)

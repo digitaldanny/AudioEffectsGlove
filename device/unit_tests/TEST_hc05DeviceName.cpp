@@ -2,8 +2,7 @@
 #if ENABLE_UNIT_TEST_HC05_DEVICE_NAME
 
 #include "unit_tests.h"
-#include "wireless_api.h"
-#include "uart_if.h"
+#include "hc05_api.h"
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -23,37 +22,35 @@
 */
 int unitTest_hc05DeviceName()
 {
-    char msg[] = "AT+NAME?\r\n";
     char* rxBuf;
+
+    char msg[] = "AT+NAME?\r\n";
     char expected[] = "+NAME:HC-05\r\n";
     int lenExpectedMsg = 13;
-    bool passed = false;
 
     // Initialize HW modules
     initExternalHwPower();
 
-    // Enable HC-05 CMD mode, which requires powering off the HC05 module first.
-    setExternalHwPower(false);
-#if TARGET_HW_MSP432
-    WirelessApi::MSP432::SetMode(HC05MODE_CMD);
-#else
-    while(1); /* Setting cmd mode not implemented for other HW targets */
-#endif // TARGET_HW_MSP432
-    setExternalHwPower(true);
+    // Enable HC-05 CMD mode (NOTE: This will power cycle the external hardware).
+    if (!Hc05Api::SetMode(HC05MODE_CMD))
+    {
+        // Trap CPU - HC05 init failed
+        while (1);
+    }
 
     while(1)
     {
         // Send the AT command to the HC-05
-        if (!Uart::send(msg))
+        if (!Hc05Api::Send(msg))
         {
             /* UART send failed */
             while(1);
         }
 
         // Read back the HC-05 module response
-        if (!Uart::recv(&rxBuf))
+        if (!Hc05Api::Recv(&rxBuf))
         {
-            /* UART send failed */
+            // UART send failed
             while(1);
         }
 
@@ -62,14 +59,15 @@ int unitTest_hc05DeviceName()
         {
             if (rxBuf[i] != expected[i])
             {
-                passed = false;
+                // FAILED TEST
+                return -1;
             }
             else
             {
-                passed = true;
+                // PASSED TEST
+                return 0;
             }
         }
-
         delayMs(1);
     }
 }
