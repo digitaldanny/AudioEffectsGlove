@@ -13,9 +13,6 @@
 */
 
 volatile uint16_t rDataA[SCI_MAX_BUFFER_LENGTH]; // Received data buffer for SCI-C
-
-// Used for checking the received data
-volatile uint16_t rDataPointA;
 volatile uint16_t rxLenSinceTx; // how many bytes have been received since last TX?
 
 /*
@@ -32,6 +29,7 @@ void initHc05()
 bool writeHc05(uint16_t* msg, uint16_t len)
 {
     // Flush RX buffer for next read
+    SCI_resetTxFIFO(SCIC_BASE);
     SCI_resetRxFIFO(SCIC_BASE);
 
     // Reset RX buffer and length for each transfer
@@ -103,11 +101,21 @@ void initSCICFIFO(void)
     //
     // 8 char bits, 1 stop bit, no parity. Baud rate is 38400.
     //
-    SCI_setConfig(SCIC_BASE, DEVICE_LSPCLK_FREQ, 38400, (SCI_CONFIG_WLEN_8 |
+    SCI_setConfig(SCIC_BASE, DEVICE_LSPCLK_FREQ, BAUDRATE_DEFAULT, (SCI_CONFIG_WLEN_8 |
                                                         SCI_CONFIG_STOP_ONE |
                                                         SCI_CONFIG_PAR_NONE));
+
+    // Fixing the baud rate formula issue in SCI_setConfig. The issue is documented in the TI thread below.
+    // https://e2e.ti.com/support/microcontrollers/c2000/f/c2000-microcontrollers-forum/651054/c2000ware-sci_setconfig-baud-rate-calculated-wrong
+    //EALLOW;
+    //uint16_t divider = (uint16_t)(((float)DEVICE_LSPCLK_FREQ / (((float)BAUDRATE_DEFAULT) * 8.0f)) + 0.5f) - 1U;
+    //HWREGH(SCIC_BASE + SCI_O_HBAUD) = (divider & 0xFF00) >> 8;
+    //HWREGH(SCIC_BASE + SCI_O_LBAUD) = (divider & 0x00FF) >> 0;
+    //HWREGH(SCIC_BASE + SCI_O_HBAUD) = 0;
+    //HWREGH(SCIC_BASE + SCI_O_LBAUD) = 372;
+    //EDIS;
+
     SCI_enableModule(SCIC_BASE);
-    SCI_enableLoopback(SCIC_BASE);
     SCI_resetChannels(SCIC_BASE);
     SCI_enableFIFO(SCIC_BASE);
 
@@ -129,8 +137,6 @@ void initSCICFIFO(void)
 //
 __interrupt void sciCRXFIFOISR(void)
 {
-    //SCI_readCharArray(SCIC_BASE, (uint16_t * const)rDataA, 1);
-
     // Read all data available in the RX buffer
     while (SCI_getRxFIFOStatus(SCIC_BASE)) //(SCI_isDataAvailableNonFIFO(SCIC_BASE))
     {
@@ -139,15 +145,8 @@ __interrupt void sciCRXFIFOISR(void)
     }
 
     SCI_clearOverflowStatus(SCIC_BASE);
-
     SCI_clearInterruptStatus(SCIC_BASE, SCI_INT_RXFF);
-
-    //
-    // Issue PIE ack
-    //
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP8);
-
-    Example_PassCount++;
 }
 
 /*
@@ -156,22 +155,25 @@ __interrupt void sciCRXFIFOISR(void)
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
+#if ENABLE_SCIC_LOOPBACK_TEST
 /*
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
  * DESCRIPTION: loopbackTest
  * This test checks that the SCIC module can transmit and receive a full message
  * back in a loopback test.
  *
- * Pin 139 (RX) must be connected to pin 56 (TX).
+ * This test internally ties pin 139 (RX) to pin 56 (TX).
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 */
-#if ENABLE_SCIC_LOOPBACK_TEST
 bool loopbackTest()
 {
     //char msg[] = "AT+NAME?\r\n";
     char tx[] = "0123456789";
     uint16_t msgLen = 10;
     char* rx;
+
+    // Internally tie SCIC TX/RX pins together
+    SCI_enableLoopback(SCIC_BASE);
 
     // INITIALIZE UART - BAUDRATE 38400
     initHc05();
@@ -200,3 +202,59 @@ bool loopbackTest()
     return true;
 }
 #endif // ENABLE_SCIC_LOOPBACK_TEST
+
+#if ENABLE_HC05_NAME_TEST
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: hc05NameTest
+ * This test checks that a read from the HC-05 "AT+NAME?" register returns the
+ * string "+NAME:HC-05"
+ *
+ * This test is similar to running a WHO_AM_I test on other ICs.
+ *
+ * Pin 139 (RX) must be connected to the HC-05 TX pin, and pin 56 (TX) must be
+ * connected to the HC-05 RX pin. The HC-05 EN pin must be connected to 3.3V
+ * and the baud rate must be 38400 to communicate with the device in CMD mode.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
+bool hc05NameTest()
+{
+    char tx[] = "AT+NAME?\r\n";
+    uint16_t txLen = 10;
+    char rxExpected[] = "+NAME:HC-05\r\n";
+    uint16_t rxLenExpected = 13;
+    char* rx;
+
+    //// Baud rate must be configured to 38400 for this test
+    //if (BAUDRATE_DEFAULT != BAUDRATE_38400)
+    //{
+    //    while(1); // Failure - Configure baud rate to 38400
+    //}
+
+    // INITIALIZE UART - BAUDRATE 38400
+    initHc05();
+
+    // Write out the message to TX pin
+    if (!writeHc05((uint16_t*)tx, txLen))
+    {
+        while(1); // Write failed, trap CPU
+    }
+
+    // Read back the message from RX pin
+    if (!readHc05((uint16_t**)&rx, rxLenExpected))
+    {
+        while(1); // Read failed, trap CPU
+    }
+
+    // Compare TX message to RX message.
+    for (int i = 0; i < rxLenExpected; i++)
+    {
+        if (rx[i] != rxExpected[i])
+        {
+            return false; // TX and RX messages do not match
+        }
+    }
+
+    return true;
+}
+#endif // ENABLE_HC05_NAME_TEST

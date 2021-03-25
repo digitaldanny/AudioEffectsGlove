@@ -16,7 +16,12 @@
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
-#define ENABLE_SCIC_LOOPBACK_TEST   1
+#define ENABLE_SCIC_LOOPBACK_TEST   0
+#define ENABLE_HC05_NAME_TEST       1
+
+#define BAUDRATE_38400      (38400<<1)
+#define BAUDRATE_9600       (9600<<1)
+#define BAUDRATE_DEFAULT    BAUDRATE_38400
 
 #define SCI_MAX_BUFFER_LENGTH       100
 
@@ -30,6 +35,9 @@
 #if ENABLE_SCIC_LOOPBACK_TEST
 bool loopbackTest();
 #endif // ENABLE_SCIC_LOOPBACK_TEST
+#if ENABLE_HC05_NAME_TEST
+bool hc05NameTest();
+#endif // ENABLE_HC05_NAME_TEST
 
 // HC-05 API
 void initHc05();
