@@ -1,7 +1,7 @@
 #include "build_switches.h"
 #if ENABLE_UNIT_TEST_MUX_LP
 
-#include "unit_tests.h"
+#include "entry_points.h"
 #include "mux_if.h"
 
 /*

@@ -1,7 +1,7 @@
 #include "build_switches.h"
 #if ENABLE_UNIT_TEST_ADC
 
-#include "unit_tests.h"
+#include "entry_points.h"
 #include "adc.h"
 #include <iostream>
 #include <iomanip>
