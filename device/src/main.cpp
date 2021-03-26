@@ -123,6 +123,10 @@ int main()
     unitTest_hc05DeviceName();
 #endif // ENABLE_UNIT_TEST_HC05_DEVICE_NAME
 
+#if ENABLE_UNIT_TEST_HC05_RW_TO_SLAVE
+    unitTest_hc05RwToSlave();
+#endif // ENABLE_UNIT_TEST_HC05_RW_TO_SLAVE
+
 #if ENABLE_HC05_CONFIG_MSTR
     unitTest_hc05ConfigMaster();
 #endif // ENABLE_HC05_CONFIG_MSTR

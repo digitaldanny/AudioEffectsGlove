@@ -40,13 +40,14 @@
 #define ENABLE_UNIT_TEST_ADC_MSP432     (0 & ENABLE_UNIT_TEST)   // Issue #36: Enables unit test for reading ADC values from flex amplifier.
 #define ENABLE_UNIT_TEST_FLEX_SENSORS   (0 & ENABLE_UNIT_TEST)   // Issue #7: Enables unit test for reading all 10 flex sensor voltage levels.
 #define ENABLE_UNIT_TEST_HC05_DEVICE_NAME (0 & ENABLE_UNIT_TEST) // Issue #37: Enable test to read back HC-05 "NAME" register (returns "HC-05" by default)
+#define ENABLE_UNIT_TEST_HC05_RW_TO_SLAVE (1 & ENABLE_UNIT_TEST) // Issue #35: Enable test to read/write to slave HC-05 with various sized payloads.
 #define ENABLE_UNIT_TEST_I2C            (0 & ENABLE_UNIT_TEST)   // Issue #39: Enable basic I2C write/read test to be read on logic analyzer.
 #define ENABLE_UNIT_TEST_EXT_PWR_SWITCH (0 & ENABLE_UNIT_TEST)  // Issue #45: Enable test that toggles external power switch. Power output be manually validated with DAD board.
 #define ENABLE_UNIT_TEST_MPU6500_WHOAMI_SPI (0 & ENABLE_UNIT_TEST) // Issue #47: Enable SPI read from MPU6500's WHO_AM_I register.
 #define ENABLE_UNIT_TEST_MPU6500_WHOAMI_I2C (0 & ENABLE_UNIT_TEST) // Issue #47: Enable I2C read from MPU6500's WHOI_AM_I register.
 
 // Main programs
-#define ENABLE_HC05_CONFIG_MSTR (1) // Issue #35: Script to configure the master HC-05's role, slave address, etc.
+#define ENABLE_HC05_CONFIG_MSTR (0) // Issue #35: Script to configure the master HC-05's role, slave address, etc.
 #define ENABLE_MAIN_V1          (0) // Issue #13: Enables main program that will be running
 
 /*

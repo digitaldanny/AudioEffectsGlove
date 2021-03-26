@@ -26,7 +26,7 @@ void initHc05()
     initSCIC();
 }
 
-bool writeHc05(uint16_t* msg, uint16_t len)
+bool resetBuffersHc05()
 {
     // Flush RX buffer for next read
     SCI_resetTxFIFO(SCIC_BASE);
@@ -35,6 +35,13 @@ bool writeHc05(uint16_t* msg, uint16_t len)
     // Reset RX buffer and length for each transfer
     memset((void*)rDataA, 0, rxLenSinceTx);
     rxLenSinceTx = 0;
+
+    return true;
+}
+
+bool writeHc05(uint16_t* msg, uint16_t len)
+{
+    resetBuffersHc05();
 
     // Write all data in msg buffer
     SCI_writeCharArray(SCIC_BASE, (const uint16_t *)msg, len);
@@ -138,7 +145,7 @@ void initSCICFIFO(void)
 __interrupt void sciCRXFIFOISR(void)
 {
     // Read all data available in the RX buffer
-    while (SCI_getRxFIFOStatus(SCIC_BASE)) //(SCI_isDataAvailableNonFIFO(SCIC_BASE))
+    while (SCI_getRxFIFOStatus(SCIC_BASE) || SCI_isDataAvailableNonFIFO(SCIC_BASE))
     {
         rDataA[rxLenSinceTx] = SCI_readCharNonBlocking(SCIC_BASE);
         rxLenSinceTx++;
@@ -225,11 +232,11 @@ bool hc05NameTest()
     uint16_t rxLenExpected = 13;
     char* rx;
 
-    //// Baud rate must be configured to 38400 for this test
-    //if (BAUDRATE_DEFAULT != BAUDRATE_38400)
-    //{
-    //    while(1); // Failure - Configure baud rate to 38400
-    //}
+    // Baud rate must be configured to 38400 for this test
+    if (BAUDRATE_DEFAULT != BAUDRATE_38400)
+    {
+        while(1); // Failure - Configure baud rate to 38400
+    }
 
     // INITIALIZE UART - BAUDRATE 38400
     initHc05();
@@ -258,3 +265,59 @@ bool hc05NameTest()
     return true;
 }
 #endif // ENABLE_HC05_NAME_TEST
+
+#if ENABLE_HC05_RW_TO_MASTER_TEST
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: hc05NameTest
+ * This test connects the DSP-side slave HC-05 to the glove-side master HC-05
+ * and reads/writes bytes of data.
+ *
+ * Pin 139 (RX) must be connected to the HC-05 TX pin, and pin 56 (TX) must be
+ * connected to the HC-05 RX pin. The HC-05 EN pin must be connected to GND
+ * and the baud rate must be 9600 to communicate with the device in DATA mode.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
+bool hc05RwToMasterTest()
+{
+    char tx[] = "OK\n";
+    uint16_t txLen = 3;
+    char rxExpected[] = "Hello, world!! 0123456789";
+    uint16_t rxLenExpected = 25;
+    char* rx;
+
+    // Baud rate must be configured to 9600 for this test
+    if (BAUDRATE_DEFAULT != BAUDRATE_9600)
+    {
+        while(1); // Failure - Configure baud rate to 9600
+    }
+
+    initHc05();
+
+    // Reset RX buffer manually when reading without writing a message first.
+    resetBuffersHc05();
+
+    // Read back the message from RX pin
+    if (!readHc05((uint16_t**)&rx, rxLenExpected))
+    {
+        while(1); // Read failed, trap CPU
+    }
+
+    // Compare recieved message with expected message before RX buffers are cleared.
+    for (int i = 0; i < rxLenExpected; i++)
+    {
+        if (rx[i] != rxExpected[i])
+        {
+            return false; // TX and RX messages do not match
+        }
+    }
+
+    // Write out ACK message
+    if (!writeHc05((uint16_t*)tx, txLen))
+    {
+        while(1); // Write failed, trap CPU
+    }
+
+    return true;
+}
+#endif // ENABLE_HC05_RW_TO_MASTER_TEST

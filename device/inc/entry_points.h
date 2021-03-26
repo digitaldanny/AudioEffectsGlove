@@ -49,6 +49,10 @@ int unitTest_flexSensors();
 int unitTest_hc05DeviceName();
 #endif // ENABLE_UNIT_TEST_HC05_DEVICE_NAME
 
+#if ENABLE_UNIT_TEST_HC05_RW_TO_SLAVE
+int unitTest_hc05RwToSlave();
+#endif // ENABLE_UNIT_TEST_HC05_RW_TO_SLAVE
+
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
  * MAIN PROGRAMS
