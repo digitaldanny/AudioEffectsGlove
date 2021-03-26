@@ -38,12 +38,14 @@ namespace Hc05Api {
     */
 
     bool SetMode (hc05Mode_e mode);
+    bool IsSlaveConnected();
     bool Send (char* txData);
     bool Recv (char** rxData);
 
 #if TARGET_HW_MSP432
     namespace MSP432{
         bool SetMode (hc05Mode_e mode);
+        bool IsSlaveConnected();
         bool Send (char* txData);
         bool Recv (char** rxData);
     }

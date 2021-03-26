@@ -74,10 +74,12 @@ namespace Uart {
     bool init (baudRate_e baudRate);
     bool send (char* txData);
     bool recv (char** rxData);
+    bool resetBuffer();
 
 #if TARGET_HW_MSP432
     namespace MSP432 {
         bool init (const eUSCI_UART_Config* config);
+        bool resetBuffer();
         bool send (char* txData);
         bool recv (char** rxData);
     }

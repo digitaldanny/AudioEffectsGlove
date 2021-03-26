@@ -48,6 +48,9 @@ int unitTest_hc05RwToSlave()
         while (1);
     }
 
+    // Wait for master HC-05 to connect with slave HC-05.
+    while (!Hc05Api::IsSlaveConnected());
+
     for (int i = 0; i < NUM_PAYLOADS; i++)
     {
         // Send the AT command to the HC-05
