@@ -26,6 +26,14 @@ int unitTest_hc05ConfigMaster()
 {
     char* rxBuf;
 
+    // HC-05 configuration registers to read
+#define NUM_READS 4
+    char rdUart[] = "AT+UART?\r\n"; // Read UART configurations (baud, stop bit, parity)
+    char rdMaster[] = "AT+ROLE?\r\n"; // Is role master (1) or slave (0)?
+    char rdConnMode[] = "AT+CMODE?\r\n"; // Read connection mode (0=fixed address)
+    char rdAddrBind[] = "AT+BIND?\r\n"; // Read fixed slave address
+    char *reads[NUM_READS] = { rdUart, rdMaster, rdConnMode, rdAddrBind };
+
     // HC-05 configurations to send
 #define NUM_CONFIGS 3
     char cfgMaster[] = "AT+ROLE=1\r\n"; // Set as master
@@ -47,6 +55,26 @@ int unitTest_hc05ConfigMaster()
         while (1);
     }
 
+    // Read current device configurations
+    for (int i = 0; i < NUM_READS; i++)
+    {
+        // Send the AT command to the HC-05
+        if (!Hc05Api::Send(reads[i]))
+        {
+            /* UART send failed */
+            while(1);
+        }
+
+        // Read back the HC-05 module response
+        if (!Hc05Api::Recv(&rxBuf))
+        {
+            // UART send failed
+            while(1);
+        }
+        delayMs(1);
+    }
+
+    // Configure the HC-05 device with new settings
     for (int i = 0; i < NUM_CONFIGS; i++)
     {
         // Send the AT command to the HC-05
