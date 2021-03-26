@@ -51,32 +51,36 @@ int unitTest_hc05RwToSlave()
     // Wait for master HC-05 to connect with slave HC-05.
     while (!Hc05Api::IsSlaveConnected());
 
-    for (int i = 0; i < NUM_PAYLOADS; i++)
+    // Run test infinitely to support data transfer accuracy test on DSP-side.
+    while (1)
     {
-        // Send the AT command to the HC-05
-        if (!Hc05Api::Send(payloads[i]))
+        for (int i = 0; i < NUM_PAYLOADS; i++)
         {
-            /* UART send failed */
-            while(1);
-        }
-
-        // Read back the HC-05 module response
-        if (!Hc05Api::Recv(&rxBuf))
-        {
-            // UART send failed
-            while(1);
-        }
-
-        // Check that the rx buffer matches the expected output (test passed?)
-        for (uint16_t i = 0; i < lenExpectedMsg; i++)
-        {
-            if (rxBuf[i] != expected[i])
+            // Send the AT command to the HC-05
+            if (!Hc05Api::Send(payloads[i]))
             {
-                // FAILED TEST
-                return -1;
+                /* UART send failed */
+                while(1);
             }
+
+            // Read back the HC-05 module response
+            if (!Hc05Api::Recv(&rxBuf))
+            {
+                // UART send failed
+                while(1);
+            }
+
+            // Check that the rx buffer matches the expected output (test passed?)
+            for (uint16_t i = 0; i < lenExpectedMsg; i++)
+            {
+                if (rxBuf[i] != expected[i])
+                {
+                    // FAILED TEST
+                    return -1;
+                }
+            }
+            delayMs(1);
         }
-        delayMs(1);
     }
     return 0;
 }

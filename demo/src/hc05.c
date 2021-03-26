@@ -286,6 +286,10 @@ bool hc05RwToMasterTest()
     uint16_t rxLenExpected = 25;
     char* rx;
 
+    uint32_t numTestIterations = 10;
+    uint32_t numAccurateTransfers = 0;
+    float percentOfAccurateTransfers;
+
     // Baud rate must be configured to 9600 for this test
     if (BAUDRATE_DEFAULT != BAUDRATE_9600)
     {
@@ -294,30 +298,42 @@ bool hc05RwToMasterTest()
 
     initHc05();
 
-    // Reset RX buffer manually when reading without writing a message first.
-    resetBuffersHc05();
-
-    // Read back the message from RX pin
-    if (!readHc05((uint16_t**)&rx, rxLenExpected))
+    for (uint32_t testIteration = 0; testIteration < numTestIterations; testIteration++)
     {
-        while(1); // Read failed, trap CPU
-    }
+        bool iterationPassed = true;
 
-    // Compare recieved message with expected message before RX buffers are cleared.
-    for (int i = 0; i < rxLenExpected; i++)
-    {
-        if (rx[i] != rxExpected[i])
+        // Reset RX buffer manually when reading without writing a message first.
+        resetBuffersHc05();
+
+        // Read back the message from RX pin
+        if (!readHc05((uint16_t**)&rx, rxLenExpected))
         {
-            return false; // TX and RX messages do not match
+            while(1); // Read failed, trap CPU
+        }
+
+        // Compare recieved message with expected message before RX buffers are cleared.
+        for (int i = 0; i < rxLenExpected; i++)
+        {
+            if (rx[i] != rxExpected[i])
+            {
+                iterationPassed = false; // TX and RX messages do not match
+            }
+        }
+
+        // Write out ACK message
+        if (!writeHc05((uint16_t*)tx, txLen))
+        {
+            while(1); // Write failed, trap CPU
+        }
+
+        // Update number of iterations passed
+        if (iterationPassed)
+        {
+            numAccurateTransfers++;
         }
     }
 
-    // Write out ACK message
-    if (!writeHc05((uint16_t*)tx, txLen))
-    {
-        while(1); // Write failed, trap CPU
-    }
-
+    percentOfAccurateTransfers = (float)numAccurateTransfers / (float)numTestIterations * 100.0f;
     return true;
 }
 #endif // ENABLE_HC05_RW_TO_MASTER_TEST
