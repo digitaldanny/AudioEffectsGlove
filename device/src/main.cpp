@@ -23,19 +23,6 @@ int main()
     // }
    //lcd_loop();
 
-
-#if ENABLE_UNIT_TEST_I2C
-    I2c::init();
-    while (true)
-    {
-        uint8_t tx[3] = {0x12, 0x34, 0x56};
-        //uint8_t rx[3] = {0};
-        I2c::write(0xAB, 0xCD, 3, tx);
-        //I2c::read(0xAB, 0xCD, 3, tx);
-        delayMs(1);
-    }
-#endif // ENABLE_UNIT_TEST_I2C
-
 #if ENABLE_UNIT_TEST_MPU6500_WHOAMI_SPI
 #define CLR_CS    GPIO_setOutputLowOnPin(systemIO.spiCs1.port, systemIO.spiCs1.pin)  // P3.5
 #define SET_CS    GPIO_setOutputHighOnPin(systemIO.spiCs1.port, systemIO.spiCs1.pin)
