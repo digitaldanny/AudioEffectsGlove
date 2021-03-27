@@ -6,7 +6,6 @@
 
 /// DEBUG **********
 #include "lcd_64x48_bitmap.h"
-#include "mpu6500.h"
 #include "i2c_if.h"
 #include "spi_if.h"
 /// DEBUG **********
@@ -24,40 +23,7 @@ int main()
    //lcd_loop();
 
 #if ENABLE_UNIT_TEST_MPU6500_WHOAMI_SPI
-#define CLR_CS    GPIO_setOutputLowOnPin(systemIO.spiCs1.port, systemIO.spiCs1.pin)  // P3.5
-#define SET_CS    GPIO_setOutputHighOnPin(systemIO.spiCs1.port, systemIO.spiCs1.pin)
-
-    MAP_GPIO_setAsOutputPin(systemIO.spiCs1.port, systemIO.spiCs1.pin);
-
-    //Drive the control lines to a reasonable starting state.
-    SET_CS;
-
-    uint8_t rx = 0;
-    Spi::init();
-    while (true)
-    {
-        // MPU6500_RA_WHO_AM_I
-        CLR_CS;
-        delayUs(2);
-
-        rx = Spi::transferByte(0x80 | MPU6500_RA_WHO_AM_I); // READ bit | WHO_AM_I addr
-
-        for (int i = 0; i < 5; i++)
-        {
-            rx = Spi::transferByte(0x12); // garbage to retreive data from rx buffer
-
-            // if received data is non-zero, breakpoint to view
-            if (rx > 0)
-            {
-                rx++;
-            }
-        }
-
-        delayUs(2);
-        SET_CS;
-
-        delayMs(1);
-    }
+    TEST_mpu6500WhoAmISpi();
 #endif // ENABLE_UNIT_TEST_MPU6500_WHOAMI_SPI
 
 #if ENABLE_UNIT_TEST_MPU6500_WHOAMI_I2C

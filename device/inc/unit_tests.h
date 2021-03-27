@@ -43,4 +43,8 @@ int unitTest_flexSensors();
 int unitTest_hc05DeviceName();
 #endif // ENABLE_UNIT_TEST_HC05_DEVICE_NAME
 
+#if ENABLE_UNIT_TEST_MPU6500_WHOAMI_SPI
+int TEST_mpu6500WhoAmISpi();
+#endif // ENABLE_UNIT_TEST_MPU6500_WHOAMI_SPI
+
 #endif // _SRC_UNIT_TESTS
