@@ -22,10 +22,14 @@
 #define _INV_MPU_H_
 
 //#include "I2Cdev.h"
-#include "i2c_if.h"
 
-/* USER MUST ADD DEFINE FOR TARGET DEVICE (ex. MPU6050, MPU6500, etc) */
-#define MPU6050
+// Includes required for MSP432 port
+#include "i2c_if.h"
+#include "target_hw_common.h"
+
+#define millis()  0
+#define MPU6050     // target HW (MPU6050, MPU6500, MPU9250, MPU9150)
+#define __SAM3X8E__ // LUTs are stored in RAM
 
 //  Define this symbol to get debug messages
 

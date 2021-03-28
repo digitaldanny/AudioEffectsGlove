@@ -1,6 +1,6 @@
 #include "mpu.h"
 #include "inv_mpu.h"
-//#include "inv_mpu_dmp_motion_driver.h"
+#include "inv_mpu_dmp_motion_driver.h"
 #include <math.h>
 
 #define FSR 2000

@@ -37,9 +37,11 @@
  * min(int a, int b)
  */
 
-#define i2c_write   !I2Cdev::writeBytes
-#define i2c_read    !I2Cdev::readBytes
-#define delay_ms    delay
+//#define i2c_write   !I2Cdev::writeBytes
+//#define i2c_read    !I2Cdev::readBytes
+#define i2c_write   !I2c::write
+#define i2c_read    !I2c::read
+#define delay_ms    delayMs
 
 static inline int reg_int_cb(struct int_param_s *int_param)
 {
