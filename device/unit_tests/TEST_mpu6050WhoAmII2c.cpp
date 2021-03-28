@@ -20,7 +20,7 @@
  * This test also runs infinitely to allow for triggering on a logic analyzer.
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
-int TEST_mpu6500WhoAmISpi()
+int TEST_mpu6500WhoAmII2c()
 {
     uint8_t data;
 
