@@ -32,6 +32,11 @@ int main()
     while(true)
     {
         I2c::read(0x68, 0x75, 1, &data);
+        if (data == 0x68)
+        {
+            // Test passes!
+            data = 0;
+        }
         delayMs(1);
     }
 #endif // ENABLE_UNIT_TEST_MPU6050_WHOAMI_I2C

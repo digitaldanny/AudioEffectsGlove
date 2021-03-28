@@ -2,6 +2,21 @@
 
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+* DEFINES
+* +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+#define EUSCI_I2C_STATUS_SLAVE_NACK       1
+
+/* EUSCI port and pin selection */
+#define EUSCI_I2C_MODULE                  EUSCI_B1_BASE
+#define EUSCI_I2C_PORT                    systemIO.i2cScl.port
+#define EUSCI_I2C_SCL_PIN                 systemIO.i2cScl.pin
+#define EUSCI_I2C_SCL_PIN_FUNCTION        GPIO_PRIMARY_MODULE_FUNCTION
+#define EUSCI_I2C_SDA_PIN                 systemIO.i2cSda.pin
+#define EUSCI_I2C_SDA_PIN_FUNCTION        GPIO_PRIMARY_MODULE_FUNCTION
+
+/*
+* +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 * GLOBALS
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
@@ -16,11 +31,9 @@ static volatile eUSCI_I2C_MasterConfig i2cConfig =
 {
         EUSCI_B_I2C_CLOCKSOURCE_SMCLK,          // SMCLK Clock Source
         12000000,                               // SMCLK = 12MHz
-        10000,
-        //EUSCI_B_I2C_SET_DATA_RATE_100KBPS,      // Desired I2C Clock of 400khz
+        EUSCI_B_I2C_SET_DATA_RATE_400KBPS,      // Desired I2C Clock of 400khz
         0,                                      // No byte counter threshold
-        //EUSCI_B_I2C_NO_AUTO_STOP
-        EUSCI_B_I2C_SEND_STOP_AUTOMATICALLY_ON_BYTECOUNT_THRESHOLD
+        EUSCI_B_I2C_NO_AUTO_STOP
 };
 
 /*
@@ -71,75 +84,143 @@ bool I2c::write(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data)
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
+// Thanks to "DavidL" who implemented this I2C polling approach in the TI thread below.
+// https://e2e.ti.com/support/microcontrollers/msp430/f/msp-low-power-microcontroller-forum/560625/problem-using-driverlib-in-i2c-polled-mode-on-msp432-launchpad
+
 bool I2c::MSP432::init()
 {
-    /* Select I2C function for I2C_SCL & I2C_SDA pins */
-    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(systemIO.i2cScl.port, systemIO.i2cScl.pin, GPIO_PRIMARY_MODULE_FUNCTION);
-    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(systemIO.i2cSda.port, systemIO.i2cSda.pin, GPIO_PRIMARY_MODULE_FUNCTION);
-
-    /* Enable master interrupt for the transferring data */
-    MAP_Interrupt_enableInterrupt(INT_EUSCIB1);
-
     /* I2C initializations currently happen for each read/write call to support burst
      * transfers, so there is no need to set I2C configurations here.
      */
+
+    /* I2C Clock Soruce Speed */
+    i2cConfig.i2cClk = MAP_CS_getSMCLK();
+
+    /* Select I2C function for I2C_SCL & I2C_SDA */
+    GPIO_setAsPeripheralModuleFunctionOutputPin(EUSCI_I2C_PORT, EUSCI_I2C_SCL_PIN,
+            EUSCI_I2C_SCL_PIN_FUNCTION);
+    GPIO_setAsPeripheralModuleFunctionOutputPin(EUSCI_I2C_PORT, EUSCI_I2C_SDA_PIN,
+            EUSCI_I2C_SDA_PIN_FUNCTION);
+
+    /* Initializing I2C Master to SMCLK at 400kbs with no-autostop */
+    MAP_I2C_initMaster(EUSCI_I2C_MODULE, (const eUSCI_I2C_MasterConfig *)&i2cConfig);
+
+    /* Enable I2C Module to start operations */
+    MAP_I2C_enableModule(EUSCI_I2C_MODULE);
+
+    /* Enable master interrupt for the transferring data */
+    //MAP_Interrupt_enableInterrupt(INT_EUSCIB1);
     return true;
 }
 
 bool I2c::MSP432::write(uint8_t ui8Addr, uint8_t ui8Reg, uint8_t ui8ByteCount, uint8_t *Data)
 {
-    return false;
+    /* Todo: Implement a delay */
+    /* Wait until ready to write */
+    while (MAP_I2C_isBusBusy(EUSCI_I2C_MODULE));
+
+    /* Load device slave address */
+    MAP_I2C_setSlaveAddress(EUSCI_I2C_MODULE, ui8Addr);
+
+    /* Send start bit and register */
+    MAP_I2C_masterSendMultiByteStart(EUSCI_I2C_MODULE,ui8Reg);
+
+    /* Wait for tx to complete */
+    while(!(MAP_I2C_getInterruptStatus(EUSCI_I2C_MODULE, EUSCI_B_I2C_TRANSMIT_INTERRUPT0) &
+            EUSCI_B_I2C_TRANSMIT_INTERRUPT0));
+
+    /* Check if slave ACK/NACK */
+    if((MAP_I2C_getInterruptStatus(EUSCI_I2C_MODULE, EUSCI_B_I2C_NAK_INTERRUPT)) &
+            EUSCI_B_I2C_NAK_INTERRUPT)
+    {
+        /* If NACK, set stop bit and exit */
+        MAP_I2C_masterSendMultiByteStop(EUSCI_I2C_MODULE);
+        return(EUSCI_I2C_STATUS_SLAVE_NACK);
+    }
+
+    /* Now write one or more data bytes */
+    while(1)
+    {
+        /* Wait for next INT */
+        while(!(MAP_I2C_getInterruptStatus(EUSCI_I2C_MODULE, EUSCI_B_I2C_TRANSMIT_INTERRUPT0) &
+                EUSCI_B_I2C_TRANSMIT_INTERRUPT0));
+
+        /* If no data to follow, we are done */
+        if(ui8ByteCount == 0 )
+        {
+            MAP_I2C_masterSendMultiByteStop(EUSCI_I2C_MODULE);
+            MAP_I2C_clearInterruptFlag(EUSCI_I2C_MODULE, EUSCI_B_I2C_TRANSMIT_INTERRUPT0);
+            return(true);
+        }
+        /* If more, send the next byte */
+        else
+        {
+            MAP_I2C_masterSendMultiByteNext(EUSCI_I2C_MODULE, *Data++);
+        }
+        ui8ByteCount--;
+    }
 }
 
 bool I2c::MSP432::read(uint8_t ui8Addr, uint8_t ui8Reg, uint8_t ui8ByteCount, uint8_t *Data)
 {
+    /* Todo: Implement a delay */
     /* Wait until ready */
-    while (MAP_I2C_isBusBusy(EUSCI_B1_BASE));
-
-    /* Reset flag so this function waits for receive interrupts to complete */
-    stopSent = false;
-
-    /* Set the number of bytes that the RX interrupt should be waiting for */
-    numTransferBytes = ui8ByteCount;
-
-    /* Assign Data to local Pointer so that data is returned to calling function's buffer */
-    pData = Data;
-
-    /* Disable I2C module to make changes to I2C configurations */
-    MAP_I2C_disableModule(EUSCI_B1_BASE);
-
-    /* Setup the number of bytes to receive */
-    i2cConfig.byteCounterThreshold = ui8ByteCount + 1; // adding 1 for the device's register address
-    MAP_I2C_initMaster(EUSCI_B1_BASE, (const eUSCI_I2C_MasterConfig *)&i2cConfig);
+    while (MAP_I2C_isBusBusy(EUSCI_I2C_MODULE));
 
     /* Load device slave address */
-    MAP_I2C_setSlaveAddress(EUSCI_B1_BASE, ui8Addr);
+    MAP_I2C_setSlaveAddress(EUSCI_I2C_MODULE, ui8Addr);
 
-    /* Enable and clear the interrupt flag */
-    MAP_I2C_clearInterruptFlag(EUSCI_B1_BASE,
-            EUSCI_B_I2C_TRANSMIT_INTERRUPT0 + EUSCI_B_I2C_RECEIVE_INTERRUPT0);
+    /* Send start bit and register */
+    MAP_I2C_masterSendMultiByteStart(EUSCI_I2C_MODULE,ui8Reg);
 
-    /* Set Master in transmit mode */
-    MAP_I2C_setMode(EUSCI_B1_BASE, EUSCI_B_I2C_TRANSMIT_MODE);
+    /* Wait for tx to complete */
+    while(!(MAP_I2C_getInterruptStatus(EUSCI_I2C_MODULE, EUSCI_B_I2C_TRANSMIT_INTERRUPT0) &
+            EUSCI_B_I2C_TRANSMIT_INTERRUPT0));
 
-    /* Enable I2C Module to start operations */
-    MAP_I2C_enableModule(EUSCI_B1_BASE);
+    /* Check if slave ACK/NACK */
+    if((MAP_I2C_getInterruptStatus(EUSCI_I2C_MODULE, EUSCI_B_I2C_NAK_INTERRUPT)) &
+            EUSCI_B_I2C_NAK_INTERRUPT)
+    {
+        /* If NACK, set stop bit and exit */
+        MAP_I2C_masterSendMultiByteStop(EUSCI_I2C_MODULE);
+        return(EUSCI_I2C_STATUS_SLAVE_NACK);
+    }
 
-    /* Making sure the last transaction has been completely sent out */
-    while (MAP_I2C_masterIsStopSent(EUSCI_B1_BASE) == EUSCI_B_I2C_SENDING_STOP);
+    /* Turn off TX and generate RE-Start */
+    MAP_I2C_masterReceiveStart(EUSCI_I2C_MODULE);
 
-    /* Send start and the first byte of the transmit buffer. We have to send
-     * two bytes to clean out whatever is in the buffer from a previous
-     * send  */
-    MAP_I2C_masterSendMultiByteStart(EUSCI_B1_BASE, ui8Reg);
-    MAP_I2C_masterSendMultiByteNext(EUSCI_B0_BASE, ui8Reg);
+    /* Wait for start bit to complete */
+    while(MAP_I2C_masterIsStartSent(EUSCI_I2C_MODULE));
 
-    /* Enable master interrupt for the transferring data */
-    MAP_I2C_enableInterrupt(EUSCI_B1_BASE, EUSCI_B_I2C_TRANSMIT_INTERRUPT0);
+    if((MAP_I2C_getInterruptStatus(EUSCI_I2C_MODULE, EUSCI_B_I2C_NAK_INTERRUPT)) &
+            EUSCI_B_I2C_NAK_INTERRUPT)
+    {
+        /* If NACK, set stop bit and exit */
+        MAP_I2C_masterSendMultiByteStop(EUSCI_I2C_MODULE);
+        return(EUSCI_I2C_STATUS_SLAVE_NACK);
+    }
 
-    // Wait for the RX interrupt to read all received data before returning
-    while (!stopSent);
-    return true;
+    /* Read one or more bytes */
+    while(ui8ByteCount)
+    {
+        /* If reading 1 byte (or last byte), generate the stop to meet the spec */
+        if(ui8ByteCount-- == 1)
+        {
+            *Data++ = MAP_I2C_masterReceiveMultiByteFinish(EUSCI_B1_BASE);
+        }
+        else
+        {
+            /* Wait for next RX interrupt */
+            while(!(MAP_I2C_getInterruptStatus(EUSCI_B1_BASE, EUSCI_B_I2C_RECEIVE_INTERRUPT0) &
+                    EUSCI_B_I2C_RECEIVE_INTERRUPT0));
+
+            /* Read the rx byte */
+            *Data++ = MAP_I2C_masterReceiveMultiByteNext(EUSCI_B1_BASE);
+        }
+    }
+
+    MAP_I2C_clearInterruptFlag(EUSCI_B1_BASE, EUSCI_B_I2C_TRANSMIT_INTERRUPT0);
+    return(true);
 }
 
 /***********************************************************
@@ -148,6 +229,8 @@ bool I2c::MSP432::read(uint8_t ui8Addr, uint8_t ui8Reg, uint8_t ui8ByteCount, ui
 extern "C" void EUSCIB1_IRQHandler(void)
 {
     uint_fast16_t status;
+
+    while(1); // SHOULDN'T ENTER HERE FOR POLLING IMPLEMENTATION
 
     status = MAP_I2C_getEnabledInterruptStatus(EUSCI_B1_BASE);
     MAP_I2C_clearInterruptFlag(EUSCI_B1_BASE, status);
