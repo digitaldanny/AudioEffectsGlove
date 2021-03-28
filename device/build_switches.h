@@ -41,7 +41,8 @@
 #define ENABLE_UNIT_TEST_I2C            (0 & ENABLE_UNIT_TEST)   // Issue #39: Enable basic I2C write/read test to be read on logic analyzer.
 #define ENABLE_UNIT_TEST_EXT_PWR_SWITCH (0 & ENABLE_UNIT_TEST)  // Issue #45: Enable test that toggles external power switch. Power output be manually validated with DAD board.
 #define ENABLE_UNIT_TEST_MPU6500_WHOAMI_SPI (0 & ENABLE_UNIT_TEST) // Issue #47: Enable SPI read from MPU6500's WHO_AM_I register.
-#define ENABLE_UNIT_TEST_MPU6050_WHOAMI_I2C (1 & ENABLE_UNIT_TEST) // Issue #47: Enable I2C read from MPU6050's WHO_AM_I register.
+#define ENABLE_UNIT_TEST_MPU6050_WHOAMI_I2C (0 & ENABLE_UNIT_TEST) // Issue #47: Enable I2C read from MPU6050's WHO_AM_I register.
+#define ENABLE_UNIT_TEST_MPU6050_SENSORDATA (1 & ENABLE_UNIT_TEST) // Issue #47: Enable reading gyro/accelerometer data from MPU6050 and converting to euler angles.
 #define ENABLE_MAIN_V1                  (1)   // Issue #13: Enables main program that will be running
 
 /*

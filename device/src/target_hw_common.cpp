@@ -166,6 +166,9 @@ void setupTargetHw()
     /* Halting watchdog timer */
     WDT_A_holdTimer();
 
+    /* Enable FPU for floating point math */
+    MAP_FPU_enableModule();
+
     /*
      * Initializes Core Clock to Maximum Frequency with highest accuracy
      *  Initializes GPIO for HFXT in and out
