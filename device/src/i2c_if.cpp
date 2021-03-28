@@ -30,9 +30,10 @@ static volatile bool stopSent;
 static volatile eUSCI_I2C_MasterConfig i2cConfig =
 {
         EUSCI_B_I2C_CLOCKSOURCE_SMCLK,          // SMCLK Clock Source
-        12000000,                               // SMCLK = 12MHz
+        12000000,                               // Set during runtime
+        //10000,
         EUSCI_B_I2C_SET_DATA_RATE_400KBPS,      // Desired I2C Clock of 400khz
-        0,                                      // No byte counter threshold
+        0,                                      // No byte counter threshold (using manual stop)
         EUSCI_B_I2C_NO_AUTO_STOP
 };
 
@@ -94,7 +95,7 @@ bool I2c::MSP432::init()
      */
 
     /* I2C Clock Soruce Speed */
-    i2cConfig.i2cClk = MAP_CS_getSMCLK();
+    //i2cConfig.i2cClk = MAP_CS_getSMCLK();
 
     /* Select I2C function for I2C_SCL & I2C_SDA */
     GPIO_setAsPeripheralModuleFunctionOutputPin(EUSCI_I2C_PORT, EUSCI_I2C_SCL_PIN,

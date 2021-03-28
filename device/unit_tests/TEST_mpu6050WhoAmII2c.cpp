@@ -25,7 +25,11 @@ int TEST_mpu6500WhoAmII2c()
     uint8_t data;
 
     I2c::init();
-    I2c::read(MPU6050_DEVADDR, WHO_AM_I_REGADDR, 1, &data);
+
+    while(1)
+    {
+        I2c::read(MPU6050_DEVADDR, WHO_AM_I_REGADDR, 1, &data);
+    }
 
     if (data == WHO_AM_I_VALUE)
     {

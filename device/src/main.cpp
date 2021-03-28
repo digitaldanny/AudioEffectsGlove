@@ -10,6 +10,11 @@
 #include "i2c_if.h"
 /// DEBUG **********
 
+    // index 0 stores Yaw-Pitch-Roll, index 1 stores raw gyro data
+    float yaw[2];
+    float pitch[2];
+    float roll[2];
+
 int main()
 {
     setupTargetHw(); // MSP432 configurations (clock speed, WDT disable, etc)
@@ -29,17 +34,14 @@ int main()
     unsigned int err_c = 0; //cumulative number of MPU/DMP reads that brought corrupted packet
     unsigned int err_o = 0; //cumulative number of MPU/DMP reads that had overflow bit set
 
-    // index 0 stores Yaw-Pitch-Roll, index 1 stores raw gyro data
-    float yaw[2];
-    float pitch[2];
-    float roll[2];
-
     I2c::init();
 
     ret = mympu_open(200);
 
     while(1)
     {
+        ret = mympu_update();
+
         switch (ret) {
         case 0: c++; break;
         case 1: np++; break;
@@ -49,7 +51,7 @@ int main()
             break;
         }
 
-        if (!(c%25))
+        if (!(c%2))
         {
             yaw[0] = mympu.ypr[0];
             yaw[1] = mympu.gyro[0];
@@ -62,6 +64,7 @@ int main()
 
             roll[0] = -1.0f; // breakpoint here
         }
+        delayMs(1);
     }
 
 #endif // ENABLE_UNIT_TEST_MPU6050_SENSORDATA

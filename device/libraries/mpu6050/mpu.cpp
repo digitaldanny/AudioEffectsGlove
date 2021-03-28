@@ -59,26 +59,26 @@ int mympu_open(unsigned int rate) {
 	if (ret) return 60+ret;
 #endif
 
-//	dmp_select_device(0);
-//	dmp_init_structures();
-//
-//	ret = dmp_load_motion_driver_firmware();
-//#ifdef MPU_DEBUG
-//	if (ret) return 80+ret;
-//#endif
-//
-//	ret = dmp_set_fifo_rate(rate);
-//#ifdef MPU_DEBUG
-//	if (ret) return 90+ret;
-//#endif
-//
-//	ret = mpu_set_dmp_state(1);
-//#ifdef MPU_DEBUG
-//	if (ret) return 100+ret;
-//#endif
-//
-//	ret = dmp_enable_feature(DMP_FEATURE_6X_LP_QUAT|DMP_FEATURE_SEND_CAL_GYRO|DMP_FEATURE_GYRO_CAL);
-//	ret = dmp_enable_feature(DMP_FEATURE_SEND_CAL_GYRO|DMP_FEATURE_GYRO_CAL);
+	dmp_select_device(0);
+	dmp_init_structures();
+
+	ret = dmp_load_motion_driver_firmware();
+#ifdef MPU_DEBUG
+	if (ret) return 80+ret;
+#endif
+
+	ret = dmp_set_fifo_rate(rate);
+#ifdef MPU_DEBUG
+	if (ret) return 90+ret;
+#endif
+
+	ret = mpu_set_dmp_state(1);
+#ifdef MPU_DEBUG
+	if (ret) return 100+ret;
+#endif
+
+	ret = dmp_enable_feature(DMP_FEATURE_6X_LP_QUAT|DMP_FEATURE_SEND_CAL_GYRO|DMP_FEATURE_GYRO_CAL);
+	ret = dmp_enable_feature(DMP_FEATURE_SEND_CAL_GYRO|DMP_FEATURE_GYRO_CAL);
 #ifdef MPU_DEBUG
 	if (ret) return 110+ret;
 #endif
