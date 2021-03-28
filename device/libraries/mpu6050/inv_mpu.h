@@ -21,8 +21,10 @@
 #ifndef _INV_MPU_H_
 #define _INV_MPU_H_
 
-#include "I2Cdev.h"
+//#include "I2Cdev.h"
+#include "i2c_if.h"
 
+/* USER MUST ADD DEFINE FOR TARGET DEVICE (ex. MPU6050, MPU6500, etc) */
 #define MPU6050
 
 //  Define this symbol to get debug messages
