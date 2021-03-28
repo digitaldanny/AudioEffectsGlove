@@ -6,7 +6,6 @@
 
 /// DEBUG **********
 #include "lcd_64x48_bitmap.h"
-#include "i2c_if.h"
 /// DEBUG **********
 
 int main()
@@ -26,19 +25,7 @@ int main()
 #endif // ENABLE_UNIT_TEST_MPU6500_WHOAMI_SPI
 
 #if ENABLE_UNIT_TEST_MPU6050_WHOAMI_I2C
-    uint8_t data;
-
-    I2c::init();
-    while(true)
-    {
-        I2c::read(0x68, 0x75, 1, &data);
-        if (data == 0x68)
-        {
-            // Test passes!
-            data = 0;
-        }
-        delayMs(1);
-    }
+    TEST_mpu6500WhoAmISpi();
 #endif // ENABLE_UNIT_TEST_MPU6050_WHOAMI_I2C
 
 #if ENABLE_UNIT_TEST_EXT_PWR_SWITCH
