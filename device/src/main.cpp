@@ -16,13 +16,14 @@ int main()
     setupTargetHw(); // MSP432 configurations (clock speed, WDT disable, etc)
     initExternalHwPower(); // Initialize external hardware power (off by default)
 
-    //lcd_setup();
-    // while(true)
-    // {
-    //     lcd_test();
-    // }
-   //lcd_loop();
-
+#if ENABLE_UNIT_TEST_LCD_DEMO
+    lcd_setup();
+    while(true)
+    {
+        lcd_test();
+    }
+    lcd_loop();
+#endif // ENABLE_UNIT_TEST_LCD_DEMO
 
 #if ENABLE_UNIT_TEST_I2C
     I2c::init();
