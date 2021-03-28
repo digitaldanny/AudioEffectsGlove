@@ -31,7 +31,6 @@ static volatile eUSCI_I2C_MasterConfig i2cConfig =
 {
         EUSCI_B_I2C_CLOCKSOURCE_SMCLK,          // SMCLK Clock Source
         12000000,                               // Set during runtime
-        //10000,
         EUSCI_B_I2C_SET_DATA_RATE_400KBPS,      // Desired I2C Clock of 400khz
         0,                                      // No byte counter threshold (using manual stop)
         EUSCI_B_I2C_NO_AUTO_STOP
@@ -162,7 +161,7 @@ bool I2c::MSP432::write(uint8_t ui8Addr, uint8_t ui8Reg, uint8_t ui8ByteCount, u
     }
 }
 
-bool I2c::MSP432::read(uint8_t ui8Addr, uint8_t ui8Reg, uint8_t ui8ByteCount, uint8_t *Data)
+bool I2c::MSP432::read(uint8_t ui8Addr, uint8_t ui8Reg, uint8_t ui8ByteCount, uint8_t *& Data)
 {
     /* Todo: Implement a delay */
     /* Wait until ready */
@@ -231,30 +230,8 @@ extern "C" void EUSCIB1_IRQHandler(void)
 {
     uint_fast16_t status;
 
-    while(1); // SHOULDN'T ENTER HERE FOR POLLING IMPLEMENTATION
-
-    status = MAP_I2C_getEnabledInterruptStatus(EUSCI_B1_BASE);
-    MAP_I2C_clearInterruptFlag(EUSCI_B1_BASE, status);
-
-    /* If we reached the transmit interrupt, it means we are at index 1 of
-     * the transmit buffer. When doing a repeated start, before we reach the
-     * last byte we will need to change the mode to receive mode, set the start
-     * condition send bit, and then load the final byte into the TXBUF.
-     */
-    if (status & EUSCI_B_I2C_TRANSMIT_INTERRUPT0)
-    {
-        xferIndex = 0;
-
-        // Finish writing the register address
-        //MAP_I2C_masterSendMultiByteNext(EUSCI_B1_BASE, regAddr);
-        MAP_I2C_disableInterrupt(EUSCI_B1_BASE, EUSCI_B_I2C_TRANSMIT_INTERRUPT0);
-
-        // Start read request
-        MAP_I2C_setMode(EUSCI_B1_BASE, EUSCI_B_I2C_RECEIVE_MODE);
-        MAP_I2C_masterReceiveStart(EUSCI_B1_BASE);
-        MAP_I2C_enableInterrupt(EUSCI_B1_BASE, EUSCI_B_I2C_RECEIVE_INTERRUPT0);
-
-    }
+    status = MAP_I2C_getEnabledInterruptStatus(EUSCI_I2C_MODULE);
+    MAP_I2C_clearInterruptFlag(EUSCI_I2C_MODULE, status);
 
     /* Receives bytes into the receive buffer. If we have received all bytes,
      * send a STOP condition */
@@ -263,13 +240,21 @@ extern "C" void EUSCIB1_IRQHandler(void)
         // Read the next byte from the slave, then increment receive buffer index
         pData[xferIndex++] = MAP_I2C_masterReceiveMultiByteNext(EUSCI_B1_BASE);
 
-        // Send stop bit and reset transfer globals
-        if(xferIndex == numTransferBytes)
+        // Read the next byte.
+        if (xferIndex != numTransferBytes)
         {
-            MAP_I2C_disableInterrupt(EUSCI_B1_BASE, EUSCI_B_I2C_RECEIVE_INTERRUPT0);
+            MAP_I2C_masterReceiveMultiByteStop(EUSCI_I2C_MODULE);
+            pData[xferIndex] = MAP_I2C_masterReceiveMultiByteNext(EUSCI_I2C_MODULE);
+            xferIndex++;
+        }
 
-            // Reset globals
-            xferIndex = 0;
+        // Receive the last byte needed.
+        else
+        {
+            pData[xferIndex] = MAP_I2C_masterReceiveMultiByteFinish(EUSCI_I2C_MODULE);
+            MAP_I2C_disableInterrupt(EUSCI_I2C_MODULE, EUSCI_B_I2C_RECEIVE_INTERRUPT0);
+
+            // Set flag to complete read
             stopSent = true;
         }
     }
