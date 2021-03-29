@@ -51,4 +51,8 @@ int TEST_timerDelay();
 int TEST_lcdProductDemo();
 #endif // ENABLE_UNIT_TEST_LCD_DEMO
 
+#if ENABLE_UNIT_TEST_LCD_TEXT
+int TEST_lcdGraphics();
+#endif // ENABLE_UNIT_TEST_LCD_TEXT
+
 #endif // _SRC_UNIT_TESTS

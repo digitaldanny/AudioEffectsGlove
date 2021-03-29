@@ -7,7 +7,6 @@
 /// DEBUG **********
 #include "i2c_if.h"
 #include "spi_if.h"
-#include "lcd_graphics.h"
 /// DEBUG **********
 
 int main()
@@ -25,18 +24,7 @@ int main()
 #endif // ENABLE_UNIT_TEST_TIMER_DELAY
 
 #if ENABLE_UNIT_TEST_LCD_TEXT
-    LcdGfx::init();
-    while(1)
-    {
-        LcdGfx::drawFill(0xFF);
-        LcdGfx::drawFill(0x00);
-        LcdGfx::drawString(0, 0, "Hello 0", 7);
-        LcdGfx::drawString(0, 1, "Hello 1", 7);
-        LcdGfx::drawString(0, 2, "Hello 2", 7);
-        LcdGfx::drawString(0, 3, "Hello 3", 7);
-        LcdGfx::drawString(0, 4, "Hello 4", 7);
-        LcdGfx::drawString(0, 5, "0123456789", 10);
-    }
+    TEST_lcdGraphics();
 #endif // ENABLE_UNIT_TEST_LCD_TEXT
 
 #if ENABLE_UNIT_TEST_LCD_DEMO

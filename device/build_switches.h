@@ -45,7 +45,7 @@
 #define ENABLE_UNIT_TEST_MPU6500_WHOAMI_I2C (0 & ENABLE_UNIT_TEST) // Issue #47: Enable I2C read from MPU6500's WHOI_AM_I register.
 #define ENABLE_UNIT_TEST_LCD_DEMO       (0 & ENABLE_UNIT_TEST)  // Issue #46: Enable demo animations to run on CFAL6448A lcd over SPI.
 #define ENABLE_UNIT_TEST_LCD_TEXT       (1 & ENABLE_UNIT_TEST)  // Issue #46: Draws custom text and image to the LCD.
-#define ENABLE_MAIN_V1                  (0)   // Issue #13: Enables main program that will be running
+#define ENABLE_MAIN_V1                  (1)   // Issue #13: Enables main program that will be running
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
