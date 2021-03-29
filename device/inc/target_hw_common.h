@@ -112,6 +112,8 @@ typedef struct
  *  Register select determines if LCD is in data or command mode.
  * @lcdReset
  *  Active low reset for LCD.
+ * @spareGpio
+ *  Spare GPIO for various testing. Not available on the PCB.
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
  */
 typedef struct
@@ -129,6 +131,7 @@ typedef struct
     pinPort_t spiCs1;
     pinPort_t lcdRs;
     pinPort_t lcdReset;
+    pinPort_t spareGpio;
 } systemIO_t;
 
 /*

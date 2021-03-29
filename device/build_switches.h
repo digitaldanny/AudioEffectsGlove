@@ -29,6 +29,7 @@
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 #define ENABLE_UNIT_TEST                (1)
+#define ENABLE_UNIT_TEST_TIMER_DELAY    (0 & ENABLE_UNIT_TEST)  // Issue NONE: Infinitely toggle using ms and us delays. Requires oscilloscope connections.
 #define ENABLE_UNIT_TEST_WIRELESS_API   (0 & ENABLE_UNIT_TEST)   // Issue #8: Enables unit test for the wireless API.
 #define ENABLE_UNIT_TEST_NXP_API        (0 & ENABLE_UNIT_TEST)   // Issue #2: Enables unit test for the gyro/accel/mag sensor pack reading.
 #define ENABLE_UNIT_TEST_MUX            (0 & ENABLE_UNIT_TEST)   // Issue #7: Enables unit test for setting mux channels.

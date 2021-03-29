@@ -32,8 +32,8 @@
 static const eUSCI_SPI_MasterConfig spiMasterConfig =
 {
         EUSCI_B_SPI_CLOCKSOURCE_SMCLK,
-        12000000,
-        1000000,
+        24000000,
+        8000000,
         //8000000,
         EUSCI_B_SPI_MSB_FIRST,
         EUSCI_B_SPI_PHASE_DATA_CAPTURED_ONFIRST_CHANGED_ON_NEXT,

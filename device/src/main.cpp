@@ -15,6 +15,10 @@ int main()
     setupTargetHw(); // MSP432 configurations (clock speed, WDT disable, etc)
     initExternalHwPower(); // Initialize external hardware power (off by default)
 
+#if ENABLE_UNIT_TEST_TIMER_DELAY
+    TEST_timerDelay();
+#endif // ENABLE_UNIT_TEST_TIMER_DELAY
+
 #if ENABLE_UNIT_TEST_LCD_DEMO
 
     setExternalHwPower(true);
@@ -23,9 +27,10 @@ int main()
     //{
     //    lcd_test();
     //}
-    lcd_loop();
-
-    while(1);
+    while(1)
+    {
+        lcd_loop();
+    }
 #endif // ENABLE_UNIT_TEST_LCD_DEMO
 
 #if ENABLE_UNIT_TEST_I2C

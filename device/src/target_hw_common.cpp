@@ -36,7 +36,8 @@ const systemIO_t systemIO = {
   .spiMiso = {GPIO_PORT_P1, GPIO_PIN7}, // P1.7
   .spiCs1 = {GPIO_PORT_P3, GPIO_PIN5}, // P3.5
   .lcdRs = {GPIO_PORT_P2, GPIO_PIN3}, // P2.3
-  .lcdReset = {GPIO_PORT_P5, GPIO_PIN1} // P5.1
+  .lcdReset = {GPIO_PORT_P5, GPIO_PIN1}, // P5.1
+  .spareGpio = {GPIO_PORT_P2, GPIO_PIN7} // P2.7
 };
 
 volatile systemInfo_t systemInfo;
@@ -104,10 +105,9 @@ void setExternalHwPower(bool enable)
 */
 void delayMs(uint32_t ms)
 {
-    int delayCount = 100;
-    for (int i = 0; i < delayCount; i++)
+    for (int i = 0; i < ms; i++)
     {
-        delayUs(1);
+        delayUs(1100); //
     }
 }
 
@@ -115,6 +115,8 @@ void delayMs(uint32_t ms)
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
  * DESCRIPTION: delayUs
  * Software delay in microseconds (rough approximation).
+ * The value is fairly accurate for values <100, but testing with a value of 100000
+ * shows that the timer is off by about 8.2% (91.8 ms instead of 100 ms).
  *
  * INPUTS:
  * @ms - Number of microseconds that software delay should last.
@@ -123,7 +125,7 @@ void delayMs(uint32_t ms)
 void delayUs(uint32_t us)
 {
 #if TARGET_HW_MSP432
-    uint32_t delayCount = 32*us;
+    uint32_t delayCount = 44*us; // 44 is an experimentally chosen multiplier to produce close to desired delay
 
     // Initialize the timer delay
     Timer32_initModule( TIMER32_0_BASE, TIMER32_PRESCALER_1, TIMER32_32BIT, TIMER32_PERIODIC_MODE);

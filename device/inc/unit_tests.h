@@ -43,4 +43,8 @@ int unitTest_flexSensors();
 int unitTest_hc05DeviceName();
 #endif // ENABLE_UNIT_TEST_HC05_DEVICE_NAME
 
+#if ENABLE_UNIT_TEST_TIMER_DELAY
+int TEST_timerDelay();
+#endif // ENABLE_UNIT_TEST_TIMER_DELAY
+
 #endif // _SRC_UNIT_TESTS
