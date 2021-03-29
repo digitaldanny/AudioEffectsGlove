@@ -6,7 +6,6 @@
 
 /// DEBUG **********
 #include "lcd_64x48_bitmap.h"
-#include "mpu6500.h"
 #include "i2c_if.h"
 #include "spi_if.h"
 /// DEBUG **********
@@ -17,11 +16,13 @@ int main()
     initExternalHwPower(); // Initialize external hardware power (off by default)
 
 #if ENABLE_UNIT_TEST_LCD_DEMO
+
+    setExternalHwPower(true);
     lcd_setup();
-    while(true)
-    {
-        lcd_test();
-    }
+    //while(true)
+    //{
+    //    lcd_test();
+    //}
     lcd_loop();
 #endif // ENABLE_UNIT_TEST_LCD_DEMO
 

@@ -106,10 +106,10 @@
 #define SET_SCK   GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN5)
 #define CLR_RS    GPIO_setOutputLowOnPin(GPIO_PORT_P2, GPIO_PIN3)  // P2.3
 #define SET_RS    GPIO_setOutputHighOnPin(GPIO_PORT_P2, GPIO_PIN3)
-#define CLR_RESET GPIO_setOutputLowOnPin(GPIO_PORT_P5, GPIO_PIN1); _delay_ms(1)  // P5.1
-#define SET_RESET GPIO_setOutputHighOnPin(GPIO_PORT_P5, GPIO_PIN1); _delay_ms(1)
-#define CLR_CS    GPIO_setOutputLowOnPin(GPIO_PORT_P3, GPIO_PIN5); _delay_ms(1)  // P3.5
-#define SET_CS    GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN5); _delay_ms(1)
+#define CLR_RESET GPIO_setOutputLowOnPin(GPIO_PORT_P5, GPIO_PIN1)  // P5.1
+#define SET_RESET GPIO_setOutputHighOnPin(GPIO_PORT_P5, GPIO_PIN1)
+#define CLR_CS    GPIO_setOutputLowOnPin(GPIO_PORT_P3, GPIO_PIN5); delayUs(100)  // P3.5
+#define SET_CS    GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN5); delayUs(100)
 
 /*
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
@@ -418,7 +418,6 @@ void lcd_test()
       {
       //Read this byte from the program memory / flash,
       //Send the data via SPI:
-      //SPI.transfer(pgm_read_byte( &(OLED_image->bitmap_data[row][column]) )); // Arduino
       uint8_t d = 0x3C;
       SPI.transfer(d); // MSP432
 
