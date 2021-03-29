@@ -171,38 +171,32 @@ void setupTargetHw()
     /* Halting watchdog timer */
     WDT_A_holdTimer();
 
-    /*
-     * Initializes Core Clock to Maximum Frequency with highest accuracy
-     *  Initializes GPIO for HFXT in and out
-     *  Enables HFXT
-     *  Sets MSP432 to Power Active Mode to handle 48 MHz
-     *  Sets Flash Wait states for 48 MHz
-     *  Sets MCLK to 48 MHz
-     */
     /* Set GPIO to be Crystal In/Out for HFXT */
     MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_PJ, GPIO_PIN3 | GPIO_PIN2, GPIO_PRIMARY_MODULE_FUNCTION);
 
-    /* Set Core Voltage Level to VCORE1 to handle 48 MHz Speed */
-    while(!PCM_setCoreVoltageLevel(PCM_VCORE1));
+    MAP_CS_setExternalClockSourceFrequency(32768, 48000000);
 
-    /* Set frequency of HFXT and LFXT */
-    MAP_CS_setExternalClockSourceFrequency(32000, 48000000);
-
-    /* Set 2 Flash Wait States */
+    /* Before we start we have to change VCORE to 1 to support the 48MHz frequency */
+    MAP_PCM_setCoreVoltageLevel(PCM_AM_LDO_VCORE1);
     MAP_FlashCtl_setWaitState(FLASH_BANK0, 2);
     MAP_FlashCtl_setWaitState(FLASH_BANK1, 2);
 
-    /* Start HFXT */
-    MAP_CS_startHFXT(0);
+    /* Starting HFXT and LFXT in non-bypass mode without a timeout. */
+    MAP_CS_startHFXT(false);
+    //MAP_CS_startLFXT(false);
 
-    /* Initialize MCLK to HFXT (48Mhz) */
+    /* Initializing the clock source as follows:
+    * MCLK = HFXT = 48MHz
+    * ACLK = LFXT = 48KHz
+    * HSMCLK = HFXT/1 = 48MHz
+    * SMCLK = HFXT/2 = 24MHz
+    * BCLK = REFO = 32kHz
+    */
     MAP_CS_initClockSignal(CS_MCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_1);
-
-    /* Initialize HSMCLK to HFXT/2 (24Mhz) */
-    MAP_CS_initClockSignal(CS_HSMCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_2);
-
-    /* Initialize SMCLK to HFXT/4 (12Mhz) */
-    MAP_CS_initClockSignal(CS_SMCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_4);
+    //MAP_CS_initClockSignal(CS_ACLK, CS_LFXTCLK_SELECT, CS_CLOCK_DIVIDER_1);
+    MAP_CS_initClockSignal(CS_HSMCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_1);
+    MAP_CS_initClockSignal(CS_SMCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_2);
+    MAP_CS_initClockSignal(CS_BCLK, CS_REFOCLK_SELECT, CS_CLOCK_DIVIDER_1);
 
     /* Enabling the FPU for floating point operation */
     MAP_FPU_enableModule();

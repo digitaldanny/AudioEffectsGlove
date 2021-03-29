@@ -24,6 +24,8 @@ int main()
     //    lcd_test();
     //}
     lcd_loop();
+
+    while(1);
 #endif // ENABLE_UNIT_TEST_LCD_DEMO
 
 #if ENABLE_UNIT_TEST_I2C
