@@ -1,7 +1,7 @@
 #include "build_switches.h"
 #if ENABLE_UNIT_TEST_MPU6500_WHOAMI_SPI
 
-#include "unit_tests.h"
+#include "entry_points.h"
 #include "mpu6500.h"
 
 #define CLR_CS    GPIO_setOutputLowOnPin(systemIO.spiCs1.port, systemIO.spiCs1.pin)  // P3.5

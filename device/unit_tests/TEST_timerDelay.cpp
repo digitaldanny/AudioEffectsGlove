@@ -1,7 +1,7 @@
 #include "build_switches.h"
 #if ENABLE_UNIT_TEST_TIMER_DELAY
 
-#include "unit_tests.h"
+#include "entry_points.h"
 #include "target_hw_common.h"
 
 #define DELAY_US    delayUs

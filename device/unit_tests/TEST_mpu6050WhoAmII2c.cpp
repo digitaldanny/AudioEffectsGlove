@@ -1,7 +1,7 @@
 #include "build_switches.h"
 #if ENABLE_UNIT_TEST_MPU6050_WHOAMI_I2C
 
-#include "unit_tests.h"
+#include "entry_points.h"
 #include "i2c_if.h"
 
 #define MPU6050_DEVADDR     0x68
