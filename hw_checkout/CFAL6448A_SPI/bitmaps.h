@@ -1,83 +1,10 @@
 #ifndef __bitmaps_h__
 #define __bitmaps_h__
-
-#include "build_switches.h"
-#include "target_hw_common.h"
-#include "spi_if.h"
-
-#define _delay_ms(ms) delayMs(ms)
-#define PROGMEM
-#define pgm_read_byte(x) (*(const unsigned char *)(x))
-#define pgm_read_word(x) (*(const unsigned long *)(x))
-
-/*
- * LCD SPI & control lines
- *   HEADER   | Color  | LCD
- * -----------+--------+-------------------------
- *  P1.6      | Brown  | LCD_MOSI   (hardware SPI)
- *  P1.5      | Red    | LCD_SCK    (hardware SPI)
- *  P2.3      | Orange | LCD_RS     (gpio)
- *  P5.1      | Yellow | LCD_RESET  (gpio)
- *  P3.5      | Green  | LCD_CS_NOT (GPIO or SPI SS)
- *  P1.7      | N/A    | not used   (would be MISO)
- *
- */
-
-#define CLR_MOSI  GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN6)  // P1.6
-#define SET_MOSI  GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN6)
-#define CLR_SCK   GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN5)  // P1.5
-#define SET_SCK   GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN5)
-#define CLR_RS    GPIO_setOutputLowOnPin(GPIO_PORT_P2, GPIO_PIN3)  // P2.3
-#define SET_RS    GPIO_setOutputHighOnPin(GPIO_PORT_P2, GPIO_PIN3)
-#define CLR_RESET GPIO_setOutputLowOnPin(GPIO_PORT_P5, GPIO_PIN1)  // P5.1
-#define SET_RESET GPIO_setOutputHighOnPin(GPIO_PORT_P5, GPIO_PIN1)
-#define CLR_CS    GPIO_setOutputLowOnPin(GPIO_PORT_P3, GPIO_PIN5)  // P3.5
-#define SET_CS    GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN5)
-
 typedef struct
   {
   unsigned char
     bitmap_data[6][64];
   } SCREEN_IMAGE;
-
-/*
- * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
- * PROTOTYPES
- * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
-*/
-
-/*
- * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
- * DESCRIPTION: Spi_c
- * This class simply calls the SPI functions in "spi_if." The need for this class
- * comes from porting the Arduino drivers for this LCD to the MSP432. In an attempt
- * to modify as little code as possible, this file requires an object instantiation
- * called "SPI"
- * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-*/
-class Spi_c
-{
-public:
-    void begin();
-    uint8_t transfer(uint8_t data);
-};
-extern Spi_c SPI;
-
-void lcd_setup( void );
-void SPI_sendCommand(uint8_t command);
-void SPI_sendData(uint8_t data);
-void show_64_x_48_bitmap(const SCREEN_IMAGE *OLED_image);
-void Set_Address(uint8_t column, uint8_t page);
-
-/*
- * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
- * DEMO ONLY CODE / STRUCTURES
- * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
-*/
-
-#if ENABLE_UNIT_TEST_LCD_DEMO
-void lcd_loop(void);
-void lcd_test();
 
 const SCREEN_IMAGE Logo_6448 PROGMEM =
   {
@@ -236,7 +163,7 @@ const SCREEN_IMAGE Gear_7_6448 PROGMEM =
       {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xE0,0xE0,0xE0,0xE0,0xE0,0xC0,0xC0,0x80,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
     }
   };
-#endif // ENABLE_UNIT_TEST_LCD_DEMO
+
 
 #endif // __bitmaps_h__
 

@@ -33,8 +33,8 @@
 //
 //For more information, please refer to <http://unlicense.org/>
 //===========================================================================
-//#include <SPI.h>
-//#include "bitmap.h"
+#include <SPI.h>
+#include "bitmaps.h"
 //============================================================================
 // The CFAL6448A-066B is a 3.3v device. You need a 3.3v Arduino to operate this
 // code properly. We used a seeedunio v4.2 set to 3.3v:
@@ -57,9 +57,6 @@
 // 3.3v => VBAT
 // 3.3v => VDD
 //
-
-/*
-// ARDUINO IMPLEMENTATION
 #define CLR_RS    (PORTB &= ~(0x01))
 #define SET_RS    (PORTB |=  (0x01))
 #define CLR_RESET (PORTB &= ~(0x02))
@@ -70,30 +67,10 @@
 #define SET_MOSI  (PORTB |=  (0x08))
 #define CLR_SCK   (PORTB &= ~(0x20))
 #define SET_SCK   (PORTB |=  (0x20))
-*/
-
-
-/*
- * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
- * MSP432 PORT (03/01/2021)
- * Author: Daniel Hamilton
- * Goal: Updating drivers to support Texas Instruments MSP432.
- * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
- */
-
-#include "lcd_64x48_bitmap.h"
-
+//============================================================================
 #define NUMBER_OF_SCREENS (13)
 #define GEAR_START_SCREEN (5)
-
-
-void Spi_c::begin() { Spi::init(); }
-uint8_t Spi_c::transfer(uint8_t data) { return Spi::transferByte(data); }
-Spi_c SPI; // <- Instantiation here.
-
-//============================================================================
-#if ENABLE_UNIT_TEST_LCD_DEMO
-const SCREEN_IMAGE *const screens[NUMBER_OF_SCREENS] =
+const SCREEN_IMAGE *const screens[NUMBER_OF_SCREENS] PROGMEM=
   {
   &Logo_6448,
   &Dimensions_6448,
@@ -109,8 +86,6 @@ const SCREEN_IMAGE *const screens[NUMBER_OF_SCREENS] =
   &Gear_6_6448,
   &Gear_7_6448
   };
-uint8_t gear_dir;
-#endif // ENABLE_UNIT_TEST_LCD_DEMO
 //============================================================================
 void SPI_sendCommand(uint8_t command)
   {
@@ -202,10 +177,10 @@ void show_64_x_48_bitmap(const SCREEN_IMAGE *OLED_image)
       {
       //Read this byte from the program memory / flash,
       //Send the data via SPI:
-      SPI.transfer(pgm_read_byte(&(OLED_image->bitmap_data[row][column])));
+      SPI.transfer(pgm_read_byte( &(OLED_image  ->bitmap_data[row][column]) ));
       }
     // Deselect the LCD controller
-    SET_CS;
+    SET_CS;    
     }
   }
 //============================================================================
@@ -278,9 +253,10 @@ void Initialize_CFAL6448A(void)
   SPI_sendCommand(SSD1306B_DISPLAY_ON_NO_SLEEP_AF);
   }
 //============================================================================
-
+uint8_t
+  gear_dir;
 //----------------------------------------------------------------------------
-void lcd_setup( void )
+void setup( void )
   {
   // LCD SPI & control lines
   //   ARD      | Port | LCD
@@ -291,14 +267,8 @@ void lcd_setup( void )
   // #11/D11    |  PB3 | LCD_MOSI   (hardware SPI)
   // #12/D12    |  PB4 | not used   (would be MISO)
   // #13/D13    |  PB5 | LCD_SCK    (hardware SPI)
-
   //Set the control lines to output
-  //DDRB |= 0x2F;
-  MAP_GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN6);
-  MAP_GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN5);
-  MAP_GPIO_setAsOutputPin(GPIO_PORT_P2, GPIO_PIN3);
-  MAP_GPIO_setAsOutputPin(GPIO_PORT_P5, GPIO_PIN1);
-  MAP_GPIO_setAsOutputPin(GPIO_PORT_P3, GPIO_PIN5);
+  DDRB |= 0x2F;
 
   //Drive the control lines to a reasonable starting state.
   CLR_RESET;
@@ -310,32 +280,22 @@ void lcd_setup( void )
   // Initialize SPI. By default the clock is 4MHz.
   SPI.begin();
   //Bump the clock to 8MHz. Appears to be the maximum.
-  //SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
-
+  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
 
   //Fire up the SPI OLED
   Initialize_CFAL6448A();
 
-#if ENABLE_UNIT_TEST_LCD_DEMO
   gear_dir=0;
-#endif // ENABLE_UNIT_TEST_LCD_DEMO
   }
-
-/*
- * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
- * DEMO ONLY CODE
- * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
-*/
-
-#if ENABLE_UNIT_TEST_LCD_DEMO
-void  lcd_loop(void)
+//----------------------------------------------------------------------------
+void  loop(void)
   {
   uint8_t
     current_screen;
   //Put up some bitmaps from flash
   for(current_screen=0;current_screen<GEAR_START_SCREEN;current_screen++)
     {
-      show_64_x_48_bitmap((SCREEN_IMAGE *)pgm_read_word(&screens[current_screen]));
+    show_64_x_48_bitmap((SCREEN_IMAGE *)pgm_read_word(&screens[current_screen]));
     //Wait a bit . . .
     _delay_ms(1500);
     if(current_screen < 2)
@@ -353,7 +313,7 @@ void  lcd_loop(void)
       {
       for(current_screen=GEAR_START_SCREEN;current_screen<NUMBER_OF_SCREENS;current_screen++)
         {
-          show_64_x_48_bitmap((SCREEN_IMAGE *)pgm_read_word(&screens[current_screen]));
+        show_64_x_48_bitmap((SCREEN_IMAGE *)pgm_read_word(&screens[current_screen]));
         _delay_ms(20);        
         }
       }
@@ -365,7 +325,7 @@ void  lcd_loop(void)
       {
       for(current_screen=NUMBER_OF_SCREENS-1;GEAR_START_SCREEN<=current_screen;current_screen--)
         {
-          show_64_x_48_bitmap((SCREEN_IMAGE *)pgm_read_word(&screens[current_screen]));
+        show_64_x_48_bitmap((SCREEN_IMAGE *)pgm_read_word(&screens[current_screen]));
         _delay_ms(20);        
         }
       }
@@ -374,30 +334,3 @@ void  lcd_loop(void)
   }
 //============================================================================
 
-void lcd_test()
-{
-    //Display is offest by 32 columns
-    //(only 64 used of a possible 128, 32 discarded each side)
-    Set_Address(32,123);
-
-    // Select the LCD's data register
-    SET_RS;
-    // Select the LCD controller
-    CLR_CS;
-    for(int column=0;column<256;column++)
-      {
-      //Read this byte from the program memory / flash,
-      //Send the data via SPI:
-      uint8_t d = 0x3C;
-      SPI.transfer(d); // MSP432
-
-      uint8_t c = 0xAF;
-      SPI_sendCommand(c);
-
-      c = 0xAE;
-      SPI_sendCommand(c);
-      }
-    // Deselect the LCD controller
-    SET_CS;
-}
-#endif // ENABLE_UNIT_TEST_LCD_DEMO

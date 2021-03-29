@@ -53,6 +53,30 @@ int unitTest_hc05DeviceName();
 int unitTest_hc05RwToSlave();
 #endif // ENABLE_UNIT_TEST_HC05_RW_TO_SLAVE
 
+#if ENABLE_UNIT_TEST_MPU6500_WHOAMI_SPI
+int TEST_mpu6500WhoAmISpi();
+#endif // ENABLE_UNIT_TEST_MPU6500_WHOAMI_SPI
+
+#if ENABLE_UNIT_TEST_MPU6050_WHOAMI_I2C
+int TEST_mpu6500WhoAmII2c();
+#endif // ENABLE_UNIT_TEST_MPU6050_WHOAMI_I2C
+
+#if ENABLE_UNIT_TEST_MPU6050_SENSORDATA_RAW
+int TEST_mpu6500RawSensorData();
+#endif // ENABLE_UNIT_TEST_MPU6050_SENSORDATA_RAW
+
+#if ENABLE_UNIT_TEST_TIMER_DELAY
+int TEST_timerDelay();
+#endif // ENABLE_UNIT_TEST_TIMER_DELAY
+
+#if ENABLE_UNIT_TEST_LCD_DEMO
+int TEST_lcdProductDemo();
+#endif // ENABLE_UNIT_TEST_LCD_DEMO
+
+#if ENABLE_UNIT_TEST_LCD_TEXT
+int TEST_lcdGraphics();
+#endif // ENABLE_UNIT_TEST_LCD_TEXT
+
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
  * MAIN PROGRAMS
@@ -64,3 +88,4 @@ int unitTest_hc05ConfigMaster();
 #endif // ENABLE_HC05_CONFIG_MSTR
 
 #endif // _SRC_ENTRY_POINTS
+

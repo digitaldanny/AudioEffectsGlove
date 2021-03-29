@@ -34,7 +34,10 @@ const systemIO_t systemIO = {
   .spiClk = {GPIO_PORT_P1, GPIO_PIN5}, // P1.5
   .spiMosi = {GPIO_PORT_P1, GPIO_PIN6}, // P1.6
   .spiMiso = {GPIO_PORT_P1, GPIO_PIN7}, // P1.7
-  .spiCs1 = {GPIO_PORT_P3, GPIO_PIN5} // P3.5
+  .spiCs1 = {GPIO_PORT_P3, GPIO_PIN5}, // P3.5
+  .lcdRs = {GPIO_PORT_P2, GPIO_PIN3}, // P2.3
+  .lcdReset = {GPIO_PORT_P5, GPIO_PIN1}, // P5.1
+  .spareGpio = {GPIO_PORT_P2, GPIO_PIN7} // P2.7
 };
 
 volatile systemInfo_t systemInfo;
@@ -102,9 +105,9 @@ void setExternalHwPower(bool enable)
 */
 void delayMs(uint32_t ms)
 {
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i < ms; i++)
     {
-        delayUs(1);
+        delayUs(1100); //
     }
 }
 
@@ -112,6 +115,8 @@ void delayMs(uint32_t ms)
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
  * DESCRIPTION: delayUs
  * Software delay in microseconds (rough approximation).
+ * The value is fairly accurate for values <100, but testing with a value of 100000
+ * shows that the timer is off by about 8.2% (91.8 ms instead of 100 ms).
  *
  * INPUTS:
  * @ms - Number of microseconds that software delay should last.
@@ -120,13 +125,15 @@ void delayMs(uint32_t ms)
 void delayUs(uint32_t us)
 {
 #if TARGET_HW_MSP432
+    uint32_t delayCount = 44*us; // 44 is an experimentally chosen multiplier to produce close to desired delay
+
     // Initialize the timer delay
     Timer32_initModule( TIMER32_0_BASE, TIMER32_PRESCALER_1, TIMER32_32BIT, TIMER32_PERIODIC_MODE);
     Timer32_disableInterrupt(TIMER32_0_BASE);
 
     // Wait for timer to finish
     Timer32_haltTimer(TIMER32_0_BASE);
-    Timer32_setCount(TIMER32_0_BASE, 32*us);
+    Timer32_setCount(TIMER32_0_BASE, delayCount);
     Timer32_startTimer(TIMER32_0_BASE, true);
 
     while(Timer32_getValue(TIMER32_0_BASE) > 0);
@@ -166,38 +173,32 @@ void setupTargetHw()
     /* Halting watchdog timer */
     WDT_A_holdTimer();
 
-    /*
-     * Initializes Core Clock to Maximum Frequency with highest accuracy
-     *  Initializes GPIO for HFXT in and out
-     *  Enables HFXT
-     *  Sets MSP432 to Power Active Mode to handle 48 MHz
-     *  Sets Flash Wait states for 48 MHz
-     *  Sets MCLK to 48 MHz
-     */
     /* Set GPIO to be Crystal In/Out for HFXT */
     MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_PJ, GPIO_PIN3 | GPIO_PIN2, GPIO_PRIMARY_MODULE_FUNCTION);
 
-    /* Set Core Voltage Level to VCORE1 to handle 48 MHz Speed */
-    while(!PCM_setCoreVoltageLevel(PCM_VCORE1));
+    MAP_CS_setExternalClockSourceFrequency(32768, 48000000);
 
-    /* Set frequency of HFXT and LFXT */
-    MAP_CS_setExternalClockSourceFrequency(32000, 48000000);
-
-    /* Set 2 Flash Wait States */
+    /* Before we start we have to change VCORE to 1 to support the 48MHz frequency */
+    MAP_PCM_setCoreVoltageLevel(PCM_AM_LDO_VCORE1);
     MAP_FlashCtl_setWaitState(FLASH_BANK0, 2);
     MAP_FlashCtl_setWaitState(FLASH_BANK1, 2);
 
-    /* Start HFXT */
-    MAP_CS_startHFXT(0);
+    /* Starting HFXT and LFXT in non-bypass mode without a timeout. */
+    MAP_CS_startHFXT(false);
+    //MAP_CS_startLFXT(false);
 
-    /* Initialize MCLK to HFXT (48Mhz) */
+    /* Initializing the clock source as follows:
+    * MCLK = HFXT = 48MHz
+    * ACLK = LFXT = 48KHz
+    * HSMCLK = HFXT/1 = 48MHz
+    * SMCLK = HFXT/2 = 24MHz
+    * BCLK = REFO = 32kHz
+    */
     MAP_CS_initClockSignal(CS_MCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_1);
-
-    /* Initialize HSMCLK to HFXT/2 (24Mhz) */
-    MAP_CS_initClockSignal(CS_HSMCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_2);
-
-    /* Initialize SMCLK to HFXT/4 (12Mhz) */
-    MAP_CS_initClockSignal(CS_SMCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_4);
+    //MAP_CS_initClockSignal(CS_ACLK, CS_LFXTCLK_SELECT, CS_CLOCK_DIVIDER_1);
+    MAP_CS_initClockSignal(CS_HSMCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_1);
+    MAP_CS_initClockSignal(CS_SMCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_2);
+    MAP_CS_initClockSignal(CS_BCLK, CS_REFOCLK_SELECT, CS_CLOCK_DIVIDER_1);
 
     /* Enabling the FPU for floating point operation */
     MAP_FPU_enableModule();
