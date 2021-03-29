@@ -28,13 +28,14 @@ int main()
     LcdGfx::init();
     while(1)
     {
+        LcdGfx::drawFill(0xFF);
         LcdGfx::drawFill(0x00);
         LcdGfx::drawString(0, 0, "Hello 0", 7);
-        LcdGfx::drawString(1, 1, "Hello 1", 7);
-        LcdGfx::drawString(2, 2, "Hello 2", 7);
-        LcdGfx::drawString(3, 3, "Hello 3", 7);
-        LcdGfx::drawString(4, 4, "Hello 4", 7);
-        LcdGfx::drawString(5, 5, "Hello 5", 7);
+        LcdGfx::drawString(0, 1, "Hello 1", 7);
+        LcdGfx::drawString(0, 2, "Hello 2", 7);
+        LcdGfx::drawString(0, 3, "Hello 3", 7);
+        LcdGfx::drawString(0, 4, "Hello 4", 7);
+        LcdGfx::drawString(0, 5, "0123456789", 10);
     }
 #endif // ENABLE_UNIT_TEST_LCD_TEXT
 

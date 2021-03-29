@@ -119,16 +119,16 @@ bool LcdGfx::writeDataBlock(unsigned char* data, uint16_t len)
  * RETURN: True if transfer was successful.
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 */
+#define CHAR_WIDTH  6
 bool LcdGfx::drawString(uint8_t x, uint8_t y, char* msg, uint16_t msgLen)
 {
     unsigned char *s;
 
-    Set_Address(x*6, y);
-    if (msgLen + x > 21) msgLen = 21 - x;
+    Set_Address(CHAR_WIDTH*(x + 6), y);
     for (uint16_t i = 0; i < msgLen; i++)
     {
-        s = &ucSmallFont[(unsigned char)msg[i]*6];
-        writeDataBlock(s, 6);
+        s = &ucSmallFont[(unsigned char)msg[i]*CHAR_WIDTH];
+        writeDataBlock(s, CHAR_WIDTH);
     }
     return true;
 }
