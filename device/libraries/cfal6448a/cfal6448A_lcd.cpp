@@ -81,56 +81,18 @@
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
  */
 
-#include "target_hw_common.h"
-#include "spi_if.h"
 #include "lcd_64x48_bitmap.h"
 
-/*
- * LCD SPI & control lines
- *   HEADER   | Color  | LCD
- * -----------+--------+-------------------------
- *  P1.6      | Brown  | LCD_MOSI   (hardware SPI)
- *  P1.5      | Red    | LCD_SCK    (hardware SPI)
- *  P2.3      | Orange | LCD_RS     (gpio)
- *  P5.1      | Yellow | LCD_RESET  (gpio)
- *  P3.5      | Green  | LCD_CS_NOT (GPIO or SPI SS)
- *  P1.7      | N/A    | not used   (would be MISO)
- *
- */
-
-#define _delay_ms(ms) delayMs(ms)
-
-#define CLR_MOSI  GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN6)  // P1.6
-#define SET_MOSI  GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN6)
-#define CLR_SCK   GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN5)  // P1.5
-#define SET_SCK   GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN5)
-#define CLR_RS    GPIO_setOutputLowOnPin(GPIO_PORT_P2, GPIO_PIN3)  // P2.3
-#define SET_RS    GPIO_setOutputHighOnPin(GPIO_PORT_P2, GPIO_PIN3)
-#define CLR_RESET GPIO_setOutputLowOnPin(GPIO_PORT_P5, GPIO_PIN1); _delay_ms(1)  // P5.1
-#define SET_RESET GPIO_setOutputHighOnPin(GPIO_PORT_P5, GPIO_PIN1); _delay_ms(1)
-#define CLR_CS    GPIO_setOutputLowOnPin(GPIO_PORT_P3, GPIO_PIN5); _delay_ms(1)  // P3.5
-#define SET_CS    GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN5); _delay_ms(1)
-
-/*
- * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
- * DESCRIPTION: Spi_c
- * This class simply calls the SPI functions in "spi_if." The need for this class
- * comes from porting the Arduino drivers for this LCD to the MSP432. In an attempt
- * to modify as little code as possible, this file requires an object instantiation
- * called "SPI"
- * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-*/
-class Spi_c
-{
-public:
-    void begin() { Spi::init(); }
-    uint8_t transfer(uint8_t data) { return Spi::transferByte(data); }
-};
-static Spi_c SPI; // <- Instantiation here.
-
-//============================================================================
 #define NUMBER_OF_SCREENS (13)
 #define GEAR_START_SCREEN (5)
+
+
+void Spi_c::begin() { Spi::init(); }
+uint8_t Spi_c::transfer(uint8_t data) { return Spi::transferByte(data); }
+Spi_c SPI; // <- Instantiation here.
+
+//============================================================================
+#if ENABLE_UNIT_TEST_LCD_DEMO
 const SCREEN_IMAGE *const screens[NUMBER_OF_SCREENS] =
   {
   &Logo_6448,
@@ -147,6 +109,8 @@ const SCREEN_IMAGE *const screens[NUMBER_OF_SCREENS] =
   &Gear_6_6448,
   &Gear_7_6448
   };
+uint8_t gear_dir;
+#endif // ENABLE_UNIT_TEST_LCD_DEMO
 //============================================================================
 void SPI_sendCommand(uint8_t command)
   {
@@ -238,8 +202,7 @@ void show_64_x_48_bitmap(const SCREEN_IMAGE *OLED_image)
       {
       //Read this byte from the program memory / flash,
       //Send the data via SPI:
-      //SPI.transfer(pgm_read_byte( &(OLED_image->bitmap_data[row][column]) )); // Arduino
-      SPI.transfer(OLED_image->bitmap_data[row][column]); // MSP432
+      SPI.transfer(pgm_read_byte(&(OLED_image->bitmap_data[row][column])));
       }
     // Deselect the LCD controller
     SET_CS;
@@ -315,8 +278,7 @@ void Initialize_CFAL6448A(void)
   SPI_sendCommand(SSD1306B_DISPLAY_ON_NO_SLEEP_AF);
   }
 //============================================================================
-uint8_t
-  gear_dir;
+
 //----------------------------------------------------------------------------
 void lcd_setup( void )
   {
@@ -354,9 +316,18 @@ void lcd_setup( void )
   //Fire up the SPI OLED
   Initialize_CFAL6448A();
 
+#if ENABLE_UNIT_TEST_LCD_DEMO
   gear_dir=0;
+#endif // ENABLE_UNIT_TEST_LCD_DEMO
   }
-//----------------------------------------------------------------------------
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * DEMO ONLY CODE
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+#if ENABLE_UNIT_TEST_LCD_DEMO
 void  lcd_loop(void)
   {
   uint8_t
@@ -364,8 +335,7 @@ void  lcd_loop(void)
   //Put up some bitmaps from flash
   for(current_screen=0;current_screen<GEAR_START_SCREEN;current_screen++)
     {
-    //show_64_x_48_bitmap((SCREEN_IMAGE *)pgm_read_word(&screens[current_screen])); // Arduino
-    show_64_x_48_bitmap((SCREEN_IMAGE*)&screens[current_screen]); // MSP432
+      show_64_x_48_bitmap((SCREEN_IMAGE *)pgm_read_word(&screens[current_screen]));
     //Wait a bit . . .
     _delay_ms(1500);
     if(current_screen < 2)
@@ -383,7 +353,7 @@ void  lcd_loop(void)
       {
       for(current_screen=GEAR_START_SCREEN;current_screen<NUMBER_OF_SCREENS;current_screen++)
         {
-          show_64_x_48_bitmap((SCREEN_IMAGE*)&screens[current_screen]); // MSP432
+          show_64_x_48_bitmap((SCREEN_IMAGE *)pgm_read_word(&screens[current_screen]));
         _delay_ms(20);        
         }
       }
@@ -395,7 +365,7 @@ void  lcd_loop(void)
       {
       for(current_screen=NUMBER_OF_SCREENS-1;GEAR_START_SCREEN<=current_screen;current_screen--)
         {
-          show_64_x_48_bitmap((SCREEN_IMAGE*)&screens[current_screen]); // MSP432
+          show_64_x_48_bitmap((SCREEN_IMAGE *)pgm_read_word(&screens[current_screen]));
         _delay_ms(20);        
         }
       }
@@ -418,7 +388,6 @@ void lcd_test()
       {
       //Read this byte from the program memory / flash,
       //Send the data via SPI:
-      //SPI.transfer(pgm_read_byte( &(OLED_image->bitmap_data[row][column]) )); // Arduino
       uint8_t d = 0x3C;
       SPI.transfer(d); // MSP432
 
@@ -431,3 +400,4 @@ void lcd_test()
     // Deselect the LCD controller
     SET_CS;
 }
+#endif // ENABLE_UNIT_TEST_LCD_DEMO

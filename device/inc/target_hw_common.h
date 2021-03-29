@@ -97,17 +97,23 @@ typedef struct
  *
  * FIELD DESCRIPTIONS:
  * @externalHwPower - Issue #45
- *  GPIO pin to control power enable for external hardware (LCD, MPU6500, HC-05, etc)
+ *  Enables power for external hardware (LCD, MPU6500, HC-05, etc)
  * @bluetoothEn - Issue #37
- *  GPIO pin to control whether HC-05 module operates in data or command mode.
- *
- * TODO:
- * - ADC14 pin for mux output
- * - 3 GPIO pins for mux control
- * - 3 SPI lines for LCD
- * - 2 GPIO for RS and CS lines on LCD
- * - 2 I2C lines for MPU6500
- * - 2 UART lines for HC-05
+ *  Controls whether HC-05 module operates in data or command mode.
+ * @bluetoothState - Issue #37
+ *  Checks if HC-05 master is connected to slave device.
+ * @uartTx/Rx
+ *  Uart pins to communicate with HC-05 device.
+ * @i2cSda/Scl
+ *  I2C lines to communicate with MPU6050.
+ * @spiMiso/Mosi/Clk/Cs1
+ *  SPI lines to communicate with LCD. Cs1 is a generic GPIO.
+ * @lcdRs
+ *  Register select determines if LCD is in data or command mode.
+ * @lcdReset
+ *  Active low reset for LCD.
+ * @spareGpio
+ *  Spare GPIO for various testing. Not available on the PCB.
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
  */
 typedef struct
@@ -123,7 +129,9 @@ typedef struct
     pinPort_t spiMosi;
     pinPort_t spiClk;
     pinPort_t spiCs1;
-    pinPort_t spiCs2;
+    pinPort_t lcdRs;
+    pinPort_t lcdReset;
+    pinPort_t spareGpio;
 } systemIO_t;
 
 /*

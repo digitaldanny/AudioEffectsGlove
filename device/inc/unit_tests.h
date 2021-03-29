@@ -51,4 +51,16 @@ int TEST_mpu6500WhoAmISpi();
 int TEST_mpu6500WhoAmII2c();
 #endif ENABLE_UNIT_TEST_MPU6050_WHOAMI_I2C
 
+#if ENABLE_UNIT_TEST_TIMER_DELAY
+int TEST_timerDelay();
+#endif // ENABLE_UNIT_TEST_TIMER_DELAY
+
+#if ENABLE_UNIT_TEST_LCD_DEMO
+int TEST_lcdProductDemo();
+#endif // ENABLE_UNIT_TEST_LCD_DEMO
+
+#if ENABLE_UNIT_TEST_LCD_TEXT
+int TEST_lcdGraphics();
+#endif // ENABLE_UNIT_TEST_LCD_TEXT
+
 #endif // _SRC_UNIT_TESTS
