@@ -43,4 +43,16 @@ int unitTest_flexSensors();
 int unitTest_hc05DeviceName();
 #endif // ENABLE_UNIT_TEST_HC05_DEVICE_NAME
 
+#if ENABLE_UNIT_TEST_TIMER_DELAY
+int TEST_timerDelay();
+#endif // ENABLE_UNIT_TEST_TIMER_DELAY
+
+#if ENABLE_UNIT_TEST_LCD_DEMO
+int TEST_lcdProductDemo();
+#endif // ENABLE_UNIT_TEST_LCD_DEMO
+
+#if ENABLE_UNIT_TEST_LCD_TEXT
+int TEST_lcdGraphics();
+#endif // ENABLE_UNIT_TEST_LCD_TEXT
+
 #endif // _SRC_UNIT_TESTS
