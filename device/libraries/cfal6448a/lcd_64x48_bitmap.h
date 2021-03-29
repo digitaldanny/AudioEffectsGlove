@@ -1,30 +1,32 @@
 #ifndef __bitmaps_h__
 #define __bitmaps_h__
 
-///// MSP432 CHANGES /////
+#include "build_switches.h"
 #include "target_hw_common.h"
 #include "spi_if.h"
-///// MSP432 CHANGES /////
 
-///// MSP432 CHANGES /////
 #define _delay_ms(ms) delayMs(ms)
 #define PROGMEM
 #define pgm_read_byte(x) (*(const unsigned char *)(x))
 #define pgm_read_word(x) (*(const unsigned long *)(x))
-///// MSP432 CHANGES /////
-
-///// MSP432 CHANGES /////
-void lcd_test();
-///// MSP432 CHANGES /////
 
 void lcd_setup( void );
-void lcd_loop(void);
 
 typedef struct
   {
   unsigned char
     bitmap_data[6][64];
   } SCREEN_IMAGE;
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * DEMO ONLY CODE / STRUCTURES
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+#if ENABLE_UNIT_TEST_LCD_DEMO
+void lcd_loop(void);
+void lcd_test();
 
 const SCREEN_IMAGE Logo_6448 PROGMEM =
   {
@@ -183,7 +185,7 @@ const SCREEN_IMAGE Gear_7_6448 PROGMEM =
       {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xE0,0xE0,0xE0,0xE0,0xE0,0xC0,0xC0,0x80,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
     }
   };
-
+#endif // ENABLE_UNIT_TEST_LCD_DEMO
 
 #endif // __bitmaps_h__
 

@@ -43,7 +43,7 @@
 #define ENABLE_UNIT_TEST_EXT_PWR_SWITCH (0 & ENABLE_UNIT_TEST)  // Issue #45: Enable test that toggles external power switch. Power output be manually validated with DAD board.
 #define ENABLE_UNIT_TEST_MPU6500_WHOAMI_SPI (0 & ENABLE_UNIT_TEST) // Issue #47: Enable SPI read from MPU6500's WHO_AM_I register.
 #define ENABLE_UNIT_TEST_MPU6500_WHOAMI_I2C (0 & ENABLE_UNIT_TEST) // Issue #47: Enable I2C read from MPU6500's WHOI_AM_I register.
-#define ENABLE_UNIT_TEST_LCD_DEMO       (1 & ENABLE_UNIT_TEST)  // Issue #46: Enable demo animations to run on CFAL6448A lcd over SPI.
+#define ENABLE_UNIT_TEST_LCD_DEMO       (0 & ENABLE_UNIT_TEST)  // Issue #46: Enable demo animations to run on CFAL6448A lcd over SPI.
 #define ENABLE_MAIN_V1                  (0)   // Issue #13: Enables main program that will be running
 
 /*

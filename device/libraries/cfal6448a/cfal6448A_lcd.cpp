@@ -351,7 +351,14 @@ void lcd_setup( void )
 
   gear_dir=0;
   }
-//----------------------------------------------------------------------------
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * DEMO ONLY CODE
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+#if ENABLE_UNIT_TEST_LCD_DEMO
 void  lcd_loop(void)
   {
   uint8_t
@@ -424,3 +431,4 @@ void lcd_test()
     // Deselect the LCD controller
     SET_CS;
 }
+#endif // ENABLE_UNIT_TEST_LCD_DEMO

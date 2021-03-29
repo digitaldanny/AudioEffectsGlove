@@ -5,7 +5,6 @@
 #include "unit_tests.h"
 
 /// DEBUG **********
-#include "lcd_64x48_bitmap.h"
 #include "i2c_if.h"
 #include "spi_if.h"
 /// DEBUG **********
@@ -15,17 +14,17 @@ int main()
     setupTargetHw(); // MSP432 configurations (clock speed, WDT disable, etc)
     initExternalHwPower(); // Initialize external hardware power (off by default)
 
+#if ENABLE_UNIT_TEST
+    // Power up the external hardware (needed for some of the unit tests).
+    setExternalHwPower(true);
+#endif // ENABLE_UNIT_TEST
+
 #if ENABLE_UNIT_TEST_TIMER_DELAY
     TEST_timerDelay();
 #endif // ENABLE_UNIT_TEST_TIMER_DELAY
 
 #if ENABLE_UNIT_TEST_LCD_DEMO
-    setExternalHwPower(true);
-    lcd_setup();
-    while(1)
-    {
-        lcd_loop();
-    }
+    TEST_lcdProductDemo();
 #endif // ENABLE_UNIT_TEST_LCD_DEMO
 
 #if ENABLE_UNIT_TEST_I2C
