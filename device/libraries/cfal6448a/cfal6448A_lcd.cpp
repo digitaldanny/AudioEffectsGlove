@@ -81,8 +81,6 @@
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
  */
 
-#include "target_hw_common.h"
-#include "spi_if.h"
 #include "lcd_64x48_bitmap.h"
 
 /*
@@ -98,8 +96,6 @@
  *
  */
 
-#define _delay_ms(ms) delayMs(ms)
-
 #define CLR_MOSI  GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN6)  // P1.6
 #define SET_MOSI  GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN6)
 #define CLR_SCK   GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN5)  // P1.5
@@ -108,8 +104,8 @@
 #define SET_RS    GPIO_setOutputHighOnPin(GPIO_PORT_P2, GPIO_PIN3)
 #define CLR_RESET GPIO_setOutputLowOnPin(GPIO_PORT_P5, GPIO_PIN1)  // P5.1
 #define SET_RESET GPIO_setOutputHighOnPin(GPIO_PORT_P5, GPIO_PIN1)
-#define CLR_CS    GPIO_setOutputLowOnPin(GPIO_PORT_P3, GPIO_PIN5); delayUs(100)  // P3.5
-#define SET_CS    GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN5); delayUs(100)
+#define CLR_CS    GPIO_setOutputLowOnPin(GPIO_PORT_P3, GPIO_PIN5)  // P3.5
+#define SET_CS    GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN5)
 
 /*
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
@@ -238,8 +234,7 @@ void show_64_x_48_bitmap(const SCREEN_IMAGE *OLED_image)
       {
       //Read this byte from the program memory / flash,
       //Send the data via SPI:
-      //SPI.transfer(pgm_read_byte( &(OLED_image->bitmap_data[row][column]) )); // Arduino
-      SPI.transfer(OLED_image->bitmap_data[row][column]); // MSP432
+      SPI.transfer(pgm_read_byte(&(OLED_image->bitmap_data[row][column])));
       }
     // Deselect the LCD controller
     SET_CS;
@@ -364,8 +359,7 @@ void  lcd_loop(void)
   //Put up some bitmaps from flash
   for(current_screen=0;current_screen<GEAR_START_SCREEN;current_screen++)
     {
-    //show_64_x_48_bitmap((SCREEN_IMAGE *)pgm_read_word(&screens[current_screen])); // Arduino
-    show_64_x_48_bitmap((SCREEN_IMAGE*)&screens[current_screen]); // MSP432
+      show_64_x_48_bitmap((SCREEN_IMAGE *)pgm_read_word(&screens[current_screen]));
     //Wait a bit . . .
     _delay_ms(1500);
     if(current_screen < 2)
@@ -383,7 +377,7 @@ void  lcd_loop(void)
       {
       for(current_screen=GEAR_START_SCREEN;current_screen<NUMBER_OF_SCREENS;current_screen++)
         {
-          show_64_x_48_bitmap((SCREEN_IMAGE*)&screens[current_screen]); // MSP432
+          show_64_x_48_bitmap((SCREEN_IMAGE *)pgm_read_word(&screens[current_screen]));
         _delay_ms(20);        
         }
       }
@@ -395,7 +389,7 @@ void  lcd_loop(void)
       {
       for(current_screen=NUMBER_OF_SCREENS-1;GEAR_START_SCREEN<=current_screen;current_screen--)
         {
-          show_64_x_48_bitmap((SCREEN_IMAGE*)&screens[current_screen]); // MSP432
+          show_64_x_48_bitmap((SCREEN_IMAGE *)pgm_read_word(&screens[current_screen]));
         _delay_ms(20);        
         }
       }

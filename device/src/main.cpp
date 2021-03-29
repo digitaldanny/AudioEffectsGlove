@@ -20,13 +20,8 @@ int main()
 #endif // ENABLE_UNIT_TEST_TIMER_DELAY
 
 #if ENABLE_UNIT_TEST_LCD_DEMO
-
     setExternalHwPower(true);
     lcd_setup();
-    //while(true)
-    //{
-    //    lcd_test();
-    //}
     while(1)
     {
         lcd_loop();
