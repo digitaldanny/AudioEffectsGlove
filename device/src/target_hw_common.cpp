@@ -34,7 +34,9 @@ const systemIO_t systemIO = {
   .spiClk = {GPIO_PORT_P1, GPIO_PIN5}, // P1.5
   .spiMosi = {GPIO_PORT_P1, GPIO_PIN6}, // P1.6
   .spiMiso = {GPIO_PORT_P1, GPIO_PIN7}, // P1.7
-  .spiCs1 = {GPIO_PORT_P3, GPIO_PIN5} // P3.5
+  .spiCs1 = {GPIO_PORT_P3, GPIO_PIN5}, // P3.5
+  .lcdRs = {GPIO_PORT_P2, GPIO_PIN3}, // P2.3
+  .lcdReset = {GPIO_PORT_P5, GPIO_PIN1} // P5.1
 };
 
 volatile systemInfo_t systemInfo;
