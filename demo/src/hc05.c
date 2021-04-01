@@ -23,7 +23,9 @@ volatile uint16_t rxLenSinceTx; // how many bytes have been received since last 
 
 void initHc05()
 {
+    resetBuffersHc05();
     initSCIC();
+    initSCICFIFO();
 }
 
 bool resetBuffersHc05()
@@ -41,10 +43,12 @@ bool resetBuffersHc05()
 
 bool writeHc05(uint16_t* msg, uint16_t len)
 {
-    resetBuffersHc05();
-
-    // Write all data in msg buffer
-    SCI_writeCharArray(SCIC_BASE, (const uint16_t *)msg, len);
+    for (uint16_t i = 0; i < len; i++)
+    {
+        // Wait until there is space on the TX FIFO before transferring next byte
+        while(SCI_getTxFIFOStatus(SCIC_BASE) == SCI_FIFO_TX16);
+        SCI_writeCharNonBlocking(SCIC_BASE, msg[i]);
+    }
 
     // Issue PIE ACK
     SCI_clearInterruptStatus(SCIC_BASE, SCI_INT_TXFF);
@@ -93,11 +97,6 @@ void initSCIC(void)
     //
     Interrupt_register(INT_SCIC_RX, sciCRXFIFOISR);
 
-    //
-    // Initialize the Device Peripherals:
-    //
-    initSCICFIFO();
-
     Interrupt_enable(INT_SCIC_RX);
 
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP8); // is this the correct interrupt group?
@@ -145,7 +144,7 @@ void initSCICFIFO(void)
 __interrupt void sciCRXFIFOISR(void)
 {
     // Read all data available in the RX buffer
-    while (SCI_getRxFIFOStatus(SCIC_BASE) || SCI_isDataAvailableNonFIFO(SCIC_BASE))
+    while (SCI_getRxFIFOStatus(SCIC_BASE) != SCI_FIFO_RX0)
     {
         rDataA[rxLenSinceTx] = SCI_readCharNonBlocking(SCIC_BASE);
         rxLenSinceTx++;
@@ -184,6 +183,8 @@ bool loopbackTest()
 
     // INITIALIZE UART - BAUDRATE 38400
     initHc05();
+
+    resetBuffersHc05();
 
     // Write out the message to TX pin
     if (!writeHc05((uint16_t*)tx, msgLen))
@@ -286,7 +287,7 @@ bool hc05RwToMasterTest()
     uint16_t rxLenExpected = 25;
     char* rx;
 
-    uint32_t numTestIterations = 10;
+    uint32_t numTestIterations = 500;
     uint32_t numAccurateTransfers = 0;
     float percentOfAccurateTransfers;
 
@@ -301,9 +302,6 @@ bool hc05RwToMasterTest()
     for (uint32_t testIteration = 0; testIteration < numTestIterations; testIteration++)
     {
         bool iterationPassed = true;
-
-        // Reset RX buffer manually when reading without writing a message first.
-        resetBuffersHc05();
 
         // Read back the message from RX pin
         if (!readHc05((uint16_t**)&rx, rxLenExpected))
@@ -320,6 +318,8 @@ bool hc05RwToMasterTest()
             }
         }
 
+        resetBuffersHc05();
+
         // Write out ACK message
         if (!writeHc05((uint16_t*)tx, txLen))
         {
@@ -331,6 +331,8 @@ bool hc05RwToMasterTest()
         {
             numAccurateTransfers++;
         }
+
+        for(uint32_t ii = 0; ii < 100000; ii++);
     }
 
     percentOfAccurateTransfers = (float)numAccurateTransfers / (float)numTestIterations * 100.0f;
