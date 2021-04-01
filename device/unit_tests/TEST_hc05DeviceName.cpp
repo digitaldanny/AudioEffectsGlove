@@ -1,7 +1,7 @@
 #include "build_switches.h"
 #if ENABLE_UNIT_TEST_HC05_DEVICE_NAME
 
-#include "unit_tests.h"
+#include "entry_points.h"
 #include "hc05_api.h"
 
 /*

@@ -19,7 +19,7 @@
 
 #define UART_BUFFER_MAX_LENGTH                      100
 
-// MSP432 SPECIFIC
+// 12 MHz source
 #define UART_BRDIV_CLK_12M_BAUDRATE_38400           19
 #define UART_UCXBRF_CLK_12M_BAUDRATE_38400          8
 #define UART_UCXBRS_CLK_12M_BAUDRATE_38400          85
@@ -34,6 +34,17 @@
 #define UART_UCXBRF_CLK_12M_BAUDRATE_9600          2
 #define UART_UCXBRS_CLK_12M_BAUDRATE_9600          0
 #define UART_OVERSAMPLING_CLK_12M_BAUDRATE_9600    EUSCI_A_UART_OVERSAMPLING_BAUDRATE_GENERATION
+
+// 16 MHz source
+#define UART_BRDIV_CLK_16M_BAUDRATE_38400           26
+#define UART_UCXBRF_CLK_16M_BAUDRATE_38400          0
+#define UART_UCXBRS_CLK_16M_BAUDRATE_38400          214
+#define UART_OVERSAMPLING_CLK_16M_BAUDRATE_38400    EUSCI_A_UART_OVERSAMPLING_BAUDRATE_GENERATION
+
+#define UART_BRDIV_CLK_16M_BAUDRATE_9600           104
+#define UART_UCXBRF_CLK_16M_BAUDRATE_9600          2
+#define UART_UCXBRS_CLK_16M_BAUDRATE_9600          182
+#define UART_OVERSAMPLING_CLK_16M_BAUDRATE_9600    EUSCI_A_UART_OVERSAMPLING_BAUDRATE_GENERATION
 
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -74,10 +85,12 @@ namespace Uart {
     bool init (baudRate_e baudRate);
     bool send (char* txData);
     bool recv (char** rxData);
+    bool resetBuffer();
 
 #if TARGET_HW_MSP432
     namespace MSP432 {
         bool init (const eUSCI_UART_Config* config);
+        bool resetBuffer();
         bool send (char* txData);
         bool recv (char** rxData);
     }

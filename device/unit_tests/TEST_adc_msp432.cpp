@@ -1,6 +1,6 @@
 #include "build_switches.h"
 #include "target_hw_common.h"
-#include "unit_tests.h"
+#include "entry_points.h"
 #include "adc_if.h"
 
 #if ENABLE_UNIT_TEST_ADC_MSP432

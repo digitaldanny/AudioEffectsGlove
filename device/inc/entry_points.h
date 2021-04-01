@@ -1,7 +1,13 @@
-#ifndef _SRC_UNIT_TESTS
-#define _SRC_UNIT_TESTS
+#ifndef _SRC_ENTRY_POINTS
+#define _SRC_ENTRY_POINTS
 
 #include "build_switches.h"
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * UNIT TESTS
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
 
 #if ENABLE_UNIT_TEST_EXT_PWR_SWITCH
 void unitTest_enableExternalHwPower();
@@ -43,6 +49,10 @@ int unitTest_flexSensors();
 int unitTest_hc05DeviceName();
 #endif // ENABLE_UNIT_TEST_HC05_DEVICE_NAME
 
+#if ENABLE_UNIT_TEST_HC05_RW_TO_SLAVE
+int unitTest_hc05RwToSlave();
+#endif // ENABLE_UNIT_TEST_HC05_RW_TO_SLAVE
+
 #if ENABLE_UNIT_TEST_MPU6500_WHOAMI_SPI
 int TEST_mpu6500WhoAmISpi();
 #endif // ENABLE_UNIT_TEST_MPU6500_WHOAMI_SPI
@@ -67,4 +77,15 @@ int TEST_lcdProductDemo();
 int TEST_lcdGraphics();
 #endif // ENABLE_UNIT_TEST_LCD_TEXT
 
-#endif // _SRC_UNIT_TESTS
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * MAIN PROGRAMS
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+#if ENABLE_HC05_CONFIG_MSTR
+int unitTest_hc05ConfigMaster();
+#endif // ENABLE_HC05_CONFIG_MSTR
+
+#endif // _SRC_ENTRY_POINTS
+

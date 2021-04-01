@@ -2,12 +2,13 @@
 
 #include "build_switches.h"
 #include "target_hw_common.h"
-#include "unit_tests.h"
+#include "entry_points.h"
 
 /// DEBUG **********
 #include "lcd_64x48_bitmap.h"
 #include "mpu.h"
 #include "i2c_if.h"
+#include "spi_if.h"
 /// DEBUG **********
 
 int main()
@@ -111,6 +112,14 @@ int main()
 #if ENABLE_UNIT_TEST_HC05_DEVICE_NAME
     unitTest_hc05DeviceName();
 #endif // ENABLE_UNIT_TEST_HC05_DEVICE_NAME
+
+#if ENABLE_UNIT_TEST_HC05_RW_TO_SLAVE
+    unitTest_hc05RwToSlave();
+#endif // ENABLE_UNIT_TEST_HC05_RW_TO_SLAVE
+
+#if ENABLE_HC05_CONFIG_MSTR
+    unitTest_hc05ConfigMaster();
+#endif // ENABLE_HC05_CONFIG_MSTR
 
 #if ENABLE_MAIN_V1
     while (1)

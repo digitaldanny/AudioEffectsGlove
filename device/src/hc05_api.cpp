@@ -20,6 +20,15 @@ bool Hc05Api::SetMode(hc05Mode_e mode)
 #endif
 }
 
+bool Hc05Api::IsSlaveConnected()
+{
+#if TARGET_HW_MSP432
+    return Hc05Api::MSP432::IsSlaveConnected();
+#else
+    return false;
+#endif
+}
+
 bool Hc05Api::Send(char* txData)
 {
 #if TARGET_HW_MSP432
@@ -85,10 +94,26 @@ bool Hc05Api::MSP432::SetMode(hc05Mode_e mode)
     // Data/Command modes.
     MAP_GPIO_setAsOutputPin(systemIO.bluetoothEn.port, systemIO.bluetoothEn.pin);
 
+    // Configure the STATE GPIO for reading if the HC-05 is connected to slave or not.
+    MAP_GPIO_setAsInputPin(systemIO.bluetoothState.port, systemIO.bluetoothState.pin);
+
     // Power cycle to switch the HC-05 mode.
     setExternalHwPower(false);
     setExternalHwPower(true);
     return true;
+}
+
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: IsSlaveConnected
+ * Checks if the master HC-05 is paired with the slave HC-05 using the STATE pin.
+ *
+ * RETURN: True if devices are successfully paired and ready to communicate.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
+bool Hc05Api::MSP432::IsSlaveConnected()
+{
+    return MAP_GPIO_getInputPinValue(systemIO.bluetoothState.port, systemIO.bluetoothState.pin);
 }
 
 bool Hc05Api::MSP432::Send(char* txData)

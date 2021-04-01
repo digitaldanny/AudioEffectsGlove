@@ -1,7 +1,7 @@
 #include "build_switches.h"
 #if ENABLE_UNIT_TEST_LCD_DEMO
 
-#include "unit_tests.h"
+#include "entry_points.h"
 #include "lcd_64x48_bitmap.h"
 
 /*

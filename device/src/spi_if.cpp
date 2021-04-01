@@ -29,10 +29,10 @@
  * - 3-Wire SPI Mode
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 */
-static const eUSCI_SPI_MasterConfig spiMasterConfig =
+static eUSCI_SPI_MasterConfig spiMasterConfig =
 {
         EUSCI_B_SPI_CLOCKSOURCE_SMCLK,
-        24000000,
+        0, // set during runtime
         8000000,
         EUSCI_B_SPI_MSB_FIRST,
         EUSCI_B_SPI_PHASE_DATA_CAPTURED_ONFIRST_CHANGED_ON_NEXT,
@@ -91,6 +91,7 @@ void Spi::MSP432::init()
         GPIO_PRIMARY_MODULE_FUNCTION);
 
     /* Configuring SPI in 3wire master mode */
+    spiMasterConfig.clockSourceFrequency = CS_getSMCLK();
     MAP_SPI_initMaster(EUSCI_B0_BASE, &spiMasterConfig);
 
     /* Enable SPI module */

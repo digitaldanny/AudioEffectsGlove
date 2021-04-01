@@ -1,7 +1,7 @@
 #include "build_switches.h"
 #if ENABLE_UNIT_TEST_ADC_C2000
 
-#include "unit_tests.h"
+#include "entry_points.h"
 #include "adc_wrapper.h"
 
 /*

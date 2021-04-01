@@ -1,7 +1,7 @@
 #include "build_switches.h"
 #if ENABLE_UNIT_TEST_FLEX_SENSORS
 
-#include "unit_tests.h"
+#include "entry_points.h"
 #include "flex_sensors_api.h"
 #include <iostream>
 #include <iomanip>

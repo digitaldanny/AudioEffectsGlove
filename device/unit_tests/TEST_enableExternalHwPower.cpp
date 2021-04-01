@@ -2,7 +2,7 @@
 
 #if ENABLE_UNIT_TEST_EXT_PWR_SWITCH
 
-#include "unit_tests.h"
+#include "entry_points.h"
 #include "target_hw_common.h"
 
 /*

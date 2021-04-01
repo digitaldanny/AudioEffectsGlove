@@ -1,7 +1,7 @@
 #include "build_switches.h"
 #if ENABLE_UNIT_TEST_MPU6050_SENSORDATA_RAW
 
-#include "unit_tests.h"
+#include "entry_points.h"
 #include "i2c_if.h"
 
 // Configuration register indices

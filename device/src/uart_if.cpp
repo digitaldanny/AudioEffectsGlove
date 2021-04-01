@@ -27,27 +27,27 @@ volatile int numInterrupts;
 static const eUSCI_UART_Config uartConfig38400 =
 {
         EUSCI_A_UART_CLOCKSOURCE_SMCLK,          // SMCLK Clock Source
-        UART_BRDIV_CLK_12M_BAUDRATE_38400,       // BRDIV
-        UART_UCXBRF_CLK_12M_BAUDRATE_38400,      // UCxBRF
-        UART_UCXBRS_CLK_12M_BAUDRATE_38400,      // UCxBRS
+        UART_BRDIV_CLK_16M_BAUDRATE_38400,       // BRDIV
+        UART_UCXBRF_CLK_16M_BAUDRATE_38400,      // UCxBRF
+        UART_UCXBRS_CLK_16M_BAUDRATE_38400,      // UCxBRS
         EUSCI_A_UART_NO_PARITY,                  // No Parity
         EUSCI_A_UART_LSB_FIRST,                  // MSB First
         EUSCI_A_UART_ONE_STOP_BIT,               // One stop bit
         EUSCI_A_UART_MODE,                       // UART mode, 8 bit mode
-        UART_OVERSAMPLING_CLK_12M_BAUDRATE_38400  // Oversampling
+        UART_OVERSAMPLING_CLK_16M_BAUDRATE_38400  // Oversampling
 };
 
 static const eUSCI_UART_Config uartConfig9600 =
 {
        EUSCI_A_UART_CLOCKSOURCE_SMCLK,          // SMCLK Clock Source
-       UART_BRDIV_CLK_12M_BAUDRATE_9600,       // BRDIV
-       UART_UCXBRF_CLK_12M_BAUDRATE_9600,      // UCxBRF
-       UART_UCXBRS_CLK_12M_BAUDRATE_9600,      // UCxBRS
+       UART_BRDIV_CLK_16M_BAUDRATE_9600,       // BRDIV
+       UART_UCXBRF_CLK_16M_BAUDRATE_9600,      // UCxBRF
+       UART_UCXBRS_CLK_16M_BAUDRATE_9600,      // UCxBRS
        EUSCI_A_UART_NO_PARITY,                  // No Parity
        EUSCI_A_UART_LSB_FIRST,                  // LSB First
        EUSCI_A_UART_ONE_STOP_BIT,               // One stop bit
        EUSCI_A_UART_MODE,                       // UART mode, 8 bit mode
-       UART_OVERSAMPLING_CLK_12M_BAUDRATE_9600  // Oversampling
+       UART_OVERSAMPLING_CLK_16M_BAUDRATE_9600  // Oversampling
 };
 #endif // TARGET_HW_MSP432
 
@@ -73,6 +73,15 @@ bool Uart::init(baudRate_e baudRate)
         /* Configuration not implemented */
         return false;
     }
+#else
+    return false;
+#endif
+}
+
+bool Uart::resetBuffer()
+{
+#if TARGET_HW_MSP432
+    return Uart::MSP432::resetBuffer();
 #else
     return false;
 #endif
@@ -125,14 +134,21 @@ bool Uart::MSP432::init(const eUSCI_UART_Config* config)
     return true;
 }
 
-bool Uart::MSP432::send(char* txData)
+bool Uart::MSP432::resetBuffer()
 {
-    char* txPtr = txData;
-    numInterrupts = 0;
     // Reset received data structure for next read
     uartRxData.flagRxReady = false;
     uartRxData.idxBuffer = 0;
     memset((void*)uartRxData.rxBuffer, 0, UART_BUFFER_MAX_LENGTH);
+    return true;
+}
+
+bool Uart::MSP432::send(char* txData)
+{
+    char* txPtr = txData;
+    numInterrupts = 0;
+
+    Uart::MSP432::resetBuffer();
 
     // Transfer data from buffer until hitting end of string.
     while (*txPtr != '\0')
