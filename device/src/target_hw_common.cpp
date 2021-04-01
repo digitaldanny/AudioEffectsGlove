@@ -107,7 +107,7 @@ void delayMs(uint32_t ms)
 {
     for (int i = 0; i < ms; i++)
     {
-        delayUs(1100); //
+        delayUs(1260); //
     }
 }
 
@@ -125,7 +125,7 @@ void delayMs(uint32_t ms)
 void delayUs(uint32_t us)
 {
 #if TARGET_HW_MSP432
-    uint32_t delayCount = 44*us; // 44 is an experimentally chosen multiplier to produce close to desired delay
+    uint32_t delayCount = 12*us; // 44 is an experimentally chosen multiplier to produce close to desired delay
 
     // Initialize the timer delay
     Timer32_initModule( TIMER32_0_BASE, TIMER32_PRESCALER_1, TIMER32_32BIT, TIMER32_PERIODIC_MODE);
