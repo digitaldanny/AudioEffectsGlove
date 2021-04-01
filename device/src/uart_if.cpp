@@ -27,27 +27,27 @@ volatile int numInterrupts;
 static const eUSCI_UART_Config uartConfig38400 =
 {
         EUSCI_A_UART_CLOCKSOURCE_SMCLK,          // SMCLK Clock Source
-        UART_BRDIV_CLK_12M_BAUDRATE_38400,       // BRDIV
-        UART_UCXBRF_CLK_12M_BAUDRATE_38400,      // UCxBRF
-        UART_UCXBRS_CLK_12M_BAUDRATE_38400,      // UCxBRS
+        UART_BRDIV_CLK_16M_BAUDRATE_38400,       // BRDIV
+        UART_UCXBRF_CLK_16M_BAUDRATE_38400,      // UCxBRF
+        UART_UCXBRS_CLK_16M_BAUDRATE_38400,      // UCxBRS
         EUSCI_A_UART_NO_PARITY,                  // No Parity
         EUSCI_A_UART_LSB_FIRST,                  // MSB First
         EUSCI_A_UART_ONE_STOP_BIT,               // One stop bit
         EUSCI_A_UART_MODE,                       // UART mode, 8 bit mode
-        UART_OVERSAMPLING_CLK_12M_BAUDRATE_38400  // Oversampling
+        UART_OVERSAMPLING_CLK_16M_BAUDRATE_38400  // Oversampling
 };
 
 static const eUSCI_UART_Config uartConfig9600 =
 {
        EUSCI_A_UART_CLOCKSOURCE_SMCLK,          // SMCLK Clock Source
-       UART_BRDIV_CLK_12M_BAUDRATE_9600,       // BRDIV
-       UART_UCXBRF_CLK_12M_BAUDRATE_9600,      // UCxBRF
-       UART_UCXBRS_CLK_12M_BAUDRATE_9600,      // UCxBRS
+       UART_BRDIV_CLK_16M_BAUDRATE_9600,       // BRDIV
+       UART_UCXBRF_CLK_16M_BAUDRATE_9600,      // UCxBRF
+       UART_UCXBRS_CLK_16M_BAUDRATE_9600,      // UCxBRS
        EUSCI_A_UART_NO_PARITY,                  // No Parity
        EUSCI_A_UART_LSB_FIRST,                  // LSB First
        EUSCI_A_UART_ONE_STOP_BIT,               // One stop bit
        EUSCI_A_UART_MODE,                       // UART mode, 8 bit mode
-       UART_OVERSAMPLING_CLK_12M_BAUDRATE_9600  // Oversampling
+       UART_OVERSAMPLING_CLK_16M_BAUDRATE_9600  // Oversampling
 };
 #endif // TARGET_HW_MSP432
 

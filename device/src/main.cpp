@@ -15,6 +15,13 @@ int main()
     setupTargetHw(); // MSP432 configurations (clock speed, WDT disable, etc)
     initExternalHwPower(); // Initialize external hardware power (off by default)
 
+    //int i = 0;
+    //while (true)
+    //{
+    //    i++;
+    //    delayMs(1);
+    //}
+
 #if ENABLE_UNIT_TEST
     // Power up the external hardware (needed for some of the unit tests).
     setExternalHwPower(true);

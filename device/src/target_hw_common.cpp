@@ -176,9 +176,11 @@ void setupTargetHw()
     /* Set GPIO to be Crystal In/Out for HFXT */
     MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_PJ, GPIO_PIN3 | GPIO_PIN2, GPIO_PRIMARY_MODULE_FUNCTION);
 
-    MAP_CS_setExternalClockSourceFrequency(32768, 48000000);
+    MAP_CS_setExternalClockSourceFrequency(32768, 16000000);
 
     /* Before we start we have to change VCORE to 1 to support the 48MHz frequency */
+    // NOTE: This may not be needed anymore since I changed the clock speed to 16 MHz.
+    // Not seeing any issues with the clock right now though, so I am leaving the code here.
     MAP_PCM_setCoreVoltageLevel(PCM_AM_LDO_VCORE1);
     MAP_FlashCtl_setWaitState(FLASH_BANK0, 2);
     MAP_FlashCtl_setWaitState(FLASH_BANK1, 2);
@@ -188,16 +190,16 @@ void setupTargetHw()
     //MAP_CS_startLFXT(false);
 
     /* Initializing the clock source as follows:
-    * MCLK = HFXT = 48MHz
-    * ACLK = LFXT = 48KHz
-    * HSMCLK = HFXT/1 = 48MHz
-    * SMCLK = HFXT/2 = 24MHz
+    * MCLK = HFXT = 16MHz
+    * ACLK = LFXT = 16KHz
+    * HSMCLK = HFXT/1 = 16MHz
+    * SMCLK = HFXT/1 = 16MHz
     * BCLK = REFO = 32kHz
     */
     MAP_CS_initClockSignal(CS_MCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_1);
     //MAP_CS_initClockSignal(CS_ACLK, CS_LFXTCLK_SELECT, CS_CLOCK_DIVIDER_1);
     MAP_CS_initClockSignal(CS_HSMCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_1);
-    MAP_CS_initClockSignal(CS_SMCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_2);
+    MAP_CS_initClockSignal(CS_SMCLK, CS_HFXTCLK_SELECT, CS_CLOCK_DIVIDER_1);
     MAP_CS_initClockSignal(CS_BCLK, CS_REFOCLK_SELECT, CS_CLOCK_DIVIDER_1);
 
     /* Enabling the FPU for floating point operation */

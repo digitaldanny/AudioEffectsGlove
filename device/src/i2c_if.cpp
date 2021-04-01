@@ -30,7 +30,7 @@ static volatile bool stopSent;
 static volatile eUSCI_I2C_MasterConfig i2cConfig =
 {
         EUSCI_B_I2C_CLOCKSOURCE_SMCLK,          // SMCLK Clock Source
-        24000000,                               // Set during runtime
+        12000000,                               // Set during runtime
         EUSCI_B_I2C_SET_DATA_RATE_400KBPS,      // Desired I2C Clock of 400khz
         0,                                      // No byte counter threshold (using manual stop)
         EUSCI_B_I2C_NO_AUTO_STOP
