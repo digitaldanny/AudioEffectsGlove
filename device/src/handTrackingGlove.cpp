@@ -3,7 +3,47 @@
 
 #include "entry_points.h"
 #include "hc05_api.h"
-#include "lcd_64x48_bitmap.h"
+#include "lcd_graphics.h"
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * DEFINES
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+#define LCD_ROW_BLUETOOTH_STATUS    0
+#define LCD_COL_BLUETOOTH_STATUS    0
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * STRUCTS
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+typedef struct
+{
+    bool isSlaveConnected;
+} gloveState_t;
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * GLOBALS
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+// Contains information about the state of the main program
+gloveState_t state;
+
+// Contains message to write to a single row of the LCD
+char lcdMsg[LCD_MAX_CHARS_PER_LINE];
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * PROTOTYPES
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+bool updateBluetoothConnectionStatus();
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -27,7 +67,50 @@
 */
 int handTrackingGlove()
 {
+    // Initialize glove state variable
+    memset((void*)&state, 0, sizeof(gloveState_t));
+
+    // Configures SPI module, LCD registers, and clears screen
+    LcdGfx::init();
+
+    // Main program loop
+    while(1)
+    {
+        updateBluetoothConnectionStatus();
+        delayMs(1);
+    }
+
     return 0;
+}
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * Description: updateBluetoothConnectionStatus
+ * Use the HC-05 STATE pin to check if the master HC-05 is paired with
+ * the slave HC-05 on the DSP Effects Rack board.
+ *
+ * RETURN: Always true
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+bool updateBluetoothConnectionStatus()
+{
+    // Check if the master HC-05 module has paired with the
+    // slave HC-05 module on the DSP Effects Rack C2000 board.
+    state.isSlaveConnected = Hc05Api::IsSlaveConnected();
+
+    if (state.isSlaveConnected)
+    {
+        memcpy(lcdMsg, "BT: Paired", LCD_MAX_CHARS_PER_LINE);
+    }
+    else
+    {
+        memcpy(lcdMsg, "BT: ?     ", LCD_MAX_CHARS_PER_LINE);
+    }
+
+    LcdGfx::drawString(LCD_COL_BLUETOOTH_STATUS, LCD_ROW_BLUETOOTH_STATUS,
+                       lcdMsg, LCD_MAX_CHARS_PER_LINE);
+
+    return true;
 }
 
 #endif // ENABLE_HAND_TRACKING_GLOVE

@@ -66,7 +66,8 @@ unsigned char ucSmallFont[] = {
 
 bool LcdGfx::init()
 {
-    lcd_setup();
+    lcd_setup(); // lcd register configuration
+    LcdGfx::drawFill(0x00); // clear screen
     return true;
 }
 
