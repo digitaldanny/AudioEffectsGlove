@@ -42,6 +42,11 @@
 #define ADC_B               (1)   ///< Adc module B
 #define ADC_MAX_NUM_CHAN    (2)   ///< Number of ADC channels used
 
+// MSP432 channel
+#define ADC_CH0             (0)
+#define ADC_CH1             (1)
+#define ADC_CH2             (2)
+
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 * STRUCTS
@@ -74,7 +79,7 @@ namespace Adc {
 #if TARGET_HW_MSP432
     namespace MSP432 {
         bool Init               ();
-        uint16_t ReadAdcChannel ();
+        uint16_t ReadAdcChannel (uint8_t adc_channel);
     }
 #endif // TARGET_HW_MSP432
 
