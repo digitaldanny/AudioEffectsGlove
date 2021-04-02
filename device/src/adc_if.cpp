@@ -71,7 +71,7 @@ uint16_t Adc::ReadAdcChannel(uint8_t adc_channel) {
 #elif ENABLE_ADC_C2000
     return Adc::C2000::ReadAdcChannel(adc_channel);
 #elif TARGET_HW_MSP432
-    return Adc::MSP432::ReadAdcChannel();
+    return Adc::MSP432::ReadAdcChannel(adc_channel);
 #else
     return false;
 #endif // ENABLE_ADC_API_PYTHON
@@ -110,7 +110,7 @@ bool Adc::MSP432::Init() {
     return true;
 }
 
-uint16_t Adc::MSP432::ReadAdcChannel() {
+uint16_t Adc::MSP432::ReadAdcChannel(uint8_t adc_channel) {
 
     // Clear conversion ready flag
     flagAdcReady = false;

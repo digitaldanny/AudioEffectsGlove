@@ -15,13 +15,13 @@ bool FlexSensors::Init()
 {
     if (!Mux::Init())
     {
-        printf("FlexSensors::Init - Could not initialize Mux\n");
-        return false;
+        // Issue initializing Mux, trap CPU
+        while(1);
     }
     if (!Adc::Init())
     {
-        printf("FlexSensors::Init - Could not initialize ADC\n");
-        return false;
+        // Issue initializing ADC, trap CPU
+        while(1);
     }
     return true;
 }
@@ -33,43 +33,31 @@ bool FlexSensors::Init()
  * 
  * INPUTS:
  * @finger
- *      Enum for which finger to collect data for (thumb, pointer, middle, ring, pinky).
- * @joints
- *      This struct will contain the sensor readings for the specified finger if 
- *      this function is successful.
+ *      Which finger to collect data for (thumb=0, pointer=1, middle=2).
  * 
  * RETURN:
- * bool - True if getting joint data was successful (contents on joints are valid).
+ * uint8_t - Requested finger's ADC reading compressed down to an 8-bit value.
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 */
-bool FlexSensors::GetJointsData(FlexSensors::finger_e finger, FlexSensors::fingerJoints_t* joints)
+uint8_t GetJointsData(uint8_t finger)
 {
-    int mcpAdcReading;
-    int pipAdcReading;
+    uint16_t adcReadingRaw;
+
+    // Check that valid finger index is being requested
+    if (finger >= FLEX_MAX_NUM_FINGERS)
 
     // Select which flex sensor voltage to output on the MCP and PIP muxes.
     if (!Mux::SelectMuxChannel((int)finger))
     {
-        printf("FlexSensors::GetJointsData - Could not set the mux channel.\n");
         return false;
     }
 
-    // Read from both ADC channels to collect an ADC sample for the mux outputs
-    // ADCA - MCP mux output
-    // ADCB - PIP mux output
-    if ((mcpAdcReading = Adc::ReadAdcChannel(ADC_CHAN_MCP)) == -1)
-    {
-        printf("FlexSensors::GetJointsData - Could not get MCP ADC reading.\n");
-        return false;
-    }
-    if ((pipAdcReading = Adc::ReadAdcChannel(ADC_CHAN_PIP)) == -1)
-    {
-        printf("FlexSensors::GetJointsData - Could not get MCP ADC reading.\n");
-        return false;
-    }
+    // Short delay to give mux time to settle
+    delayUs(10);
 
-    // Assign the ADC readings to the passed fingerJoints structure.
-    joints->mcp = mcpAdcReading;
-    joints->pip = pipAdcReading;
-    return true;
+    // Collect ADC sample from the flex sensor amplifier output
+    adcReadingRaw = Adc::ReadAdcChannel(ADC_CHAN_FLEX_SENSORS);
+
+    // Return top 8 bits of the 14 bit ADC reading
+    return (uint8_t)(adcReadingRaw >> 6);
 }
