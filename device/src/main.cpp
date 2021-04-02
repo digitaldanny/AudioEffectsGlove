@@ -30,34 +30,6 @@ int main()
     TEST_mpu6500RawSensorData();
 #endif // ENABLE_UNIT_TEST_MPU6050_SENSORDATA_RAW
 
-#if ENABLE_UNIT_TEST_MPU6050_SENSORDATA
-    int ret;
-    unsigned int c = 0; //cumulative number of successful MPU/DMP reads
-    unsigned int np = 0; //cumulative number of MPU/DMP reads that brought no packet back
-    unsigned int err_c = 0; //cumulative number of MPU/DMP reads that brought corrupted packet
-    unsigned int err_o = 0; //cumulative number of MPU/DMP reads that had overflow bit set
-
-    I2c::init();
-
-    ret = mympu_open(200);
-
-    while(1)
-    {
-        ret = mympu_update();
-
-        switch (ret) {
-        case 0: c++; break;
-        case 1: np++; break;
-        case 2: err_o++; break;
-        case 3: err_c++; break;
-        default:
-            break;
-        }
-        delayMs(1);
-    }
-
-#endif // ENABLE_UNIT_TEST_MPU6050_SENSORDATA
-
 #if ENABLE_UNIT_TEST_MPU6500_WHOAMI_SPI
     TEST_mpu6500WhoAmISpi();
 #endif // ENABLE_UNIT_TEST_MPU6500_WHOAMI_SPI
