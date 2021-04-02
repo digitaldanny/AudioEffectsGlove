@@ -4,13 +4,6 @@
 #include "target_hw_common.h"
 #include "entry_points.h"
 
-/// DEBUG **********
-#include "lcd_64x48_bitmap.h"
-#include "mpu.h"
-#include "i2c_if.h"
-#include "spi_if.h"
-/// DEBUG **********
-
 int main()
 {
     setupTargetHw(); // MSP432 configurations (clock speed, WDT disable, etc)
