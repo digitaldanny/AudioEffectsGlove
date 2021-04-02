@@ -87,5 +87,9 @@ int TEST_lcdGraphics();
 int unitTest_hc05ConfigMaster();
 #endif // ENABLE_HC05_CONFIG_MSTR
 
+#if ENABLE_HAND_TRACKING_GLOVE
+int handTrackingGlove();
+#endif // ENABLE_HAND_TRACKING_GLOVE
+
 #endif // _SRC_ENTRY_POINTS
 

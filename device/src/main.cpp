@@ -86,10 +86,9 @@ int main()
     unitTest_hc05ConfigMaster();
 #endif // ENABLE_HC05_CONFIG_MSTR
 
-#if ENABLE_MAIN_V1
-    while (1)
-    {
-        MAP_PCM_gotoLPM0();
-    }
-#endif // ENABLE_MAIN_V1
+#if ENABLE_HAND_TRACKING_GLOVE
+    handTrackingGlove();
+#endif // ENABLE_HAND_TRACKING_GLOVE
+
+    while(1); // TRAP CPU - Should not be here!
 }

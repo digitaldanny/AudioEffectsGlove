@@ -52,7 +52,7 @@
 #define ENABLE_UNIT_TEST_LCD_TEXT       (0 & ENABLE_UNIT_TEST)  // Issue #46: Draws custom text and image to the LCD.
 
 #define ENABLE_HC05_CONFIG_MSTR (0) // Issue #35: Script to configure the master HC-05's role, slave address, etc.
-#define ENABLE_MAIN_V1          (0) // Issue #13: Enables main program that will be running
+#define ENABLE_HAND_TRACKING_GLOVE (1) // Issue #53: Hand tracking glove's main loop (capture data, transfer to DSP Effects Rack)
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
