@@ -48,7 +48,7 @@
 #define ENABLE_UNIT_TEST_MPU6050_WHOAMI_I2C (0 & ENABLE_UNIT_TEST) // Issue #47: Enable I2C read from MPU6050's WHO_AM_I register.
 #define ENABLE_UNIT_TEST_MPU6050_SENSORDATA (0 & ENABLE_UNIT_TEST) // Issue #47: Enable reading gyro/accelerometer data from MPU6050 and converting to Euler angles using DMP.
 #define ENABLE_UNIT_TEST_MPU6050_SENSORDATA_RAW (0 & ENABLE_UNIT_TEST) // Issue #47: Reading raw gyro / accelerometer sensor data from MPU6050 without DMP.
-#define ENABLE_UNIT_TEST_LCD_DEMO       (1 & ENABLE_UNIT_TEST)  // Issue #46: Enable demo animations to run on CFAL6448A lcd over SPI.
+#define ENABLE_UNIT_TEST_LCD_DEMO       (0 & ENABLE_UNIT_TEST)  // Issue #46: Enable demo animations to run on CFAL6448A lcd over SPI.
 #define ENABLE_UNIT_TEST_LCD_TEXT       (0 & ENABLE_UNIT_TEST)  // Issue #46: Draws custom text and image to the LCD.
 
 #define ENABLE_HC05_CONFIG_MSTR (0) // Issue #35: Script to configure the master HC-05's role, slave address, etc.

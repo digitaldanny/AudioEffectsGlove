@@ -19,11 +19,6 @@ static PyObject* pMuxObj;      // mux.Cd4051be object
 #endif
 
 #if TARGET_HW_MSP432
-static pinPort_t muxPins[MUX_NUM_SEL_LINES] = {
-    [0] = {GPIO_PORT_P3, GPIO_PIN7},
-    [1] = {GPIO_PORT_P4, GPIO_PIN1},
-    [2] = {GPIO_PORT_P4, GPIO_PIN6}
-};
 #endif // TARGET_HW_MSP432
 
 /*
@@ -68,7 +63,7 @@ bool Mux::Init() {
  * bool - True if mux selection was successful.
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
 */
-bool Mux::SelectMuxChannel(int mux_channel) {
+bool Mux::SelectMuxChannel(uint8_t mux_channel) {
 #if TARGET_HW_PYTHON_CAPABLE
     return Mux::Python::SelectMuxChannel(mux_channel);
 #elif TARGET_HW_C2000
@@ -100,17 +95,17 @@ bool Mux::SelectMuxChannel(int mux_channel) {
 bool Mux::MSP432::Init() {
     for (int p = 0; p < MUX_NUM_SEL_LINES; p++)
     {
-        GPIO_setAsOutputPin(muxPins[p].port, muxPins[p].pin);
+        GPIO_setAsOutputPin(systemIO.flexMux[p].port, systemIO.flexMux[p].pin);
     }
     return true;
 }
 #endif // TARGET_HW_MSP432
 
 #if TARGET_HW_MSP432
-bool Mux::MSP432::SelectMuxChannel(int mux_channel) {
+bool Mux::MSP432::SelectMuxChannel(uint8_t mux_channel) {
 
     // Check that the provided mux channel is within the valid channel range.
-    if (mux_channel < MUX_CHAN_MIN || mux_channel > MUX_CHAN_MAX)
+    if (mux_channel > MUX_CHAN_MAX)
     {
         /* provided mux channel is outside of valid channel range */
         return false;
@@ -122,9 +117,9 @@ bool Mux::MSP432::SelectMuxChannel(int mux_channel) {
     for (int p = 0; p < MUX_NUM_SEL_LINES; p++)
     {
         if (mux_channel & (1<<p))
-            GPIO_setOutputHighOnPin(muxPins[p].port, muxPins[p].pin);
+            GPIO_setOutputHighOnPin(systemIO.flexMux[p].port, systemIO.flexMux[p].pin);
         else
-            GPIO_setOutputLowOnPin(muxPins[p].port, muxPins[p].pin);
+            GPIO_setOutputLowOnPin(systemIO.flexMux[p].port, systemIO.flexMux[p].pin);
     }
 
     return true;

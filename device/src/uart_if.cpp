@@ -16,6 +16,7 @@
 
 volatile uartRxData_t uartRxData; // Stores data receives through UART
 volatile int numInterrupts;
+volatile uint8_t numBytesToRead;
 
 #if TARGET_HW_MSP432
 /* UART Configuration Parameter. These are the configuration parameters to
@@ -87,19 +88,19 @@ bool Uart::resetBuffer()
 #endif
 }
 
-bool Uart::send(char* txData)
+bool Uart::send(char* txData, uint8_t numBytes)
 {
 #if TARGET_HW_MSP432
-    return Uart::MSP432::send(txData);
+    return Uart::MSP432::send(txData, numBytes);
 #else
     return false;
 #endif
 }
 
-bool Uart::recv(char** rxData)
+bool Uart::recv(char** rxData, uint8_t numBytes)
 {
 #if TARGET_HW_MSP432
-    return Uart::MSP432::recv(rxData);
+    return Uart::MSP432::recv(rxData, numBytes);
 #else
     return false;
 #endif
@@ -143,24 +144,28 @@ bool Uart::MSP432::resetBuffer()
     return true;
 }
 
-bool Uart::MSP432::send(char* txData)
+bool Uart::MSP432::send(char* txData, uint8_t numBytes)
 {
     char* txPtr = txData;
+    uint8_t numBytesTransferred = 0;
     numInterrupts = 0;
 
     Uart::MSP432::resetBuffer();
 
     // Transfer data from buffer until hitting end of string.
-    while (*txPtr != '\0')
+    while (numBytesTransferred < numBytes)
     {
         MAP_UART_transmitData(EUSCI_A2_BASE, *txPtr);
         txPtr++;
+        numBytesTransferred++;
     }
     return true;
 }
 
-bool Uart::MSP432::recv(char** rxData)
+bool Uart::MSP432::recv(char** rxData, uint8_t numBytes)
 {
+    numBytesToRead = numBytes;
+
     // Wait for rx buffer to be filled before reading data.
     while (!uartRxData.flagRxReady);
 
@@ -185,7 +190,7 @@ extern "C" void EUSCIA2_IRQHandler(void)
         uartRxData.idxBuffer++;
 
         // Signal that final byte of data was received when final character is \n
-        if (rx == '\n')
+        if (uartRxData.idxBuffer == numBytesToRead)
         {
             uartRxData.flagRxReady = true;
         }

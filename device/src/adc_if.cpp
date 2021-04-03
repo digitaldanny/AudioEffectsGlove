@@ -18,8 +18,6 @@ volatile adcData_t adcData[ADC_MAX_NUM_CHAN];
 #endif // ENABLE_ADC_C2000
 
 #if TARGET_HW_MSP432
-// Port and pin that ADC14 will be triggered by.
-static const pinPort_t adcPin = {GPIO_PORT_P5, GPIO_PIN5};
 static volatile uint16_t adcReading;
 static volatile bool flagAdcReady;
 #endif // TARGET_HW_MSP432
@@ -90,7 +88,7 @@ bool Adc::MSP432::Init() {
     MAP_ADC14_initModule(ADC_CLOCKSOURCE_MCLK, ADC_PREDIVIDER_1, ADC_DIVIDER_4, 0);
 
     /* Configuring GPIOs (5.5 A0) */
-    MAP_GPIO_setAsPeripheralModuleFunctionInputPin(adcPin.port, adcPin.pin,
+    MAP_GPIO_setAsPeripheralModuleFunctionInputPin(systemIO.flexAdc.port, systemIO.flexAdc.pin,
     GPIO_TERTIARY_MODULE_FUNCTION);
 
     /* Configuring ADC Memory */

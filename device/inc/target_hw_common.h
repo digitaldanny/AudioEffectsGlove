@@ -112,6 +112,10 @@ typedef struct
  *  Register select determines if LCD is in data or command mode.
  * @lcdReset
  *  Active low reset for LCD.
+ * @flexAdc
+ *  ADC14 pin for reading amplified and filtered flex sensor outputs.
+ * @flexMux{0-2}
+ *  GPIO outputs for controlling flex sensor mux selects.
  * @spareGpio
  *  Spare GPIO for various testing. Not available on the PCB.
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
@@ -131,6 +135,8 @@ typedef struct
     pinPort_t spiCs1;
     pinPort_t lcdRs;
     pinPort_t lcdReset;
+    pinPort_t flexAdc;
+    pinPort_t flexMux[3];
     pinPort_t spareGpio;
 } systemIO_t;
 
