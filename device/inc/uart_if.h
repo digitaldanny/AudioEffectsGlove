@@ -83,16 +83,16 @@ namespace Uart {
     */
 
     bool init (baudRate_e baudRate);
-    bool send (char* txData);
-    bool recv (char** rxData);
+    bool send (char* txData, uint8_t numBytes);
+    bool recv (char** rxData, uint8_t numBytes);
     bool resetBuffer();
 
 #if TARGET_HW_MSP432
     namespace MSP432 {
         bool init (const eUSCI_UART_Config* config);
         bool resetBuffer();
-        bool send (char* txData);
-        bool recv (char** rxData);
+        bool send (char* txData, uint8_t numBytes);
+        bool recv (char** rxData, uint8_t numBytes);
     }
 #endif // ENABLE_UART_C2000
 }

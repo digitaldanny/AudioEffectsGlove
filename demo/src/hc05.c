@@ -161,6 +161,53 @@ __interrupt void sciCRXFIFOISR(void)
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
+#if ENABLE_HC05_DATA_PACKET_TEST
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: hc05NameTest
+ * This test connects the DSP-side slave HC-05 to the glove-side master HC-05
+ * and reads/writes bytes of data.
+ *
+ * Pin 139 (RX) must be connected to the HC-05 TX pin, and pin 56 (TX) must be
+ * connected to the HC-05 RX pin. The HC-05 EN pin must be connected to GND
+ * and the baud rate must be 9600 to communicate with the device in DATA mode.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
+bool messageProtocolTest()
+{
+    unsigned char ack = DPP_OPCODE_ACK;
+    dataPacket_t* rxPtr;
+
+    // Baud rate must be configured to 9600 for this test
+    if (BAUDRATE_DEFAULT != BAUDRATE_9600)
+    {
+        while(1); // Failure - Configure baud rate to 9600
+    }
+
+    initHc05();
+
+    while(1)
+    {
+        // Read back the message from RX pin
+        if (!readHc05((uint16_t**)&rxPtr, sizeof(dataPacket_t)))
+        {
+            while(1); // Read failed, trap CPU
+        }
+
+        resetBuffersHc05();
+
+        // Write out ACK message
+        if (!writeHc05((uint16_t*)&ack, 1))
+        {
+            while(1); // Write failed, trap CPU
+        }
+
+        for(uint32_t ii = 0; ii < 100000; ii++);
+    }
+    return true;
+}
+#endif // ENABLE_HC05_DATA_PACKET_TEST
+
 #if ENABLE_SCIC_LOOPBACK_TEST
 /*
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+

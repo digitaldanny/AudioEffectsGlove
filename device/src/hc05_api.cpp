@@ -29,19 +29,19 @@ bool Hc05Api::IsSlaveConnected()
 #endif
 }
 
-bool Hc05Api::Send(char* txData)
+bool Hc05Api::Send(char* txData, uint8_t numBytes)
 {
 #if TARGET_HW_MSP432
-    return Hc05Api::MSP432::Send(txData);
+    return Hc05Api::MSP432::Send(txData, numBytes);
 #else
     return false;
 #endif
 }
 
-bool Hc05Api::Recv(char** rxData)
+bool Hc05Api::Recv(char** rxData, uint8_t numBytes)
 {
 #if TARGET_HW_MSP432
-    return Hc05Api::MSP432::Recv(rxData);
+    return Hc05Api::MSP432::Recv(rxData, numBytes);
 #else
     return false;
 #endif
@@ -116,14 +116,14 @@ bool Hc05Api::MSP432::IsSlaveConnected()
     return MAP_GPIO_getInputPinValue(systemIO.bluetoothState.port, systemIO.bluetoothState.pin);
 }
 
-bool Hc05Api::MSP432::Send(char* txData)
+bool Hc05Api::MSP432::Send(char* txData, uint8_t numBytes)
 {
-    return Uart::send(txData);
+    return Uart::send(txData, numBytes);
 }
 
-bool Hc05Api::MSP432::Recv(char** rxData)
+bool Hc05Api::MSP432::Recv(char** rxData, uint8_t numBytes)
 {
-    return Uart::recv(rxData);
+    return Uart::recv(rxData, numBytes);
 }
 
 #endif // TARGET_HW_MSP432

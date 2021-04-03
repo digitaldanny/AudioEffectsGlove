@@ -2,6 +2,7 @@
 #if ENABLE_HAND_TRACKING_GLOVE
 
 #include "entry_points.h"
+#include "data_packet_protocol.h"
 #include "hc05_api.h"
 #include "flex_sensors_api.h"
 #include "lcd_graphics.h"
@@ -26,8 +27,15 @@ typedef struct
     // Is master Hc-05 is paired with slave Hc-05?
     bool isSlaveConnected;
 
-    // 8-bit compressed flex sensor data for each finger.
-    uint8_t flexSensorAdc[FLEX_MAX_NUM_FINGERS];
+    // Is the slave Hc-05 ready to receive a new data packet?
+    bool isSlaveReadyForUpdate;
+
+    // Data packet to transfer
+    dataPacket_t packet;
+
+    // Message received back from the slave device
+    // This will only contain the opcode portion of the dataPacket_t.
+    char* slaveResponse;
 
     // Contains message to write to a single row of the LCD
     char lcdMsg[LCD_MAX_CHARS_PER_LINE];
@@ -83,12 +91,56 @@ int handTrackingGlove()
     // Configures ADC module and sets mux GPIO
     FlexSensors::Init();
 
+    // Configure UART to communicate with HC-05 module
+    Hc05Api::SetMode(HC05MODE_DATA);
+
+    // Slave will be ready for update as soon as master and slave connect
+    state.isSlaveReadyForUpdate = true;
+
     // Main program loop
     while(1)
     {
+        // Is slave HC-05 still paired with master HC-05?
         updateBluetoothConnectionStatus();
+
+        // Capture and compress ADC readings for all flex sensors
         updateFlexSensorReadings();
-        delayMs(100);
+
+        // Send the next packet to the slave device if ready
+        if (state.isSlaveConnected)
+        {
+            if (state.isSlaveReadyForUpdate)
+            {
+                state.packet.opCode = DPP_OPCODE_PACKET;
+
+                // Send next packet of data
+                if (!Hc05Api::Send((char*)&state.packet, sizeof(dataPacket_t)))
+                {
+                    while(1); // Send transfer should not fail - trap CPU for debugging.
+                }
+
+                // Slave may still be processing the previous update.
+                state.isSlaveReadyForUpdate = false;
+            }
+            else
+            {
+                // Wait for ACK response from slave device
+                if (!Hc05Api::Recv((char**)&state.slaveResponse, 1))
+                {
+                    while(1); // Receive should not fail - trap CPU for debugging.
+                }
+
+                if (*state.slaveResponse != DPP_OPCODE_ACK)
+                {
+                    while(1); // Slave response should only be an ACK - trap CPU for debugging.
+                }
+
+                // Slave has processed the previous update and is ready for a new one.
+                state.isSlaveReadyForUpdate = true;
+            }
+        }
+
+        delayMs(1);
     }
 
     return 0;
@@ -138,11 +190,11 @@ bool updateFlexSensorReadings()
 {
     for (uint8_t f = 0; f < FLEX_MAX_NUM_FINGERS; f++)
     {
-        state.flexSensorAdc[f] = FlexSensors::GetJointsData(f);
+        state.packet.flexSensors[f] = (unsigned char)FlexSensors::GetJointsData(f);
 
         // Update LCD with flex sensor readings
         memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
-        sprintf(state.lcdMsg, "F%u: %u", f, state.flexSensorAdc[f]);
+        sprintf(state.lcdMsg, "F%u: %u", f, state.packet.flexSensors[f]);
         LcdGfx::drawString(0, f + 1, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
     }
     return true;

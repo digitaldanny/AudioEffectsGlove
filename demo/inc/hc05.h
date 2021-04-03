@@ -8,6 +8,7 @@
 */
 #include "driverlib.h"
 #include "device.h"
+#include "data_packet_protocol.h"
 #include <string.h>
 
 /*
@@ -18,7 +19,8 @@
 
 #define ENABLE_SCIC_LOOPBACK_TEST       0
 #define ENABLE_HC05_NAME_TEST           0
-#define ENABLE_HC05_RW_TO_MASTER_TEST   1
+#define ENABLE_HC05_RW_TO_MASTER_TEST   0
+#define ENABLE_HC05_DATA_PACKET_TEST    1
 
 #define BAUDRATE_38400      (38400<<1)
 #define BAUDRATE_9600       (9600<<1)
@@ -44,6 +46,10 @@ bool hc05NameTest();
 #if ENABLE_HC05_RW_TO_MASTER_TEST
 bool hc05RwToMasterTest();
 #endif // ENABLE_HC05_RW_TO_MASTER_TEST
+
+#if ENABLE_HC05_DATA_PACKET_TEST
+bool messageProtocolTest();
+#endif // ENABLE_HC05_DATA_PACKET_TEST
 
 // HC-05 API
 void initHc05();
