@@ -69,7 +69,7 @@ bool readHc05NonBlocking(uint16_t** rx, uint16_t len)
 {
     // Return data if expected number of bytes are received.
     // Otherwise, do nothing.
-    if (rxLenSinceTx == len);
+    if (rxLenSinceTx == len)
     {
         *rx = (uint16_t*)rDataA;
         return true;
@@ -163,6 +163,7 @@ __interrupt void sciCRXFIFOISR(void)
     {
         rDataA[rxLenSinceTx] = SCI_readCharNonBlocking(SCIC_BASE);
         rxLenSinceTx++;
+
     }
 
     SCI_clearOverflowStatus(SCIC_BASE);
