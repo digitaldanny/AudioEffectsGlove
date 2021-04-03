@@ -3,6 +3,7 @@
 
 #include "entry_points.h"
 #include "hc05_api.h"
+#include "flex_sensors_api.h"
 #include "lcd_graphics.h"
 
 /*
@@ -22,7 +23,15 @@
 
 typedef struct
 {
+    // Is master Hc-05 is paired with slave Hc-05?
     bool isSlaveConnected;
+
+    // 8-bit compressed flex sensor data for each finger.
+    uint8_t flexSensorAdc[FLEX_MAX_NUM_FINGERS];
+
+    // Contains message to write to a single row of the LCD
+    char lcdMsg[LCD_MAX_CHARS_PER_LINE];
+
 } gloveState_t;
 
 /*
@@ -33,9 +42,6 @@ typedef struct
 
 // Contains information about the state of the main program
 gloveState_t state;
-
-// Contains message to write to a single row of the LCD
-char lcdMsg[LCD_MAX_CHARS_PER_LINE];
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -73,11 +79,26 @@ int handTrackingGlove()
     // Configures SPI module, LCD registers, and clears screen
     LcdGfx::init();
 
+    // Configures ADC module and sets mux GPIO
+    FlexSensors::Init();
+
     // Main program loop
     while(1)
     {
         updateBluetoothConnectionStatus();
-        delayMs(1);
+
+        for (uint8_t f = 0; f < FLEX_MAX_NUM_FINGERS; f++)
+        {
+            state.flexSensorAdc[f] = FlexSensors::GetJointsData(f);
+
+            // Update LCD with flex sensor readings
+            memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
+            sprintf(state.lcdMsg, "F%u: %u", f, state.flexSensorAdc[f]);
+
+            LcdGfx::drawString(0, f+1, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
+        }
+
+        delayMs(100);
     }
 
     return 0;
@@ -90,6 +111,7 @@ int handTrackingGlove()
  * the slave HC-05 on the DSP Effects Rack board.
  *
  * RETURN: Always true
+ *
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 bool updateBluetoothConnectionStatus()
@@ -100,15 +122,15 @@ bool updateBluetoothConnectionStatus()
 
     if (state.isSlaveConnected)
     {
-        memcpy(lcdMsg, "BT: Paired", LCD_MAX_CHARS_PER_LINE);
+        memcpy(state.lcdMsg, "BT: Paired", LCD_MAX_CHARS_PER_LINE);
     }
     else
     {
-        memcpy(lcdMsg, "BT: ?     ", LCD_MAX_CHARS_PER_LINE);
+        memcpy(state.lcdMsg, "BT: ?     ", LCD_MAX_CHARS_PER_LINE);
     }
 
     LcdGfx::drawString(LCD_COL_BLUETOOTH_STATUS, LCD_ROW_BLUETOOTH_STATUS,
-                       lcdMsg, LCD_MAX_CHARS_PER_LINE);
+                       state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
 
     return true;
 }

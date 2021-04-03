@@ -40,7 +40,7 @@ extern "C" {
 */
 
 #define MUX_CHAN_MIN        (0)   // Minimum mux channel
-#define MUX_CHAN_MAX        (7)   // Maximum mux channel
+#define MUX_CHAN_MAX        (2)   // Maximum mux channel
 #define MUX_NUM_SEL_LINES   (3)   // Number of select lines (sel[2:0] = 3)
 
 #define MUX_MODULE          PROTO_PATH "cd4051be_mux"
@@ -57,12 +57,12 @@ extern "C" {
 namespace Mux {
 
     bool Init               ();
-    bool SelectMuxChannel   (int mux_channel);
+    bool SelectMuxChannel   (uint8_t mux_channel);
 
 #if TARGET_HW_MSP432
     namespace MSP432 {
         bool Init               ();
-        bool SelectMuxChannel   (int mux_channel);
+        bool SelectMuxChannel   (uint8_t mux_channel);
     }
 #endif // ENABLE_TARGET_MSP432
 
@@ -76,7 +76,7 @@ namespace Mux {
 #if TARGET_HW_PYTHON_CAPABLE
     namespace Python {
         bool Init               ();
-        bool SelectMuxChannel   (int mux_channel);
+        bool SelectMuxChannel   (uint8_t mux_channel);
     }
 #endif // ENABLE_MUX_PYTHON
 }

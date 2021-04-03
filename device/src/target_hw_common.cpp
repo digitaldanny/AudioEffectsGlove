@@ -37,6 +37,12 @@ const systemIO_t systemIO = {
   .spiCs1 = {GPIO_PORT_P3, GPIO_PIN5}, // P3.5
   .lcdRs = {GPIO_PORT_P2, GPIO_PIN3}, // P2.3
   .lcdReset = {GPIO_PORT_P5, GPIO_PIN1}, // P5.1
+  .flexAdc = {GPIO_PORT_P5, GPIO_PIN5}, // P5.5
+  .flexMux = {
+              {GPIO_PORT_P3, GPIO_PIN7}, // P3.7
+              {GPIO_PORT_P4, GPIO_PIN1}, // P4.1
+              {GPIO_PORT_P4, GPIO_PIN6} // P4.6
+  },
   .spareGpio = {GPIO_PORT_P2, GPIO_PIN7} // P2.7
 };
 
