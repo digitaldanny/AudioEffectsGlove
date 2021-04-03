@@ -59,6 +59,8 @@ gloveState_t state;
 
 bool updateBluetoothConnectionStatus();
 bool updateFlexSensorReadings();
+void SendUpdateToSlave();
+void WaitForSlaveAck();
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -111,32 +113,13 @@ int handTrackingGlove()
         {
             if (state.isSlaveReadyForUpdate)
             {
-                state.packet.opCode = DPP_OPCODE_PACKET;
-
-                // Send next packet of data
-                if (!Hc05Api::Send((char*)&state.packet, sizeof(dataPacket_t)))
-                {
-                    while(1); // Send transfer should not fail - trap CPU for debugging.
-                }
-
-                // Slave may still be processing the previous update.
-                state.isSlaveReadyForUpdate = false;
+                SendUpdateToSlave();
             }
             else
             {
-                // Wait for ACK response from slave device
-                if (!Hc05Api::Recv((char**)&state.slaveResponse, 1))
-                {
-                    while(1); // Receive should not fail - trap CPU for debugging.
-                }
-
-                if (*state.slaveResponse != DPP_OPCODE_ACK)
-                {
-                    while(1); // Slave response should only be an ACK - trap CPU for debugging.
-                }
-
-                // Slave has processed the previous update and is ready for a new one.
-                state.isSlaveReadyForUpdate = true;
+                // Wait for ACK response from slave device if packet was
+                // recently sent.
+                WaitForSlaveAck();
             }
         }
 
@@ -198,6 +181,49 @@ bool updateFlexSensorReadings()
         LcdGfx::drawString(0, f + 1, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
     }
     return true;
+}
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * Description: SendUpdateToSlave
+ * Send latest packet of sensor data to the slave device.
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+void SendUpdateToSlave()
+{
+    state.packet.opCode = DPP_OPCODE_PACKET;
+    // Send next packet of data
+    if (!Hc05Api::Send((char*) (&state.packet), sizeof(dataPacket_t)))
+    {
+        while (1); // Send transfer should not fail - trap CPU for debugging.
+
+    }
+    // Slave may still be processing the previous update.
+    state.isSlaveReadyForUpdate = false;
+}
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * Description: WaitForSlaveAck
+ * Loop infinitely while waiting for slave device to notify master that
+ * previous data packet was processed.
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+void WaitForSlaveAck()
+{
+    // Wait for ACK response from slave device
+    if (!Hc05Api::Recv((char**) (&state.slaveResponse), 1))
+    {
+        while (1); // Receive should not fail - trap CPU for debugging.
+
+    }
+    if (*state.slaveResponse != DPP_OPCODE_ACK)
+    {
+        while (1); // Slave response should only be an ACK - trap CPU for debugging.
+
+    }
+    // Slave has processed the previous update and is ready for a new one.
+    state.isSlaveReadyForUpdate = true;
 }
 
 #endif // ENABLE_HAND_TRACKING_GLOVE
