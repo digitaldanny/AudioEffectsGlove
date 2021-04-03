@@ -56,6 +56,7 @@ void initHc05();
 bool resetBuffersHc05();
 bool writeHc05(uint16_t* msg, uint16_t len);
 bool readHc05(uint16_t** rx, uint16_t len);
+bool readHc05NonBlocking(uint16_t** rx, uint16_t len);
 
 // SCI drivers
 __interrupt void sciCTXFIFOISR(void);

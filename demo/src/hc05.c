@@ -65,6 +65,21 @@ bool readHc05(uint16_t** rx, uint16_t len)
     return true;
 }
 
+bool readHc05NonBlocking(uint16_t** rx, uint16_t len)
+{
+    // Return data if expected number of bytes are received.
+    // Otherwise, do nothing.
+    if (rxLenSinceTx == len);
+    {
+        *rx = (uint16_t*)rDataA;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
  * SCI IMPLEMENTATIONS
