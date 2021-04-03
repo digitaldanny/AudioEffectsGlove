@@ -50,6 +50,7 @@ gloveState_t state;
 */
 
 bool updateBluetoothConnectionStatus();
+bool updateFlexSensorReadings();
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -86,18 +87,7 @@ int handTrackingGlove()
     while(1)
     {
         updateBluetoothConnectionStatus();
-
-        for (uint8_t f = 0; f < FLEX_MAX_NUM_FINGERS; f++)
-        {
-            state.flexSensorAdc[f] = FlexSensors::GetJointsData(f);
-
-            // Update LCD with flex sensor readings
-            memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
-            sprintf(state.lcdMsg, "F%u: %u", f, state.flexSensorAdc[f]);
-
-            LcdGfx::drawString(0, f+1, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
-        }
-
+        updateFlexSensorReadings();
         delayMs(100);
     }
 
@@ -132,6 +122,29 @@ bool updateBluetoothConnectionStatus()
     LcdGfx::drawString(LCD_COL_BLUETOOTH_STATUS, LCD_ROW_BLUETOOTH_STATUS,
                        state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
 
+    return true;
+}
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * Description: updateFlexSensorReadings
+ * Read all compressed flex sensors voltage values (currently 3).
+ *
+ * RETURN: Always true
+ *
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+bool updateFlexSensorReadings()
+{
+    for (uint8_t f = 0; f < FLEX_MAX_NUM_FINGERS; f++)
+    {
+        state.flexSensorAdc[f] = FlexSensors::GetJointsData(f);
+
+        // Update LCD with flex sensor readings
+        memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
+        sprintf(state.lcdMsg, "F%u: %u", f, state.flexSensorAdc[f]);
+        LcdGfx::drawString(0, f + 1, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
+    }
     return true;
 }
 
