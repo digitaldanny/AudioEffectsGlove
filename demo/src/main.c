@@ -268,7 +268,7 @@ void main(void)
     {
         // Read glove sensor data from master device and notify the device that
         // the data packet was received.
-        if (readHc05NonBlocking((Uint16**)gloveSensorData, sizeof(gloveSensorData)));
+        if (readHc05NonBlocking((Uint16**)&gloveSensorData, sizeof(gloveSensorData)))
         {
             Uint16 ackMsg = DPP_OPCODE_ACK;
             resetBuffersHc05();
