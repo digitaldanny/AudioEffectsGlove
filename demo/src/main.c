@@ -19,6 +19,7 @@
 
 #include "kiss_fft.h"
 #include "kiss_fftr.h"
+#include "hc05.h"
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -154,7 +155,6 @@ float * prevInPtr;
 float * currInPtr;
 
 // PITCH SHIFTING
-volatile Uint16 robotEffectEn;
 volatile Uint16 adcBResult;
 volatile Uint16 adcAResult;
 volatile float shift;
@@ -194,7 +194,6 @@ void main(void)
     currInPtr               = (float*)&rin1[0];
     prevInPtr               = (float*)&rin2[0];     // prev buff must be initialized to 0 for stft
 
-    robotEffectEn           = 0;
     // ------------------------------------------------------------------------
 
     // prev buff must be initialized to 0 for stft
@@ -221,6 +220,15 @@ void main(void)
     EINT;  // Enable Global interrupt INTM
     ERTM;  // Enable Global realtime interrupt DBGM
 
+    // Initialize HC-05 module
+    initHc05();
+
+    // Baud rate must be configured to 9600 for HC-05 to communicate in data mode.
+    if (BAUDRATE_DEFAULT != BAUDRATE_9600)
+    {
+        while(1); // Failure - Configure baud rate to 9600
+    }
+
     // update frequencies on LCD
     char s1[] = "filter k = ";
     lcdRow1();
@@ -244,27 +252,33 @@ void main(void)
     Uint16 switches;
     Uint16 prevSwitches = 1234; // switches != prevSwitches initially
 
+    dataPacket_t* gloveSensorData;
+
+    // set input gain to 0dB by default
+    Uint16 command = linput_volctl (0x17 - 8 - switches); // 12dB - 8*1.5dB (-8 => 0dB, -12 => -6dB
+    BitBangedCodecSpiTransmit (command);
+    SmallDelay();
+
+    // set output gain to 0dB by default
+    command = lhp_volctl (0x69 - 8 - switches); // 12dB - 8*1.5dB (-8 => 0dB, -12 => -6dB
+    BitBangedCodecSpiTransmit (command);
+    SmallDelay();
+
     while(1)
     {
+        // Read glove sensor data from master device and notify the device that
+        // the data packet was received.
+        if (readHc05NonBlocking((Uint16**)gloveSensorData, sizeof(gloveSensorData)));
+        {
+            Uint16 ackMsg = DPP_OPCODE_ACK;
+            resetBuffersHc05();
+            writeHc05(&ackMsg, 1);
+        }
+
+
         // +--------------------------------------------------------------------------------------+
         // CREATE ADC VALUES WHILE WAITING FOR NEW SAMPLES
         // +--------------------------------------------------------------------------------------+
-
-        // line in volume control
-        switches = getCodecSwitches();
-        if (switches != prevSwitches)
-        {
-            // set input gain to 0dB by default
-            Uint16 command = linput_volctl (0x17 - 8 - switches); // 12dB - 8*1.5dB (-8 => 0dB, -12 => -6dB
-            BitBangedCodecSpiTransmit (command);
-            SmallDelay();
-
-            // set output gain to 0dB by default
-            command = lhp_volctl (0x69 - 8 - switches); // 12dB - 8*1.5dB (-8 => 0dB, -12 => -6dB
-            BitBangedCodecSpiTransmit (command);
-            SmallDelay();
-        }
-        prevSwitches = switches;
 
         // Select the audio source..
         Uint16 buttons = getCodecButtons();
@@ -291,11 +305,7 @@ void main(void)
                 lcdCursorRow1(7);
                 char str[] = "-R";
                 lcdString((Uint16 *)&str);
-
-                robotEffectEn = 1;
             }
-            else
-                robotEffectEn = 0;
         }
         else if (buttons == RIGHT_BUTTON)
         {
@@ -312,8 +322,6 @@ void main(void)
             lcdCursorRow1(0);
             char str[] = "MIC OFF";
             lcdString((Uint16 *)&str);
-
-            robotEffectEn = 0;
         }
 
         FORCE_ADC_CONVERSION;     // force ADC to convert on A0 (shift)
@@ -361,17 +369,6 @@ void main(void)
              // Uint16 k = 442; // tested value to remove white noise (32KHz sampling) -> 13.8 KHz
              // Uint16 k = 295; // (48KHz sampling) -> 13.8 KHz
              Uint16 k = (Uint16)kFilter; // controllable using B2 ADC
-
-             // robotic voice effect zeros out the phase without changing the magnitude of the
-             // frequency bins.. (optional effect)
-             if (robotEffectEn)
-             {
-                 for (Uint16 i = 0; i < k; i++)
-                 {
-                     cout[i].r = sqrtf(cout[i].r*cout[i].r + cout[i].i*cout[i].i);
-                     cout[i].i = 0.0f;
-                 }
-             }
 
              // get rid of the white noise in upper bins
              for (Uint16 i = k; i < CFFT_SIZE/2; i++)
