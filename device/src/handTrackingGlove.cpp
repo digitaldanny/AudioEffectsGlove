@@ -8,7 +8,7 @@
 #include "lcd_graphics.h"
 
 /*
- * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * +=====+=====+=====+=====+=====+=====+=====+==5===+=====+=====+=====+=====+
  * DEFINES
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
@@ -86,6 +86,9 @@ int handTrackingGlove()
 {
     // Initialize glove state variable
     memset((void*)&state, 0, sizeof(gloveState_t));
+
+    // Initialize GPIO to control external hardware power and set power to off
+    initExternalHwPower();
 
     // Configures SPI module, LCD registers, and clears screen
     LcdGfx::init();

@@ -58,15 +58,22 @@ int unitTest_hc05ConfigMaster()
     // Read current device configurations
     for (int i = 0; i < NUM_READS; i++)
     {
+        uint8_t numBytes = 0;
+        while (*(reads[i]+numBytes) != '\n')
+        {
+            numBytes++;
+        }
+        numBytes++;
+
         // Send the AT command to the HC-05
-        if (!Hc05Api::Send(reads[i]))
+        if (!Hc05Api::Send(reads[i], numBytes))
         {
             /* UART send failed */
             while(1);
         }
 
         // Read back the HC-05 module response
-        if (!Hc05Api::Recv(&rxBuf))
+        if (!Hc05Api::Recv(&rxBuf, lenExpectedMsg))
         {
             // UART send failed
             while(1);
@@ -77,15 +84,22 @@ int unitTest_hc05ConfigMaster()
     // Configure the HC-05 device with new settings
     for (int i = 0; i < NUM_CONFIGS; i++)
     {
+        uint8_t numBytes = 0;
+        while (*(configs[i]+numBytes) != '\n')
+        {
+            numBytes++;
+        }
+        numBytes++;
+
         // Send the AT command to the HC-05
-        if (!Hc05Api::Send(configs[i]))
+        if (!Hc05Api::Send(configs[i], numBytes))
         {
             /* UART send failed */
             while(1);
         }
 
         // Read back the HC-05 module response
-        if (!Hc05Api::Recv(&rxBuf))
+        if (!Hc05Api::Recv(&rxBuf, lenExpectedMsg))
         {
             // UART send failed
             while(1);
