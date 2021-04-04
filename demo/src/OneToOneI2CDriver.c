@@ -70,6 +70,7 @@ void I2C_O2O_Master_Init(Uint16 slaveAddress, float32 sysClkMhz, float32 I2CClkK
  */
 void I2C_O2O_SendBytes(Uint16 * const values, Uint16 length)
 {
+    /*
 	// Set to Master, Repeat Mode, TRX, FREE, Start
 	I2caRegs.I2CMDR.all = 0x66A0;
 
@@ -85,6 +86,7 @@ void I2C_O2O_SendBytes(Uint16 * const values, Uint16 length)
 
 	// Stop Bit
 	I2caRegs.I2CMDR.bit.STP = 1;
+	*/
 }
 
 /*
