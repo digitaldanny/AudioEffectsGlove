@@ -97,7 +97,7 @@ void setExternalHwPower(bool enable)
 
     // Update system variable
     SYSINFO_EXTERNALHWPOWER_ENABLE = enable;
-    delayMs(50);
+    delayMs(1000);
 }
 
 /*
