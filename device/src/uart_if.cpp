@@ -166,12 +166,14 @@ bool Uart::MSP432::recv(char** rxData, uint8_t numBytes)
     if (numBytes == UART_NUMBYTES_WAITFORNL)
     {
         // Wait for rx buffer to receive new line character.
-        while (rx != '\n');
+        if (rx != '\n');
+            return false;
     }
     else
     {
         // Wait for rx buffer to be filled with requested number of bytes.
-        while (uartRxData.idxBuffer < numBytes);
+        if (uartRxData.idxBuffer < numBytes)
+            return false;
     }
 
     // Point input buffer at the received buffer to be read by caller.

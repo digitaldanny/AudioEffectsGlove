@@ -16,6 +16,8 @@
 #define LCD_ROW_BLUETOOTH_STATUS    0
 #define LCD_COL_BLUETOOTH_STATUS    0
 
+#define BLUETOOTH_TIMEOUT_COUNT     500 // Iteration count between data update to ack is expected to be around 10-15.
+
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
  * STRUCTS
@@ -29,6 +31,11 @@ typedef struct
 
     // Is the slave Hc-05 ready to receive a new data packet?
     bool isSlaveReadyForUpdate;
+
+    // If slave device has not responded within a certain number of
+    // main loop iterations, the C2000 program may have restarted
+    // without powering off the slave HC-05.
+    uint32_t bluetoothTimeoutCounter;
 
     // Data packet to transfer
     dataPacket_t packet;
@@ -61,7 +68,7 @@ gloveState_t state;
 bool updateBluetoothConnectionStatus();
 bool updateFlexSensorReadings();
 void SendUpdateToSlave();
-void WaitForSlaveAck();
+void CheckForSlaveAck();
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -112,21 +119,28 @@ int handTrackingGlove()
         // Capture and compress ADC readings for all flex sensors
         updateFlexSensorReadings();
 
-        // Send the next packet to the slave device if ready
         if (state.isSlaveConnected)
         {
+            // Send the next packet to the slave device if ready
             if (state.isSlaveReadyForUpdate)
             {
                 SendUpdateToSlave();
             }
+            else if (state.bluetoothTimeoutCounter >= BLUETOOTH_TIMEOUT_COUNT)
+            {
+                // Slave device may have disconnected. Reset slaveReady bool
+                // for when the device reconnects.
+                state.isSlaveReadyForUpdate = true;
+            }
             else
             {
                 // Wait for ACK response from slave device if packet was
-                // recently sent.
-                WaitForSlaveAck();
+                // sent during current connection.
+                CheckForSlaveAck();
             }
         }
 
+        state.bluetoothTimeoutCounter++;
         delayMs(5);
     }
 
@@ -204,6 +218,7 @@ void SendUpdateToSlave()
     }
     // Slave may still be processing the previous update.
     state.isSlaveReadyForUpdate = false;
+    state.bluetoothTimeoutCounter = 0;
 }
 
 /*
@@ -213,21 +228,20 @@ void SendUpdateToSlave()
  * previous data packet was processed.
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
-void WaitForSlaveAck()
+void CheckForSlaveAck()
 {
     // Wait for ACK response from slave device
-    if (!Hc05Api::Recv((char**) (&state.slaveResponse), 1))
+    if (Hc05Api::Recv((char**) (&state.slaveResponse), 1))
     {
-        while (1); // Receive should not fail - trap CPU for debugging.
+        // Decode response from slave device
+        if (*state.slaveResponse != DPP_OPCODE_ACK)
+        {
+            while (1); // Slave response should only be an ACK - trap CPU for debugging.
+        }
 
+        // Slave has processed the previous update and is ready for a new one.
+        state.isSlaveReadyForUpdate = true;
     }
-    if (*state.slaveResponse != DPP_OPCODE_ACK)
-    {
-        while (1); // Slave response should only be an ACK - trap CPU for debugging.
-
-    }
-    // Slave has processed the previous update and is ready for a new one.
-    state.isSlaveReadyForUpdate = true;
 }
 
 #endif // ENABLE_HAND_TRACKING_GLOVE
