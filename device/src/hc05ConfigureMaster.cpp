@@ -73,12 +73,12 @@ int unitTest_hc05ConfigMaster()
         }
 
         // Read back the HC-05 module response
-        if (!Hc05Api::Recv(&rxBuf, lenExpectedMsg))
+        if (!Hc05Api::Recv(&rxBuf, UART_NUMBYTES_WAITFORNL))
         {
             // UART send failed
             while(1);
         }
-        delayMs(1);
+        delayMs(5);
     }
 
     // Configure the HC-05 device with new settings
@@ -114,7 +114,7 @@ int unitTest_hc05ConfigMaster()
                 return -1;
             }
         }
-        delayMs(1);
+        delayMs(5);
     }
     return 0;
 }

@@ -16,7 +16,7 @@
 
 volatile uartRxData_t uartRxData; // Stores data receives through UART
 volatile int numInterrupts;
-volatile uint8_t numBytesToRead;
+volatile char rx;
 
 #if TARGET_HW_MSP432
 /* UART Configuration Parameter. These are the configuration parameters to
@@ -137,10 +137,9 @@ bool Uart::MSP432::init(const eUSCI_UART_Config* config)
 
 bool Uart::MSP432::resetBuffer()
 {
-    // Reset received data structure for next read
-    uartRxData.flagRxReady = false;
-    uartRxData.idxBuffer = 0;
-    memset((void*)uartRxData.rxBuffer, 0, UART_BUFFER_MAX_LENGTH);
+    // Reset received data structures for next read
+    rx = '\0';
+    memset((void*)&uartRxData, 0, sizeof(uartRxData_t));
     return true;
 }
 
@@ -164,10 +163,16 @@ bool Uart::MSP432::send(char* txData, uint8_t numBytes)
 
 bool Uart::MSP432::recv(char** rxData, uint8_t numBytes)
 {
-    numBytesToRead = numBytes;
-
-    // Wait for rx buffer to be filled before reading data.
-    while (!uartRxData.flagRxReady);
+    if (numBytes == UART_NUMBYTES_WAITFORNL)
+    {
+        // Wait for rx buffer to receive new line character.
+        while (rx != '\n');
+    }
+    else
+    {
+        // Wait for rx buffer to be filled with requested number of bytes.
+        while (uartRxData.idxBuffer < numBytes);
+    }
 
     // Point input buffer at the received buffer to be read by caller.
     *rxData = (char*)&uartRxData.rxBuffer[0];
@@ -177,7 +182,6 @@ bool Uart::MSP432::recv(char** rxData, uint8_t numBytes)
 
 extern "C" void EUSCIA2_IRQHandler(void)
 {
-    char rx;
     uint32_t status = MAP_UART_getEnabledInterruptStatus(EUSCI_A2_BASE);
     numInterrupts++;
     MAP_UART_clearInterruptFlag(EUSCI_A2_BASE, status);
@@ -188,12 +192,6 @@ extern "C" void EUSCIA2_IRQHandler(void)
         rx = MAP_UART_receiveData(EUSCI_A2_BASE);
         uartRxData.rxBuffer[uartRxData.idxBuffer] = rx;
         uartRxData.idxBuffer++;
-
-        // Signal that final byte of data was received when final character is \n
-        if (uartRxData.idxBuffer == numBytesToRead)
-        {
-            uartRxData.flagRxReady = true;
-        }
     }
 
     // Trap PC in the interrupt if buffer is about to overflow

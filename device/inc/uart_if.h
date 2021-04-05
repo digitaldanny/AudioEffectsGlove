@@ -46,6 +46,8 @@
 #define UART_UCXBRS_CLK_16M_BAUDRATE_9600          182
 #define UART_OVERSAMPLING_CLK_16M_BAUDRATE_9600    EUSCI_A_UART_OVERSAMPLING_BAUDRATE_GENERATION
 
+#define UART_NUMBYTES_WAITFORNL                     0xFF
+
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 * ENUMS
