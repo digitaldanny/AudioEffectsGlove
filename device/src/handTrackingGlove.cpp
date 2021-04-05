@@ -115,35 +115,16 @@ int handTrackingGlove()
         // Send the next packet to the slave device if ready
         if (state.isSlaveConnected)
         {
-            state.packet.opCode = 0xAB;
-            state.packet.flexSensors[0] = 0xCD;
-            state.packet.flexSensors[1] = 0xEF;
-            state.packet.flexSensors[2] = 0x44;
-
-            // Send next packet of data
-            if (!Hc05Api::Send((char*) (&state.packet), sizeof(dataPacket_t)))
+            if (state.isSlaveReadyForUpdate)
             {
-                while (1); // Send transfer should not fail - trap CPU for debugging.
-
+                SendUpdateToSlave();
             }
-
-            // Wait for ACK response from slave device
-            if (!Hc05Api::Recv((char**) (&state.slaveResponse), 1))
+            else
             {
-                while (1); // Receive should not fail - trap CPU for debugging.
-
+                // Wait for ACK response from slave device if packet was
+                // recently sent.
+                WaitForSlaveAck();
             }
-
-            //if (state.isSlaveReadyForUpdate)
-            //{
-            //    SendUpdateToSlave();
-            //}
-            //else
-            //{
-            //    // Wait for ACK response from slave device if packet was
-            //    // recently sent.
-            //    WaitForSlaveAck();
-            //}
         }
 
         delayMs(5);
