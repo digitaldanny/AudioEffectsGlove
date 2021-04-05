@@ -146,7 +146,7 @@ int handTrackingGlove()
             //}
         }
 
-        delayMs(1);
+        delayMs(5);
     }
 
     return 0;
