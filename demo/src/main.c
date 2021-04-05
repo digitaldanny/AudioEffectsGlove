@@ -260,6 +260,7 @@ void main(void)
 
     dataPacket_t* gloveSensorData;      // Points to data stored in the UART RX buff (typecasts to dataPacket_t).
     dataPacket_t gloveSensorDataLocal;  // Data is copied over to be used in the main program.
+    uint32_t unknownOpCodeCounter = 0;  // Times unknown op-code has been received over uart
 
     // set input gain to 0dB by default
     Uint16 command = linput_volctl (0x17 - 8 - switches); // 12dB - 8*1.5dB (-8 => 0dB, -12 => -6dB
@@ -278,18 +279,28 @@ void main(void)
     {
         // // Read glove sensor data from master device and notify the device that
         // // the data packet was received.
-        if (readHc05NonBlocking((Uint16**)&gloveSensorData, sizeof(gloveSensorData)))
+        if (readHc05NonBlocking((Uint16**)&gloveSensorData, 2*sizeof(gloveSensorData)))
         {
-            Uint16 ackMsg = DPP_OPCODE_ACK;
-
-            // Store received data in the uart RX buffer into the local data structure.
+            // Store received data in the uart RX buffer into the local data structure
+            // and reset the uart buffers for next transfer.
+            Interrupt_disable(INT_SCIC_RX);
             memcpy((void*)&gloveSensorDataLocal, (void*)gloveSensorData, sizeof(dataPacket_t));
-
-            // Notify the master device that the last packet has been processed.
             resetBuffersHc05();
-            writeHc05(&ackMsg, 1);
-        }
+            Interrupt_enable(INT_SCIC_RX);
 
+            // Decode received message
+            if (gloveSensorDataLocal.opCode == DPP_OPCODE_PACKET)
+            {
+                Uint16 ackMsg = DPP_OPCODE_ACK;
+
+                // Notify the master device that the last packet has been processed.
+                writeHc05(&ackMsg, 1);
+            }
+            else
+            {
+                unknownOpCodeCounter++;
+            }
+        }
 
         // +--------------------------------------------------------------------------------------+
         // CREATE ADC VALUES WHILE WAITING FOR NEW SAMPLES
@@ -359,13 +370,6 @@ void main(void)
         kFilter = FLEX_MAX_ADC - (float)(gloveSensorDataLocal.flexSensors[FLEX_INDEX_LPF]);
         kFilter /= FLEX_MAX_ADC;
         kFilter *= (CFFT_SIZE/2-1);
-
-        /// DEBUG ///
-        if (kFilter >= 500)
-        {
-            kFilter -= 1;
-        }
-        /// DEBUG ///
 
         float tens   = abs(shift) / 10.0;
         float ones   = (tens - (Uint16)tens) * 10;
