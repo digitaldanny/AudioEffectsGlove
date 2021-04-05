@@ -20,10 +20,19 @@
 #define ENABLE_SCIC_LOOPBACK_TEST       0
 #define ENABLE_HC05_NAME_TEST           0
 #define ENABLE_HC05_RW_TO_MASTER_TEST   0
-#define ENABLE_HC05_DATA_PACKET_TEST    0
+#define ENABLE_HC05_DATA_PACKET_TEST    1
 
-#define BAUDRATE_38400      (38400<<1)
-#define BAUDRATE_9600       (9600<<1)
+// Running project on laptop uses a different driverlib version
+// that divides the clocks differently.
+#define DRIVERLIB_2
+
+#ifdef DRIVERLIB_2
+ #define BAUDRATE_38400      (38400>>1)
+ #define BAUDRATE_9600       (9600>>1)
+#else
+ #define BAUDRATE_38400      (38400<<1)
+ #define BAUDRATE_9600       (9600<<1)
+#endif // DRIVERLIB_2
 #define BAUDRATE_DEFAULT    BAUDRATE_9600
 
 #define SCI_MAX_BUFFER_LENGTH       100
