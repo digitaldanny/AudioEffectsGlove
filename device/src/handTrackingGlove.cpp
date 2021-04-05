@@ -61,7 +61,7 @@ gloveState_t state;
 bool updateBluetoothConnectionStatus();
 bool updateFlexSensorReadings();
 void SendUpdateToSlave();
-void WaitForSlaveAck();
+void CheckForSlaveAck();
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -112,9 +112,9 @@ int handTrackingGlove()
         // Capture and compress ADC readings for all flex sensors
         updateFlexSensorReadings();
 
-        // Send the next packet to the slave device if ready
         if (state.isSlaveConnected)
         {
+            // Send the next packet to the slave device if ready
             if (state.isSlaveReadyForUpdate)
             {
                 SendUpdateToSlave();
@@ -122,9 +122,15 @@ int handTrackingGlove()
             else
             {
                 // Wait for ACK response from slave device if packet was
-                // recently sent.
-                WaitForSlaveAck();
+                // sent during current connection.
+                CheckForSlaveAck();
             }
+        }
+        else
+        {
+            // Slave device may have disconnected. Reset slaveReady bool
+            // for when the device reconnects.
+            state.isSlaveReadyForUpdate = true;
         }
 
         delayMs(5);
@@ -213,21 +219,20 @@ void SendUpdateToSlave()
  * previous data packet was processed.
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
-void WaitForSlaveAck()
+void CheckForSlaveAck()
 {
     // Wait for ACK response from slave device
-    if (!Hc05Api::Recv((char**) (&state.slaveResponse), 1))
+    if (Hc05Api::Recv((char**) (&state.slaveResponse), 1))
     {
-        while (1); // Receive should not fail - trap CPU for debugging.
+        // Decode response from slave device
+        if (*state.slaveResponse != DPP_OPCODE_ACK)
+        {
+            while (1); // Slave response should only be an ACK - trap CPU for debugging.
+        }
 
+        // Slave has processed the previous update and is ready for a new one.
+        state.isSlaveReadyForUpdate = true;
     }
-    if (*state.slaveResponse != DPP_OPCODE_ACK)
-    {
-        while (1); // Slave response should only be an ACK - trap CPU for debugging.
-
-    }
-    // Slave has processed the previous update and is ready for a new one.
-    state.isSlaveReadyForUpdate = true;
 }
 
 #endif // ENABLE_HAND_TRACKING_GLOVE
