@@ -20,7 +20,7 @@
 #define ENABLE_SCIC_LOOPBACK_TEST       0
 #define ENABLE_HC05_NAME_TEST           0
 #define ENABLE_HC05_RW_TO_MASTER_TEST   0
-#define ENABLE_HC05_DATA_PACKET_TEST    1
+#define ENABLE_HC05_DATA_PACKET_TEST    0
 
 // Running project on laptop uses a different driverlib version
 // that divides the clocks differently.

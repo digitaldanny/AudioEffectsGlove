@@ -252,7 +252,8 @@ void main(void)
     Uint16 switches;
     Uint16 prevSwitches = 1234; // switches != prevSwitches initially
 
-    dataPacket_t* gloveSensorData;
+    dataPacket_t* gloveSensorData;      // Points to data stored in the UART RX buff (typecasts to dataPacket_t).
+    dataPacket_t gloveSensorDataLocal;  // Data is copied over to be used in the main program.
 
     // set input gain to 0dB by default
     Uint16 command = linput_volctl (0x17 - 8 - switches); // 12dB - 8*1.5dB (-8 => 0dB, -12 => -6dB
@@ -264,6 +265,9 @@ void main(void)
     BitBangedCodecSpiTransmit (command);
     SmallDelay();
 
+    // Initialize glove sensor data
+    memset((void*)&gloveSensorDataLocal, 0, sizeof(dataPacket_t));
+
     while(1)
     {
         // Read glove sensor data from master device and notify the device that
@@ -271,8 +275,20 @@ void main(void)
         if (readHc05NonBlocking((Uint16**)&gloveSensorData, sizeof(gloveSensorData)))
         {
             Uint16 ackMsg = DPP_OPCODE_ACK;
+
+            // Store received data in the uart RX buffer into the local data structure.
+            memcpy((void*)&gloveSensorDataLocal, (void*)gloveSensorData, sizeof(dataPacket_t));
+
+            // Notify the master device that the last packet has been processed.
             resetBuffersHc05();
             writeHc05(&ackMsg, 1);
+
+            // Update LCD with new data packet
+            lcdCursorRow1(0);
+            char str[16] = {" "};
+            sprintf(str, "FLX: %u, %u, %u", gloveSensorDataLocal.flexSensors[0],
+                    gloveSensorDataLocal.flexSensors[1], gloveSensorDataLocal.flexSensors[2]);
+            lcdString((Uint16 *)&str);
         }
 
 
