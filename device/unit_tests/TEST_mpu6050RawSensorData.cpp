@@ -39,8 +39,11 @@ int TEST_mpu6500RawSensorData()
     // Write configuration register values
     for (int iConfig = 0; iConfig < MPU6050_NUM_CONFIGS; iConfig++)
     {
-        I2c::write(MPU6050_DEV_ADDR, mpu6050Configs[iConfig][0], 1, &mpu6050Configs[iConfig][1]);
-        delayMs(1);
+        if (!I2c::write(MPU6050_DEV_ADDR, mpu6050Configs[iConfig][0], 1, &mpu6050Configs[iConfig][1]))
+        {
+            while(1); // I2c NACK received - track CPU for HW debug
+        }
+        delayMs(10);
     }
 
     delayMs(10);
@@ -62,7 +65,7 @@ int TEST_mpu6500RawSensorData()
         gyroBuffer[1] = (sensorBuffer[10] << 8) | (sensorBuffer[11]);
         gyroBuffer[2] = (sensorBuffer[12] << 8) | (sensorBuffer[13]);
 
-        delayMs(1); // delay here for breakpointing
+        delayMs(10); // delay here for breakpointing
     }
     return 0;
 }
