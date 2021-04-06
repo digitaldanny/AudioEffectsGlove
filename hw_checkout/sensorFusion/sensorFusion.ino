@@ -41,12 +41,13 @@ void loop() {
   gyY = Wire.read() << 8 | Wire.read();
   gyZ = Wire.read() << 8 | Wire.read();
 
-  Serial.print("AcX = "); Serial.print(acX);
-  Serial.print(" | AcY = "); Serial.print(acY);
-  Serial.print(" | AcZ = "); Serial.print(acZ);
-  Serial.print(" | Tmp = "); Serial.print(tmp);
-  Serial.print(" | GyX = "); Serial.print(gyX);
-  Serial.print(" | GyY = "); Serial.print(gyY);
-  Serial.print(" | GyZ = "); Serial.println(gyZ);
+  Serial.print("AcX:"); Serial.print(acX);
+  Serial.print(" AcY:"); Serial.print(acY);
+  Serial.print(" AcZ:"); Serial.print(acZ);
+  //Serial.print(" Tmp:"); Serial.print(tmp);
+  //Serial.print(" GyX:"); Serial.print(gyX);
+  //Serial.print(" GyY:"); Serial.print(gyY);
+  //Serial.print(" GyZ:"); Serial.print(gyZ);
+  Serial.print("\n");
   delay(100);
 }
