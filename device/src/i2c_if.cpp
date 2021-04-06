@@ -31,7 +31,7 @@ static volatile eUSCI_I2C_MasterConfig i2cConfig =
 {
         EUSCI_B_I2C_CLOCKSOURCE_SMCLK,          // SMCLK Clock Source
         0,                                      // Set during runtime
-        EUSCI_B_I2C_SET_DATA_RATE_400KBPS,      // Desired I2C Clock of 400khz
+        EUSCI_B_I2C_SET_DATA_RATE_100KBPS,      // Desired I2C Clock of 400khz
         0,                                      // No byte counter threshold (using manual stop)
         EUSCI_B_I2C_NO_AUTO_STOP
 };
@@ -124,6 +124,7 @@ bool I2c::MSP432::write(uint8_t ui8Addr, uint8_t ui8Reg, uint8_t ui8ByteCount, u
 
     /* Send start bit and register */
     MAP_I2C_masterSendMultiByteStart(EUSCI_I2C_MODULE,ui8Reg);
+    MAP_I2C_masterSendMultiByteNext(EUSCI_I2C_MODULE, ui8Reg);
 
     /* Wait for tx to complete */
     while(!(MAP_I2C_getInterruptStatus(EUSCI_I2C_MODULE, EUSCI_B_I2C_TRANSMIT_INTERRUPT0) &
@@ -135,7 +136,7 @@ bool I2c::MSP432::write(uint8_t ui8Addr, uint8_t ui8Reg, uint8_t ui8ByteCount, u
     {
         /* If NACK, set stop bit and exit */
         MAP_I2C_masterSendMultiByteStop(EUSCI_I2C_MODULE);
-        return(EUSCI_I2C_STATUS_SLAVE_NACK);
+        return(false);
     }
 
     /* Now write one or more data bytes */
