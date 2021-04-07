@@ -59,6 +59,7 @@ extern void EUSCIB0_IRQHandler(void);
 extern void ADC14_IRQHandler(void);
 extern void EUSCIA2_IRQHandler(void);
 extern void EUSCIB1_IRQHandler(void);
+extern void SysTick_Handler(void);
 
 
 /* Interrupt vector table.  Note that the proper constructs must be placed on this to  */
@@ -84,7 +85,7 @@ void (* const interruptVectors[])(void) =
     defaultISR,                             /* Debug monitor handler     */
     0,                                      /* Reserved                  */
     defaultISR,                             /* The PendSV handler        */
-    defaultISR,                             /* The SysTick handler       */
+    SysTick_Handler,                        /* The SysTick handler       */
     defaultISR,                             /* PSS ISR                   */
     defaultISR,                             /* CS ISR                    */
     defaultISR,                             /* PCM ISR                   */
