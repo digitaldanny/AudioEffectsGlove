@@ -28,6 +28,11 @@
 #define MPU6050_SENSOR_ADDR_START   0x3B    // XACCEL_H is the first address to read from to capture all sensor values
 #define MPU6050_SENSOR_BURST_LEN    14      // 6 regs Accel X-Z H/L, 2 regs Temp H/L, 6 regs Gyro X-Z H/L
 
+// Gyro error calculated using the TEST_mpu6050GyroError script (build switch = ENABLE_MPU6050_ESTIMATE_GYRO_ERROR)
+// The first values are the ones estimated by the script and the second values are the ones that I eyeballed on the LCD
+#define MPU6050_GYRO_ERROR_X        (114-150)
+#define MPU6050_GYRO_ERROR_Y        (-444+220)
+#define MPU6050_GYRO_ERROR_Z        (-168+40)
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+

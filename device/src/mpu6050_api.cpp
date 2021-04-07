@@ -59,9 +59,9 @@ bool Mpu6050Api::readSensorData(int16_t* accelBuffer, int16_t* gyroBuffer)
     accelBuffer[1] = (sensorBuffer[2] << 8) | (sensorBuffer[3]);
     accelBuffer[2] = (sensorBuffer[4] << 8) | (sensorBuffer[5]);
     // temperature value is stored in indices 6-7 but is not used for this application
-    gyroBuffer[0] = (sensorBuffer[8] << 8) | (sensorBuffer[9]);
-    gyroBuffer[1] = (sensorBuffer[10] << 8) | (sensorBuffer[11]);
-    gyroBuffer[2] = (sensorBuffer[12] << 8) | (sensorBuffer[13]);
+    gyroBuffer[0] = ((sensorBuffer[8] << 8) | (sensorBuffer[9])) - MPU6050_GYRO_ERROR_X;
+    gyroBuffer[1] = ((sensorBuffer[10] << 8) | (sensorBuffer[11])) - MPU6050_GYRO_ERROR_Y;
+    gyroBuffer[2] = ((sensorBuffer[12] << 8) | (sensorBuffer[13])) - MPU6050_GYRO_ERROR_Z;
 
     return true;
 }
