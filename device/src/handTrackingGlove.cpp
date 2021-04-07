@@ -138,7 +138,7 @@ int handTrackingGlove()
         for (uint8_t f = 0; f < 3; f++)
         {
             memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
-            sprintf(state.lcdMsg, "A%u: %d", f, accelBuffer[f]);
+            sprintf(state.lcdMsg, "G%u: %d", f, gyroBuffer[f]);
             LcdGfx::drawString(0, f + 1, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
         }
 

@@ -64,7 +64,7 @@ volatile systemInfo_t systemInfo;
 void initExternalHwPower()
 {
     // Configure GPIO as output pin with the power disabled by default.
-    setExternalHwPower(false);
+    setExternalHwPower(true);
     MAP_GPIO_setAsOutputPin(SYSIO_PIN_EXTERNALHWPOWER_PORT, SYSIO_PIN_EXTERNALHWPOWER_PIN);
 }
 
