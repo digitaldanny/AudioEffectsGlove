@@ -55,8 +55,7 @@ uint8_t FlexSensors::GetJointsData(uint8_t finger)
         return false;
     }
 
-    // Short delay to give mux and Low-pass filter capacitor time to settle
-    delayUs(50);
+    delayMs(1);
 
     // Collect ADC sample from the flex sensor amplifier output
     adcReadingRaw = Adc::ReadAdcChannel(ADC_CHAN_FLEX_SENSORS);

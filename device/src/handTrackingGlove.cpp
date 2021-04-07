@@ -6,6 +6,7 @@
 #include "hc05_api.h"
 #include "flex_sensors_api.h"
 #include "mpu6050_api.h"
+#include "sensor_processing_lib.h"
 #include "lcd_graphics.h"
 
 /*
@@ -18,15 +19,6 @@
 #define LCD_COL_BLUETOOTH_STATUS    0
 
 #define BLUETOOTH_TIMEOUT_COUNT     500 // Iteration count between data update to ack is expected to be around 10-15.
-
-/*
- * +=====+=====+=====+=====+=====+=====+=====+==5===+=====+=====+=====+=====+
- * GLOBALS
- * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
-*/
-
-int16_t accelBuffer[3];
-int16_t gyroBuffer[3];
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -54,6 +46,19 @@ typedef struct
     // This will only contain the opcode portion of the dataPacket_t.
     char* slaveResponse;
 
+    // MPU6050 sensor data
+    int16_t accelBuffer[3];
+    int16_t gyroBuffer[3];
+
+    // Sensor fusion variables
+    unsigned long startTime;
+    float delta,wx,wy,wz;
+    euler_angles angles;
+    vector_ijk fusedVector;
+    Quaternion qAcc;
+    float corrPitch;
+    float corrRoll;
+
     // Contains message to write to a single row of the LCD
     char lcdMsg[LCD_MAX_CHARS_PER_LINE];
 
@@ -77,6 +82,7 @@ gloveState_t state;
 
 bool updateBluetoothConnectionStatus();
 bool updateFlexSensorReadings();
+void updateEulerAngles();
 void SendUpdateToSlave();
 void CheckForSlaveAck();
 
@@ -120,6 +126,11 @@ int handTrackingGlove()
     // Configure I2C and MPU6050 module to read accelerometer and gyroscope sensor data.
     Mpu6050Api::init();
 
+    // Initialize sensor fusion library
+    state.fusedVector = vector_3d_initialize(0.0,0.0,-1.0);
+    state.qAcc = quaternion_initialize(1.0,0.0,0.0,0.0);
+    state.startTime = millis();
+
     // Slave will be ready for update as soon as master and slave connect
     state.isSlaveReadyForUpdate = true;
 
@@ -133,14 +144,19 @@ int handTrackingGlove()
         updateFlexSensorReadings();
 
         // Capture the latest accelerometer and gyroscope sensor readings
-        Mpu6050Api::readSensorData(accelBuffer, gyroBuffer);
+        Mpu6050Api::readSensorData(state.accelBuffer, state.gyroBuffer);
 
-        for (uint8_t f = 0; f < 3; f++)
-        {
-            memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
-            sprintf(state.lcdMsg, "G%u: %d", f, gyroBuffer[f]);
-            LcdGfx::drawString(0, f + 1, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
-        }
+        // Update pitch and roll angles from accel / gyro readings.
+        updateEulerAngles();
+
+        // Update LCD with Pitch and Roll angles.
+        memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
+        sprintf(state.lcdMsg, "P: %.1f", state.corrPitch);
+        LcdGfx::drawString(0, 1, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
+
+        memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
+        sprintf(state.lcdMsg, "R: %.1f", state.corrRoll);
+        LcdGfx::drawString(0, 2, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
 
         if (state.isSlaveConnected)
         {
@@ -168,6 +184,47 @@ int handTrackingGlove()
     }
 
     return 0;
+}
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * Description: updateEulerAngles
+ * Use the sensor fusion algorithm to convert most recent gyroscope and
+ * accelerometer readings into new Pitch and Roll values.
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+void updateEulerAngles()
+{
+    // Update Euler angles from accel / gyro readings
+    state.wx = 0.0005323 * state.gyroBuffer[0];
+    state.wy = 0.0005323 * state.gyroBuffer[1];
+    state.wz = 0.0005323 * state.gyroBuffer[2];
+
+    state.delta = 0.001 * (millis() - state.startTime);
+
+    state.fusedVector = update_fused_vector(state.fusedVector, state.accelBuffer[0],
+                                            state.accelBuffer[1], state.accelBuffer[2],
+                                            state.wx, state.wy, state.wz,
+                                            state.delta);
+
+    state.qAcc = quaternion_from_accelerometer(state.fusedVector.a,
+                                               state.fusedVector.b,
+                                               state.fusedVector.c);
+
+    state.angles = quaternion_to_euler_angles(state.qAcc);
+    state.startTime = millis();
+
+    // Modify the roll values so that the resting sensor has an angle of 0.
+    // Rotating right increases towards 180, rotating left decreases towards -180.
+    state.corrRoll = state.angles.roll + 180.0f;
+    if (state.corrRoll > 180.0f)
+    {
+        state.corrRoll -= 360.0f;
+    }
+
+    // TODO - Modify the pitch values so that there is not any bending at the
+    // top of 90 degrees and -90 degrees.
+    state.corrPitch = state.angles.pitch;
 }
 
 /*
