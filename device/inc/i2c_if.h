@@ -28,7 +28,7 @@ namespace I2c
     namespace MSP432
     {
         bool init();
-        bool read(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *& data);
+        bool read(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
         bool write(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
     }
 #endif // TARGET_HW_MSP432

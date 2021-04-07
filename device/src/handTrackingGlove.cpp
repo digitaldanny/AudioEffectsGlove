@@ -5,6 +5,7 @@
 #include "data_packet_protocol.h"
 #include "hc05_api.h"
 #include "flex_sensors_api.h"
+#include "mpu6050_api.h"
 #include "lcd_graphics.h"
 
 /*
@@ -17,6 +18,15 @@
 #define LCD_COL_BLUETOOTH_STATUS    0
 
 #define BLUETOOTH_TIMEOUT_COUNT     500 // Iteration count between data update to ack is expected to be around 10-15.
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+==5===+=====+=====+=====+=====+
+ * GLOBALS
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+
+int16_t accelBuffer[3];
+int16_t gyroBuffer[3];
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -107,6 +117,9 @@ int handTrackingGlove()
     // Configure UART to communicate with HC-05 module
     Hc05Api::SetMode(HC05MODE_DATA);
 
+    // Configure I2C and MPU6050 module to read accelerometer and gyroscope sensor data.
+    Mpu6050Api::init();
+
     // Slave will be ready for update as soon as master and slave connect
     state.isSlaveReadyForUpdate = true;
 
@@ -118,6 +131,16 @@ int handTrackingGlove()
 
         // Capture and compress ADC readings for all flex sensors
         updateFlexSensorReadings();
+
+        // Capture the latest accelerometer and gyroscope sensor readings
+        Mpu6050Api::readSensorData(accelBuffer, gyroBuffer);
+
+        for (uint8_t f = 0; f < 3; f++)
+        {
+            memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
+            sprintf(state.lcdMsg, "G%u: %d", f, gyroBuffer[f]);
+            LcdGfx::drawString(0, f + 1, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
+        }
 
         if (state.isSlaveConnected)
         {
@@ -193,10 +216,10 @@ bool updateFlexSensorReadings()
     {
         state.packet.flexSensors[f] = (unsigned char)FlexSensors::GetJointsData(f);
 
-        // Update LCD with flex sensor readings
-        memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
-        sprintf(state.lcdMsg, "F%u: %u", f, state.packet.flexSensors[f]);
-        LcdGfx::drawString(0, f + 1, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
+        // // Update LCD with flex sensor readings
+        // memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
+        // sprintf(state.lcdMsg, "F%u: %u", f, state.packet.flexSensors[f]);
+        // LcdGfx::drawString(0, f + 1, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
     }
     return true;
 }
