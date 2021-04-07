@@ -35,6 +35,7 @@ uint8_t mpu6050Configs[MPU6050_NUM_CONFIGS][2] = {
 int TEST_mpu6500RawSensorData()
 {
     I2c::init();
+    delayMs(10);
 
     // Write configuration register values
     for (int iConfig = 0; iConfig < MPU6050_NUM_CONFIGS; iConfig++)
