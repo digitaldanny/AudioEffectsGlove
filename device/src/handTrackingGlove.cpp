@@ -82,7 +82,7 @@ gloveState_t state;
 
 bool updateBluetoothConnectionStatus();
 bool updateFlexSensorReadings();
-void updateEulerAngles();
+void updatePitchRoll();
 void SendUpdateToSlave();
 void CheckForSlaveAck();
 
@@ -147,16 +147,7 @@ int handTrackingGlove()
         Mpu6050Api::readSensorData(state.accelBuffer, state.gyroBuffer);
 
         // Update pitch and roll angles from accel / gyro readings.
-        updateEulerAngles();
-
-        // Update LCD with Pitch and Roll angles.
-        memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
-        sprintf(state.lcdMsg, "P: %.1f", state.corrPitch);
-        LcdGfx::drawString(0, 1, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
-
-        memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
-        sprintf(state.lcdMsg, "R: %.1f", state.corrRoll);
-        LcdGfx::drawString(0, 2, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
+        updatePitchRoll();
 
         if (state.isSlaveConnected)
         {
@@ -193,7 +184,7 @@ int handTrackingGlove()
  * accelerometer readings into new Pitch and Roll values.
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
-void updateEulerAngles()
+void updatePitchRoll()
 {
     // Update Euler angles from accel / gyro readings
     state.wx = 0.0005323 * state.gyroBuffer[0];
@@ -225,6 +216,15 @@ void updateEulerAngles()
     // TODO - Modify the pitch values so that there is not any bending at the
     // top of 90 degrees and -90 degrees.
     state.corrPitch = state.angles.pitch;
+
+    // Update LCD with Pitch and Roll angles.
+    memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
+    sprintf(state.lcdMsg, "P: %.1f", state.corrPitch);
+    LcdGfx::drawString(0, 1, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
+
+    memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
+    sprintf(state.lcdMsg, "R: %.1f", state.corrRoll);
+    LcdGfx::drawString(0, 2, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
 }
 
 /*
