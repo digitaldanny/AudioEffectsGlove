@@ -6,12 +6,12 @@
 #include "lcd_graphics.h"
 #include "flex_sensors_api.h"
 
-#define ADC_CH_OCV      ADC_CH2 // Open circuit voltage ADC buffer index
-#define ADC_CH_CCV      ADC_CH3 // Closed circuit voltage ADC buffer index
+#define ADC_CH_OCV      ADC_CH3 // Open circuit voltage ADC buffer index
+#define ADC_CH_CCV      ADC_CH1 // Closed circuit voltage ADC buffer index
 
-uint8_t flex0;
-uint8_t ocv;
-uint8_t ccv;
+uint16_t flex0;
+uint16_t ocv;
+uint16_t ccv;
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -31,15 +31,15 @@ int unitTest_stateOfCharge()
     char lcdBuff[10] = {0};
 
     Adc::Init();
-    FlexSensors::Init();
+    //FlexSensors::Init();
     //LcdGfx::init();
-    FlexSensors::GetJointsData(0);
+    //FlexSensors::GetJointsData(0);
 
     while(true)
     {
-        flex0   = (uint8_t)(Adc::ReadAdcChannel(0) >> 6);
-        ocv     = (uint8_t)(Adc::ReadAdcChannel(ADC_CH_OCV) >> 6);
-        ccv     = (uint8_t)(Adc::ReadAdcChannel(ADC_CH_CCV));
+        flex0   = Adc::ReadAdcChannel(0);
+        ocv     = Adc::ReadAdcChannel(ADC_CH_OCV);
+        ccv     = Adc::ReadAdcChannel(ADC_CH_CCV);
 
         //memset(lcdBuff, ' ', 10);
         //sprintf(lcdBuff, "FLX: %u", flex0);
@@ -53,7 +53,7 @@ int unitTest_stateOfCharge()
         //sprintf(lcdBuff, "CCV: %u", ccv);
         //LcdGfx::drawString(0, 2, lcdBuff, 10);
 
-        delayMs(100);
+        delayMs(10);
     }
     return 0;
 }

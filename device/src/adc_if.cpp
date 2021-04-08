@@ -83,7 +83,8 @@ uint16_t Adc::ReadAdcChannel(uint8_t adc_channel) {
 
 #if TARGET_HW_MSP432
 bool Adc::MSP432::Init() {
-    /* Initializing ADC (MCLK/1/4) */
+
+    /* Initializing ADC (MCLK/1/1) */
     MAP_ADC14_enableModule();
     MAP_ADC14_initModule(ADC_CLOCKSOURCE_MCLK, ADC_PREDIVIDER_1, ADC_DIVIDER_4, 0);
 
@@ -103,7 +104,7 @@ bool Adc::MSP432::Init() {
             ADC_INPUT_A0, false);
     MAP_ADC14_configureConversionMemory(ADC_MEM1,
             ADC_VREFPOS_AVCC_VREFNEG_VSS,
-            ADC_INPUT_A0, false);
+            ADC_INPUT_A1, false);
     MAP_ADC14_configureConversionMemory(ADC_MEM2,
             ADC_VREFPOS_AVCC_VREFNEG_VSS,
             ADC_INPUT_A2, false);
@@ -119,25 +120,22 @@ bool Adc::MSP432::Init() {
     MAP_Interrupt_enableInterrupt(INT_ADC14);
     MAP_Interrupt_enableMaster();
 
-    /*
-     * Configuring the sample trigger to be sourced from Timer_A0 CCR1 and on the
-     * rising edge, default samplemode is extended (SHP=0)
-     */
-//    MAP_ADC14_setSampleHoldTrigger(ADC_TRIGGER_SOURCE1, false);
-    MAP_ADC14_setSampleHoldTrigger(ADC_TRIGGER_ADCSC, false);
-
-    /*
-     * Set SHP=1 for pulse sample mode, and set length to 4 clocks, the ADC
-     * is manually triggered from the timer
-     */
-//    MAP_ADC14_enableSampleTimer(ADC_MANUAL_ITERATION);
+    /* After triggering conversion, ADC channel automatically increments for conversion */
     MAP_ADC14_enableSampleTimer(ADC_AUTOMATIC_ITERATION);
-    MAP_ADC14_setSampleHoldTime(ADC_PULSE_WIDTH_4,ADC_PULSE_WIDTH_4);
-
     MAP_ADC14_enableConversion();
     return true;
 }
 
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: ReadAdcChannel
+ * This function triggers the ADC conversion on all 4 channels and returns
+ * the requested channel's value.
+ *
+ * NOTE - This function is not efficient when reading from all 4 channels
+ * sequentially since it will trigger a new conversion each time.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ */
 uint16_t Adc::MSP432::ReadAdcChannel(uint8_t adc_channel) {
 
     // Clear conversion ready flag
