@@ -279,12 +279,12 @@ void main(void)
     {
         // // Read glove sensor data from master device and notify the device that
         // // the data packet was received.
-        if (readHc05NonBlocking((Uint16**)&gloveSensorData, 2*sizeof(gloveSensorData)))
+        if (readHc05NonBlocking((Uint16**)&gloveSensorData, DATA_PACKET_SIZE_IN_BYTES))
         {
             // Store received data in the uart RX buffer into the local data structure
             // and reset the uart buffers for next transfer.
             Interrupt_disable(INT_SCIC_RX);
-            memcpy((void*)&gloveSensorDataLocal, (void*)gloveSensorData, sizeof(dataPacket_t));
+            memcpy((void*)&gloveSensorDataLocal, (void*)gloveSensorData, 2*sizeof(dataPacket_t));
             resetBuffersHc05();
             Interrupt_enable(INT_SCIC_RX);
 
@@ -295,6 +295,19 @@ void main(void)
 
                 // Notify the master device that the last packet has been processed.
                 writeHc05(&ackMsg, 1);
+
+
+                lcdClear();
+
+                lcdCursorRow1(0);
+                char str1[16] = {" "};
+                sprintf(str1, "P: %.2f", gloveSensorDataLocal.pitch);
+                lcdString((Uint16 *)&str1);
+
+                lcdCursorRow2(0);
+                char str2[16] = {" "};
+                sprintf(str2, "R: %.2f", gloveSensorDataLocal.roll);
+                lcdString((Uint16 *)&str2);
             }
             else
             {
