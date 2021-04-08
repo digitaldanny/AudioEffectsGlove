@@ -31,27 +31,20 @@ int unitTest_stateOfCharge()
     char lcdBuff[10] = {0};
 
     Adc::Init();
-    //FlexSensors::Init();
-    //LcdGfx::init();
-    //FlexSensors::GetJointsData(0);
+    LcdGfx::init();
 
     while(true)
     {
-        flex0   = Adc::ReadAdcChannel(0);
         ocv     = Adc::ReadAdcChannel(ADC_CH_OCV);
         ccv     = Adc::ReadAdcChannel(ADC_CH_CCV);
 
-        //memset(lcdBuff, ' ', 10);
-        //sprintf(lcdBuff, "FLX: %u", flex0);
-        //LcdGfx::drawString(0, 0, lcdBuff, 10);
-        //
-        //memset(lcdBuff, ' ', 10);
-        //sprintf(lcdBuff, "OCV: %u", ocv);
-        //LcdGfx::drawString(0, 1, lcdBuff, 10);
-        //
-        //memset(lcdBuff, ' ', 10);
-        //sprintf(lcdBuff, "CCV: %u", ccv);
-        //LcdGfx::drawString(0, 2, lcdBuff, 10);
+        memset(lcdBuff, ' ', 10);
+        sprintf(lcdBuff, "OCV: %u", ocv);
+        LcdGfx::drawString(0, 0, lcdBuff, 10);
+
+        memset(lcdBuff, ' ', 10);
+        sprintf(lcdBuff, "CCV: %u", ccv);
+        LcdGfx::drawString(0, 1, lcdBuff, 10);
 
         delayMs(10);
     }
