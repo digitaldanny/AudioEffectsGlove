@@ -46,6 +46,10 @@
 #define ADC_CH0             (0)
 #define ADC_CH1             (1)
 #define ADC_CH2             (2)
+#define ADC_CH3             (3)
+
+// Multi-sequence ADC conversion being used - 4 ADC_MEM regions.
+#define NUM_ADC_CONVERSIONS_MAX 4
 
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+

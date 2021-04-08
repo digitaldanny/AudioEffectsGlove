@@ -50,6 +50,7 @@
 #define ENABLE_UNIT_TEST_MPU6050_SENSORDATA_RAW (0 & ENABLE_UNIT_TEST) // Issue #47: Reading raw gyro / accelerometer sensor data from MPU6050 without DMP.
 #define ENABLE_UNIT_TEST_LCD_DEMO       (0 & ENABLE_UNIT_TEST)  // Issue #46: Enable demo animations to run on CFAL6448A lcd over SPI.
 #define ENABLE_UNIT_TEST_LCD_TEXT       (0 & ENABLE_UNIT_TEST)  // Issue #46: Draws custom text and image to the LCD.
+#define ENABLE_UNIT_TEST_STATE_OF_CHARGE (1 & ENABLE_UNIT_TEST) // Issue #51: Estimates battery state of charge using OCV and CCV circuits.
 
 #define ENABLE_HC05_CONFIG_MSTR (0) // Issue #35: Script to configure the master HC-05's role, slave address, etc.
 #define ENABLE_HAND_TRACKING_GLOVE (1) // Issue #53: Hand tracking glove's main loop (capture data, transfer to DSP Effects Rack)

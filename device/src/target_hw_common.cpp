@@ -43,6 +43,9 @@ const systemIO_t systemIO = {
               {GPIO_PORT_P4, GPIO_PIN1}, // P4.1
               {GPIO_PORT_P4, GPIO_PIN6} // P4.6
   },
+  .ocvAdc = {GPIO_PORT_P5, GPIO_PIN2}, // P5.2
+  .ccvAdc = {GPIO_PORT_P5, GPIO_PIN4}, // P5.4
+  .spareAdc = {GPIO_PORT_P5, GPIO_PIN3}, // P5.3
   .spareGpio = {GPIO_PORT_P2, GPIO_PIN7} // P2.7
 };
 

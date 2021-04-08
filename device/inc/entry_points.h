@@ -77,6 +77,10 @@ int TEST_lcdProductDemo();
 int TEST_lcdGraphics();
 #endif // ENABLE_UNIT_TEST_LCD_TEXT
 
+#if ENABLE_UNIT_TEST_STATE_OF_CHARGE
+int unitTest_stateOfCharge();
+#endif // ENABLE_UNIT_TEST_STATE_OF_CHARGE
+
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
  * MAIN PROGRAMS

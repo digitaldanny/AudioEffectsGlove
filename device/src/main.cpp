@@ -78,6 +78,10 @@ int main()
     unitTest_hc05DeviceName();
 #endif // ENABLE_UNIT_TEST_HC05_DEVICE_NAME
 
+#if ENABLE_UNIT_TEST_STATE_OF_CHARGE
+    unitTest_stateOfCharge();
+#endif // ENABLE_UNIT_TEST_STATE_OF_CHARGE
+
 #if ENABLE_UNIT_TEST_HC05_RW_TO_SLAVE
     unitTest_hc05RwToSlave();
 #endif // ENABLE_UNIT_TEST_HC05_RW_TO_SLAVE

@@ -116,6 +116,10 @@ typedef struct
  *  ADC14 pin for reading amplified and filtered flex sensor outputs.
  * @flexMux{0-2}
  *  GPIO outputs for controlling flex sensor mux selects.
+ * @ocvAdc
+ *  ADC pin to measure battery's Open Circuit Voltage.
+ * @loadCurrentAdc
+ *  ADC pin to measure battery's Closed Circuit Voltage (runtime current draw).
  * @spareGpio
  *  Spare GPIO for various testing. Not available on the PCB.
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
@@ -137,6 +141,9 @@ typedef struct
     pinPort_t lcdReset;
     pinPort_t flexAdc;
     pinPort_t flexMux[3];
+    pinPort_t ocvAdc;
+    pinPort_t ccvAdc;
+    pinPort_t spareAdc;
     pinPort_t spareGpio;
 } systemIO_t;
 
