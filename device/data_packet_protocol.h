@@ -29,6 +29,8 @@ typedef struct
 {
     unsigned char opCode;
     unsigned char flexSensors[3];
+    float pitch;
+    float roll;
 } dataPacket_t;
 
 #endif // _SRC_DATA_PACKET_PROTOCOL
