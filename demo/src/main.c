@@ -258,9 +258,11 @@ void main(void)
     Uint16 switches;
     Uint16 prevSwitches = 1234; // switches != prevSwitches initially
 
-    dataPacket_t* gloveSensorData;      // Points to data stored in the UART RX buff (typecasts to dataPacket_t).
+    Uint16* gloveDataBuf;      // Points to data stored in the UART RX buff (typecasts to dataPacket_t).
     dataPacket_t gloveSensorDataLocal;  // Data is copied over to be used in the main program.
     uint32_t unknownOpCodeCounter = 0;  // Times unknown op-code has been received over uart
+    float pitch;
+    float roll;
 
     // set input gain to 0dB by default
     Uint16 command = linput_volctl (0x17 - 8 - switches); // 12dB - 8*1.5dB (-8 => 0dB, -12 => -6dB
@@ -279,12 +281,20 @@ void main(void)
     {
         // // Read glove sensor data from master device and notify the device that
         // // the data packet was received.
-        if (readHc05NonBlocking((Uint16**)&gloveSensorData, DATA_PACKET_SIZE_IN_BYTES))
+        if (readHc05NonBlocking((Uint16**)&gloveDataBuf, DPP_PACKET_SIZE_IN_BYTES_C2000))
         {
             // Store received data in the uart RX buffer into the local data structure
             // and reset the uart buffers for next transfer.
             Interrupt_disable(INT_SCIC_RX);
-            memcpy((void*)&gloveSensorDataLocal, (void*)gloveSensorData, 2*sizeof(dataPacket_t));
+
+            //memcpy((void*)&gloveSensorDataLocal, (void*)gloveSensorData, sizeof(dataPacket_t));
+            gloveSensorDataLocal.opCode = gloveDataBuf[0];
+            gloveSensorDataLocal.flexSensors[0] = gloveDataBuf[1];
+            gloveSensorDataLocal.flexSensors[1] = gloveDataBuf[2];
+            gloveSensorDataLocal.flexSensors[2] = gloveDataBuf[3];
+            gloveSensorDataLocal.pitch = (short)((gloveDataBuf[5] << 8) | gloveDataBuf[4]);
+            gloveSensorDataLocal.roll = (short)((gloveDataBuf[7] << 8) | gloveDataBuf[6]);
+
             resetBuffersHc05();
             Interrupt_enable(INT_SCIC_RX);
 
@@ -296,24 +306,24 @@ void main(void)
                 // Notify the master device that the last packet has been processed.
                 writeHc05(&ackMsg, 1);
 
-
                 lcdClear();
-
                 lcdCursorRow1(0);
                 char str1[16] = {" "};
-                sprintf(str1, "P: %.2f", gloveSensorDataLocal.pitch);
-                lcdString((Uint16 *)&str1);
+                sprintf(str1, "P: %d", gloveSensorDataLocal.pitch);
+                lcdString((Uint16 *)str1);
 
                 lcdCursorRow2(0);
                 char str2[16] = {" "};
-                sprintf(str2, "R: %.2f", gloveSensorDataLocal.roll);
-                lcdString((Uint16 *)&str2);
+                sprintf(str2, "R: %d", gloveSensorDataLocal.roll);
+                lcdString((Uint16 *)str2);
             }
             else
             {
                 unknownOpCodeCounter++;
             }
         }
+        for (uint32_t i = 0; i < 10000; i++);
+        continue;
 
         // +--------------------------------------------------------------------------------------+
         // CREATE ADC VALUES WHILE WAITING FOR NEW SAMPLES

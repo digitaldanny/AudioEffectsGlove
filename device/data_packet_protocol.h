@@ -18,8 +18,10 @@
 #define DPP_PACKET_NUM_BYTES    1   // Number of bytes that should be expected for a data packet update
                                     // Opcode (1) + joints 0-2 (3) + ? + suffix (1)
 
-#define DPP_FLOAT_LENGTH_TOTAL      6   // Total number of bytes for each string representation of a float
-#define DPP_FLOAT_LENGTH_DECIMAL    1   // Out of the total length of the float, how many hold the decimal?
+// TODO: Pad or pack the dataPacket_t struct so this value does not need to be hardcoded
+// while running on C2000. It would be better to use 'sizeof(dataPacket_t)' instead of
+// calling this.
+#define DPP_PACKET_SIZE_IN_BYTES_C2000    (8) // 1=opCode, 3=flexSensors, 2=pitch, 2=roll
 
 /*
 * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -32,8 +34,8 @@ typedef struct
 {
     unsigned char opCode;
     unsigned char flexSensors[3];
-    unsigned char pitch[DPP_FLOAT_LENGTH_TOTAL];
-    unsigned char roll[DPP_FLOAT_LENGTH_TOTAL];
+    short pitch;
+    short roll;
 } dataPacket_t;
 
 #endif // _SRC_DATA_PACKET_PROTOCOL
