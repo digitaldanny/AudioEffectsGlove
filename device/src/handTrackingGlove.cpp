@@ -217,13 +217,18 @@ void updatePitchRoll()
     // top of 90 degrees and -90 degrees.
     state.pitch= state.angles.pitch;
 
-    // Serialize the pitch and roll
-    sprintf((char*)state.packet.pitch, "%*.*f",DPP_FLOAT_LENGTH_TOTAL, DPP_FLOAT_LENGTH_DECIMAL, state.pitch);
-    sprintf((char*)state.packet.roll, "%*.*f",DPP_FLOAT_LENGTH_TOTAL, DPP_FLOAT_LENGTH_DECIMAL, state.roll);
+    // Typecast to integer and store pitch/roll angles into data packet
+    state.packet.pitch = (short)state.pitch;
+    state.packet.roll = (short)state.roll;
 
     // Update LCD with Pitch and Roll angles.
-    LcdGfx::drawString(0, 1, (char*)state.packet.pitch, DPP_FLOAT_LENGTH_TOTAL);
-    LcdGfx::drawString(0, 2, (char*)state.packet.roll, DPP_FLOAT_LENGTH_TOTAL);
+    memset(state.lcdMsg, ' ', LCD_MAX_CHARS_PER_LINE);
+    sprintf(state.lcdMsg, "P: %d", state.packet.pitch);
+    LcdGfx::drawString(0, 1, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
+
+    memset(state.lcdMsg, ' ', LCD_MAX_CHARS_PER_LINE);
+    sprintf(state.lcdMsg, "R: %d", state.packet.roll);
+    LcdGfx::drawString(0, 2, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
 }
 
 /*
