@@ -166,7 +166,7 @@ bool Uart::MSP432::recv(char** rxData, uint8_t numBytes)
     if (numBytes == UART_NUMBYTES_WAITFORNL)
     {
         // Wait for rx buffer to receive new line character.
-        if (rx != '\n');
+        if (rx != '\n')
             return false;
     }
     else
