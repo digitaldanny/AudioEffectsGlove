@@ -57,6 +57,8 @@
 #define VOLUME_THRESHOLD    10
 #define DOES_CHANGE_MEET_THRESH(curr, prev)     (curr - VOLUME_THRESHOLD > prev || curr + VOLUME_THRESHOLD < prev)
 
+#define EFFECTS_TOGGLE_THRESHOLD    (FLEX_MAX_ADC/2.0f)
+
 // FFT related
 // 9 => 512 pt, 10 => 1024 pt FFT
 // (hamming LUT will have to be regenerated if this value changes)
@@ -264,6 +266,7 @@ void main(void)
     uint32_t unknownOpCodeCounter = 0;  // Times unknown op-code has been received over uart
     uint16_t volumeDown = 0; // Multiple of 1.5dB to remove from the default output gain of 12dB.
     unsigned char prevVolumeFlexReading = 123; // What was the value of gloveSensorDataLocal.flex[FLEX_INDEX_VOLUME] in previous loop?
+    bool isFxEnabled = false;
 
     // set input gain to 0dB by default
     Uint16 command = linput_volctl (0x17); // 12dB - 8*1.5dB (-8 => 0dB, -12 => -6dB
@@ -308,7 +311,25 @@ void main(void)
             }
         }
 
-        // Update volume levels if flex sensor reading has changed enough
+        // +--------------------------------------------------------------------------------------+
+        // Toggle effects enable if flex sensor meets required threshold.
+        // +--------------------------------------------------------------------------------------+
+
+        static uint16_t edgeCount = 0;
+        if (gloveSensorDataLocal.flexSensors[FLEX_INDEX_EFFECTS_ENABLE] > EFFECTS_TOGGLE_THRESHOLD)
+        {
+            edgeCount++;
+        }
+        else if (gloveSensorDataLocal.flexSensors[FLEX_INDEX_EFFECTS_ENABLE] < EFFECTS_TOGGLE_THRESHOLD && edgeCount > 0)
+        {
+            isFxEnabled = !isFxEnabled;
+            edgeCount = 0;
+        }
+
+        // +--------------------------------------------------------------------------------------+
+        // Update volume levels if flex sensor reading has changed enough.
+        // +--------------------------------------------------------------------------------------+
+
         if (DOES_CHANGE_MEET_THRESH(gloveSensorDataLocal.flexSensors[FLEX_INDEX_VOLUME], prevVolumeFlexReading))
         {
             // set output gain to 0dB by default
@@ -324,8 +345,6 @@ void main(void)
         // +--------------------------------------------------------------------------------------+
 
         hpfBinIndexStart = (CFFT_SIZE/2-1)*((float)gloveSensorDataLocal.flexSensors[FLEX_INDEX_HPF]) / FLEX_MAX_ADC;
-        if (hpfBinIndexStart < 0)
-            hpfBinIndexStart = 0;
 
         // +--------------------------------------------------------------------------------------+
         // Low-pass filter control
@@ -355,45 +374,49 @@ void main(void)
         {
             timerOn();
 
-             // create mono samples by averaging left and right samples and store to the fft buffer
-             for (int i = 0; i < CFFT_SIZE_X2_MASK; i+=2)
-                 currInPtr[i>>1] = ((float)fftFrame->buffer[i] + (float)fftFrame->buffer[i+1])/2.0f;
+            // +----------------------------------------------------------------------------+
+            // EFFECTS PROCESSING
+            // +----------------------------------------------------------------------------+
 
-             kiss_fftr(kiss_fftr_state, currInPtr, cout); // FFT
+            // Only perform effects processing if FX are enabled.
+            if (isFxEnabled)
+            {
+                // create mono samples by averaging left and right samples and store to the fft buffer
+                for (int i = 0; i < CFFT_SIZE_X2_MASK; i+=2)
+                    currInPtr[i>>1] = ((float)fftFrame->buffer[i] + (float)fftFrame->buffer[i+1])/2.0f;
 
-             // +----------------------------------------------------------------------------+
-             //                               USER APP END
-             // +----------------------------------------------------------------------------+
+                kiss_fftr(kiss_fftr_state, currInPtr, cout); // FFT
 
-             // Low-pass filter (clear bins above starting index)
-             for (Uint16 i = lpfBinIndexStart; i < CFFT_SIZE/2; i++)
-             {
-                 cout[i].r = 0.0f;
-                 cout[i].i = 0.0f;
-             }
+                // Low-pass filter (clear bins above starting index)
+                for (Uint16 i = lpfBinIndexStart; i < CFFT_SIZE/2; i++)
+                {
+                    cout[i].r = 0.0f;
+                    cout[i].i = 0.0f;
+                }
 
-             //// High-pass filter (clear bins below starting index)
-             //for (Uint16 i = (Uint16)hpfBinIndexStart+1; i > 0; i--)
-             //{
-             //    cout[i-1].r = 0.0f;
-             //    cout[i-1].i = 0.0f;
-             //}
+                //// High-pass filter (clear bins below starting index)
+                //for (Uint16 i = (Uint16)hpfBinIndexStart+1; i > 0; i--)
+                //{
+                //    cout[i-1].r = 0.0f;
+                //    cout[i-1].i = 0.0f;
+                //}
 
-             bins = (kiss_fft_cpx*)&cout;
-             bins = pitchShift(bins, CFFT_SIZE, shift);
+                bins = (kiss_fft_cpx*)&cout;
+                bins = pitchShift(bins, CFFT_SIZE, shift);
 
-             // +----------------------------------------------------------------------------+
-             //                               USER APP END
-             // +----------------------------------------------------------------------------+
+                kiss_fftri(kiss_fftri_state, bins, currInPtr); // IFFT
 
-             kiss_fftri(kiss_fftri_state, bins, currInPtr); // IFFT
+                // output the fft results
+                for (int i = 0; i < CFFT_SIZE_MIN_1; i++)
+                {
+                    fftFrame->buffer[2*i]      = (int16)(currInPtr[i] * 0.02);    // left channel
+                    fftFrame->buffer[2*i+1]    = fftFrame->buffer[2*i];           // right channel
+                }
+            }
 
-             // output the fft results
-             for (int i = 0; i < CFFT_SIZE_MIN_1; i++)
-             {
-                 fftFrame->buffer[2*i]      = (int16)(currInPtr[i] * 0.02);    // left channel
-                 fftFrame->buffer[2*i+1]    = fftFrame->buffer[2*i];           // right channel
-             }
+            // +----------------------------------------------------------------------------+
+            // BUFFER POINTER + LCD UPDATE
+            // +----------------------------------------------------------------------------+
 
              // switch the inBuff pointers so the currentBuff becomes the previous input buffer
              Uint32 tempSwitchingPtr = (Uint32)prevInPtr;
@@ -403,10 +426,10 @@ void main(void)
              // Update LCD with effect parameters
              lcdCursorRow1(0);
              char lcdMsgRow1[16] = {" "};
-             sprintf(lcdMsgRow1, "L=%03u H=%03u FX=%u",
+             sprintf(lcdMsgRow1, "L=%03u H=%03u FX=%01u",
                      lpfBinIndexStart,
                      hpfBinIndexStart,
-                     1);
+                     isFxEnabled);
              lcdString((Uint16 *)lcdMsgRow1);
 
              lcdCursorRow2(0);
