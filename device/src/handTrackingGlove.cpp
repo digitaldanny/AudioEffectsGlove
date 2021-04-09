@@ -18,7 +18,7 @@
 #define LCD_ROW_BLUETOOTH_STATUS    0
 #define LCD_COL_BLUETOOTH_STATUS    0
 
-#define BLUETOOTH_TIMEOUT_COUNT     500 // Iteration count between data update to ack is expected to be around 10-15.
+#define BLUETOOTH_TIMEOUT_COUNT     50 // Iteration count between data update to ack is expected to be around 10-15.
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -243,6 +243,10 @@ void updatePitchRoll()
 */
 bool updateBluetoothConnectionStatus()
 {
+    static uint8_t searchingCount = 0;
+    static uint32_t delayCount = 0;
+    static char searchingDots[4] = {" "};
+
     // Check if the master HC-05 module has paired with the
     // slave HC-05 module on the DSP Effects Rack C2000 board.
     state.isSlaveConnected = Hc05Api::IsSlaveConnected();
@@ -253,7 +257,14 @@ bool updateBluetoothConnectionStatus()
     }
     else
     {
-        memcpy(state.lcdMsg, "BT: ?     ", LCD_MAX_CHARS_PER_LINE);
+        // Update the searching for slave HC-05 animation
+        // (animation shifts a dot to the right in a circular loop)
+        searchingDots[searchingCount] = '*';
+        searchingDots[(searchingCount-1) & 0x03] = ' ';
+        sprintf(state.lcdMsg, "BT: %.4s  ", searchingDots);
+        if (delayCount % 10 == 0)
+            searchingCount = (searchingCount+1) & 0x03;
+        delayCount++;
     }
 
     LcdGfx::drawString(LCD_COL_BLUETOOTH_STATUS, LCD_ROW_BLUETOOTH_STATUS,
