@@ -56,6 +56,8 @@ typedef struct
     euler_angles angles;
     vector_ijk fusedVector;
     Quaternion qAcc;
+    float pitch;
+    float roll;
 
     // Contains message to write to a single row of the LCD
     char lcdMsg[LCD_MAX_CHARS_PER_LINE];
@@ -205,23 +207,27 @@ void updatePitchRoll()
 
     // Modify the roll values so that the resting sensor has an angle of 0.
     // Rotating right increases towards 180, rotating left decreases towards -180.
-    state.packet.roll = state.angles.roll + 180.0f;
-    if (state.packet.roll > 180.0f)
+    state.roll = state.angles.roll + 180.0f;
+    if (state.roll > 180.0f)
     {
-        state.packet.roll -= 360.0f;
+        state.roll -= 360.0f;
     }
 
     // TODO - Modify the pitch values so that there is not any bending at the
     // top of 90 degrees and -90 degrees.
-    state.packet.pitch= state.angles.pitch;
+    state.pitch= state.angles.pitch;
+
+    // Typecast to integer and store pitch/roll angles into data packet
+    state.packet.pitch = (short)state.pitch;
+    state.packet.roll = (short)state.roll;
 
     // Update LCD with Pitch and Roll angles.
-    memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
-    sprintf(state.lcdMsg, "P: %.1f", state.packet.pitch);
+    memset(state.lcdMsg, ' ', LCD_MAX_CHARS_PER_LINE);
+    sprintf(state.lcdMsg, "P: %d", state.packet.pitch);
     LcdGfx::drawString(0, 1, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
 
-    memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
-    sprintf(state.lcdMsg, "R: %.1f", state.packet.roll);
+    memset(state.lcdMsg, ' ', LCD_MAX_CHARS_PER_LINE);
+    sprintf(state.lcdMsg, "R: %d", state.packet.roll);
     LcdGfx::drawString(0, 2, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
 }
 
