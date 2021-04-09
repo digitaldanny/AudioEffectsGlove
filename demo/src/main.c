@@ -42,7 +42,16 @@
 #define FLEX_MIN_ADC    0.0f
 #define FLEX_MAX_ADC    160.0f
 
-#define FLEX_INDEX_LPF  0
+// Pitch and roll max/min values
+#define PITCH_MAX       (75.0f)
+#define PITCH_MIN       (-75.0f)
+#define ROLL_MAX        (90.0f)
+#define ROLL_MIN        (-90.0f)
+
+// Flex sensors index for controlling various features
+#define FLEX_INDEX_EFFECTS_ENABLE   0
+#define FLEX_INDEX_VOLUME           1
+#define FLEX_INDEX_HPF              2
 
 // FFT related
 // 9 => 512 pt, 10 => 1024 pt FFT
@@ -66,7 +75,7 @@
 #define WAIT_FOR_ADC_CONVERSION_B   while (AdcbRegs.ADCCTL1.bit.ADCBSY == 1)
 #define CLEAR_ADC_FLAG_B            AdcbRegs.ADCINTFLGCLR.bit.ADCINT1 = 0x0001
 
-#define MAX_SHIFT                   6.0f
+#define MAX_SHIFT                   12.0f
 #define MIN_SHIFT                   -12.0f
 
 #define LEFT_BUTTON                 0x4
@@ -163,8 +172,9 @@ float * currInPtr;
 // PITCH SHIFTING
 volatile Uint16 adcBResult;
 volatile Uint16 adcAResult;
-volatile float shift;
-volatile float lpfBinIndexStart;
+int16_t shift;
+uint16_t lpfBinIndexStart;
+uint16_t hpfBinIndexStart;
 char wr[6] = "#XX.X"; // store ASCII versions of DFT magnitude in here..
 
 /*
@@ -235,16 +245,6 @@ void main(void)
         while(1); // Failure - Configure baud rate to 9600
     }
 
-    // update frequencies on LCD
-    char s1[] = "filter k = ";
-    lcdRow1();
-    lcdString((Uint16 *)&s1);
-
-    // update shift amount on
-    char s2[] = "shift = ";
-    lcdRow2();
-    lcdString((Uint16 *)&s2);
-
     /*
      * fftptr - assigns where the fft malloc will start at
      * lenmem - assign to max value so fftptr is used for malloc
@@ -255,22 +255,17 @@ void main(void)
     kiss_fftri_state = kiss_fftr_alloc(fftSize, 1, NULL, NULL);
     EALLOW;
 
-    Uint16 switches;
-    Uint16 prevSwitches = 1234; // switches != prevSwitches initially
-
     Uint16* gloveDataBuf;      // Points to data stored in the UART RX buff (typecasts to dataPacket_t).
     dataPacket_t gloveSensorDataLocal;  // Data is copied over to be used in the main program.
     uint32_t unknownOpCodeCounter = 0;  // Times unknown op-code has been received over uart
-    float pitch;
-    float roll;
 
     // set input gain to 0dB by default
-    Uint16 command = linput_volctl (0x17 - 8 - switches); // 12dB - 8*1.5dB (-8 => 0dB, -12 => -6dB
+    Uint16 command = linput_volctl (0x17); // 12dB - 8*1.5dB (-8 => 0dB, -12 => -6dB
     BitBangedCodecSpiTransmit (command);
     SmallDelay();
 
     // set output gain to 0dB by default
-    command = lhp_volctl (0x69 - 8 - switches); // 12dB - 8*1.5dB (-8 => 0dB, -12 => -6dB
+    command = lhp_volctl (0x69); // 12dB - 8*1.5dB (-8 => 0dB, -12 => -6dB
     BitBangedCodecSpiTransmit (command);
     SmallDelay();
 
@@ -313,77 +308,32 @@ void main(void)
         }
 
         // +--------------------------------------------------------------------------------------+
-        // CREATE ADC VALUES WHILE WAITING FOR NEW SAMPLES
+        // High-pass filter control
         // +--------------------------------------------------------------------------------------+
 
-        // Select the audio source..
-        Uint16 buttons = getCodecButtons();
-        if (buttons == LEFT_BUTTON || buttons == MIDDLE_BUTTON)
-        {
-            // turn mic on
-            Uint16 command = fullpowerup();
-            BitBangedCodecSpiTransmit (command);
-            SmallDelay();
+        hpfBinIndexStart = (CFFT_SIZE/2-1)*((float)gloveSensorDataLocal.flexSensors[FLEX_INDEX_HPF]) / FLEX_MAX_ADC;
+        if (hpfBinIndexStart < 0)
+            hpfBinIndexStart = 0;
 
-            command = aaudpath();
-            BitBangedCodecSpiTransmit (command);
-            SmallDelay();
+        // +--------------------------------------------------------------------------------------+
+        // Low-pass filter control
+        // +--------------------------------------------------------------------------------------+
 
-            lcdClearTopRow();
-            lcdCursorRow1(0);
-            char str[] = "MIC ON";
-            lcdString((Uint16 *)&str);
+        // Ignore the upper end of roll for this effect since we want the max
+        // output when the hand is flat.
+        if (gloveSensorDataLocal.pitch > 0)
+            lpfBinIndexStart = (uint16_t)PITCH_MAX;
+        else
+            lpfBinIndexStart = (uint16_t)(gloveSensorDataLocal.pitch - (int16_t)PITCH_MIN);
 
-            // only enable the robot vocal effect if the middle button
-            // is pushed and the mic is enabled.
-            if (buttons == MIDDLE_BUTTON)
-            {
-                lcdCursorRow1(7);
-                char str[] = "-R";
-                lcdString((Uint16 *)&str);
-            }
-        }
-        else if (buttons == RIGHT_BUTTON)
-        {
-            // turn mic off
-            Uint16 command = nomicpowerup();
-            BitBangedCodecSpiTransmit (command);
-            SmallDelay();
+        lpfBinIndexStart = (uint16_t)( ((float)CFFT_SIZE/2-1) * ((float)lpfBinIndexStart) / PITCH_MAX );
 
-            command = nomicaaudpath();
-            BitBangedCodecSpiTransmit (command);
-            SmallDelay();
+        // +--------------------------------------------------------------------------------------+
+        // Pitch shifting control
+        // +--------------------------------------------------------------------------------------+
 
-            lcdClearTopRow();
-            lcdCursorRow1(0);
-            char str[] = "MIC OFF";
-            lcdString((Uint16 *)&str);
-        }
-
-        // FORCE_ADC_CONVERSION;     // force ADC to convert on A0 (shift)
-        // FORCE_ADC_CONVERSION_B;   // force ADC to convert on B2 (kFilter)
-        //
-        // // find ADC value to pitch shift by
-        // WAIT_FOR_ADC_CONVERSION;  // wait for first conversion to complete
-        // CLEAR_ADC_FLAG;           // clear the interrupt flag generated by the conversion
-        // adcAResult = AdcaResultRegs.ADCRESULT0; // save results of the conversion
-        // shift = (MAX_SHIFT - MIN_SHIFT)*(float)adcAResult/(float)4095 + MIN_SHIFT;
-
-        // Change LPF starting bin index based on flex sensor 0 reading
-        // LPF starting index = binMax * (maxFlexVal - measuredFlexVal) / maxFlexVal
-        lpfBinIndexStart = FLEX_MAX_ADC - (float)(gloveSensorDataLocal.flexSensors[FLEX_INDEX_LPF]);
-        lpfBinIndexStart /= FLEX_MAX_ADC;
-        lpfBinIndexStart *= (CFFT_SIZE/2-1);
-        if (lpfBinIndexStart < 0.0f)
-            lpfBinIndexStart = 0.0f;
-
-        float tens   = abs(shift) / 10.0;
-        float ones   = (tens - (Uint16)tens) * 10;
-        float tenths = (ones - (Uint16)ones) * 10;
-
-        float k_hundreds = abs(lpfBinIndexStart) / 100.0;
-        float k_tens   = (k_hundreds - (Uint16)k_hundreds) * 10;
-        float k_ones   = (k_tens - (Uint16)k_tens) * 10;
+        float shiftFloat = (MAX_SHIFT/ROLL_MAX)*(float)gloveSensorDataLocal.roll;
+        shift = (int16_t)shiftFloat;
 
         // +--------------------------------------------------------------------------------------+
         // NEW SAMPLES ARE READY FOR USER APPLICATION
@@ -403,17 +353,19 @@ void main(void)
              //                               USER APP END
              // +----------------------------------------------------------------------------+
 
-             // Create the index for filtering in the buffer
-             // Uint16 k = 442; // tested value to remove white noise (32KHz sampling) -> 13.8 KHz
-             // Uint16 k = 295; // (48KHz sampling) -> 13.8 KHz
-             Uint16 k = (Uint16)lpfBinIndexStart; // controllable using B2 ADC
-
-             // get rid of the white noise in upper bins
-             for (Uint16 i = k; i < CFFT_SIZE/2; i++)
+             // Low-pass filter (clear bins above starting index)
+             for (Uint16 i = lpfBinIndexStart; i < CFFT_SIZE/2; i++)
              {
                  cout[i].r = 0.0f;
                  cout[i].i = 0.0f;
              }
+
+             //// High-pass filter (clear bins below starting index)
+             //for (Uint16 i = (Uint16)hpfBinIndexStart+1; i > 0; i--)
+             //{
+             //    cout[i-1].r = 0.0f;
+             //    cout[i-1].i = 0.0f;
+             //}
 
              bins = (kiss_fft_cpx*)&cout;
              bins = pitchShift(bins, CFFT_SIZE, shift);
@@ -436,30 +388,21 @@ void main(void)
              prevInPtr = currInPtr;
              currInPtr = (float*)tempSwitchingPtr;
 
-             // Write to the LCD AFTER processing has completed
-             // handle adc input to work with pitch function
-             if (shift > 0.0f)
-                 wr[0] = '+';
-             else
-                 wr[0] = '-';
+             // Update LCD with effect parameters
+             lcdCursorRow1(0);
+             char lcdMsgRow1[16] = {" "};
+             sprintf(lcdMsgRow1, "L=%03u H=%03u V=%03u",
+                     lpfBinIndexStart,
+                     hpfBinIndexStart,
+                     99);
+             lcdString((Uint16 *)lcdMsgRow1);
 
-             // update LCD with shift/kFilter data
-             lcdCursorRow2(8);
-             wr[1] = INT_TO_ASCII((Uint16)tens + 0.5f);
-             wr[2] = INT_TO_ASCII((Uint16)ones); // 1's place (Ex. [1].23)
-             wr[3] = '.';
-             wr[4] = INT_TO_ASCII((Uint16)tenths); // 10th's place (Ex. 1.[2]3)
-             wr[5] = '\0';
-             lcdString((Uint16 *)&wr);
-
-             lcdCursorRow1(11);
-             wr[0] = INT_TO_ASCII((Uint16)k_hundreds);
-             wr[1] = INT_TO_ASCII((Uint16)k_tens);
-             wr[2] = INT_TO_ASCII((Uint16)k_ones);
-             wr[3] = '\0';
-             wr[4] = '\0';
-             wr[5] = '\0';
-             lcdString((Uint16 *)&wr);
+             lcdCursorRow2(0);
+             char lcdMsgRow2[16] = {" "};
+             sprintf(lcdMsgRow2, "P=%03d FX=%05u",
+                     shift,
+                     gloveSensorDataLocal.flexSensors[FLEX_INDEX_EFFECTS_ENABLE]);
+             lcdString((Uint16 *)lcdMsgRow2);
 
              timerOff();
              dma_flag = 0;
