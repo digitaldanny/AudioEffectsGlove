@@ -55,7 +55,7 @@
 #define FLEX_INDEX_HPF              2
 
 #define VOLUME_THRESHOLD    10
-#define DOES_CHANGE_MEET_THRESH(curr, prev)     (curr - VOLUME_THRESHOLD > prev || curr + VOLUME_THRESHOLD < prev)
+#define DOES_CHANGE_MEET_THRESH(curr, prev)     (curr > prev + VOLUME_THRESHOLD || curr + VOLUME_THRESHOLD < prev)
 
 #define EFFECTS_TOGGLE_THRESHOLD    (FLEX_MAX_ADC/2.0f)
 
@@ -278,9 +278,64 @@ void main(void)
 
     while(1)
     {
-        // // Read glove sensor data from master device and notify the device that
-        // // the data packet was received.
-        if (readHc05NonBlocking((Uint16**)&gloveDataBuf, DPP_PACKET_SIZE_IN_BYTES_C2000))
+
+        // TASK 1 - Process the DSP effects.
+        if (dma_flag)
+        {
+            timerOn();
+
+            // +----------------------------------------------------------------------------+
+            // EFFECTS PROCESSING
+            // +----------------------------------------------------------------------------+
+
+            // Only perform effects processing if FX are enabled.
+            if (isFxEnabled)
+            {
+                // create mono samples by averaging left and right samples and store to the fft buffer
+                for (int i = 0; i < CFFT_SIZE_X2_MASK; i+=2)
+                    currInPtr[i>>1] = ((float)fftFrame->buffer[i] + (float)fftFrame->buffer[i+1])/2.0f;
+
+                kiss_fftr(kiss_fftr_state, currInPtr, cout); // FFT
+
+                // Low-pass filter (clear bins above starting index)
+                for (Uint16 i = lpfBinIndexStart; i < CFFT_SIZE/2; i++)
+                {
+                    cout[i].r = 0.0f;
+                    cout[i].i = 0.0f;
+                }
+
+                // High-pass filter (clear bins below starting index)
+                for (int32_t i = (int32_t)hpfBinIndexStart; i > 0; i--)
+                {
+                    cout[i].r = 0.0f;
+                    cout[i].i = 0.0f;
+                }
+
+                bins = (kiss_fft_cpx*)&cout;
+                bins = pitchShift(bins, CFFT_SIZE, shift);
+
+                kiss_fftri(kiss_fftri_state, bins, currInPtr); // IFFT
+
+                // output the fft results
+                for (int i = 0; i < CFFT_SIZE_MIN_1; i++)
+                {
+                    fftFrame->buffer[2*i]      = (int16)(currInPtr[i] * 0.02);    // left channel
+                    fftFrame->buffer[2*i+1]    = fftFrame->buffer[2*i];           // right channel
+                }
+            }
+
+             // switch the inBuff pointers so the currentBuff becomes the previous input buffer
+             Uint32 tempSwitchingPtr = (Uint32)prevInPtr;
+             prevInPtr = currInPtr;
+             currInPtr = (float*)tempSwitchingPtr;
+
+             timerOff();
+             dma_flag = 0;
+        }
+
+        // TASK 2 - Read glove sensor data from master device and notify the device that
+        // the data packet was received.
+        else if (readHc05NonBlocking((Uint16**)&gloveDataBuf, DPP_PACKET_SIZE_IN_BYTES_C2000))
         {
             // Store received data in the uart RX buffer into the local data structure
             // and reset the uart buffers for next transfer.
@@ -311,136 +366,82 @@ void main(void)
             }
         }
 
-        // +--------------------------------------------------------------------------------------+
-        // Toggle effects enable if flex sensor meets required threshold.
-        // +--------------------------------------------------------------------------------------+
-
-        static uint16_t edgeCount = 0;
-        if (gloveSensorDataLocal.flexSensors[FLEX_INDEX_EFFECTS_ENABLE] > EFFECTS_TOGGLE_THRESHOLD)
-        {
-            edgeCount++;
-        }
-        else if (gloveSensorDataLocal.flexSensors[FLEX_INDEX_EFFECTS_ENABLE] < EFFECTS_TOGGLE_THRESHOLD && edgeCount > 0)
-        {
-            isFxEnabled = !isFxEnabled;
-            edgeCount = 0;
-        }
-
-        // +--------------------------------------------------------------------------------------+
-        // Update volume levels if flex sensor reading has changed enough.
-        // +--------------------------------------------------------------------------------------+
-
-        if (DOES_CHANGE_MEET_THRESH(gloveSensorDataLocal.flexSensors[FLEX_INDEX_VOLUME], prevVolumeFlexReading))
-        {
-            // set output gain to 0dB by default
-            volumeDown = (float)VOLUME_MAX * (float)gloveSensorDataLocal.flexSensors[FLEX_INDEX_VOLUME] / FLEX_MAX_ADC;
-            command = lhp_volctl (0x69 - volumeDown); // 12dB - volumeDown*1.5dB (-8 => 0dB, -16 => -12dB
-            BitBangedCodecSpiTransmit (command);
-            SmallDelay();
-        }
-        prevVolumeFlexReading = gloveSensorDataLocal.flexSensors[FLEX_INDEX_VOLUME];
-
-        // +--------------------------------------------------------------------------------------+
-        // High-pass filter control
-        // +--------------------------------------------------------------------------------------+
-
-        hpfBinIndexStart = (CFFT_SIZE/2-1)*((float)gloveSensorDataLocal.flexSensors[FLEX_INDEX_HPF]) / FLEX_MAX_ADC;
-
-        // +--------------------------------------------------------------------------------------+
-        // Low-pass filter control
-        // +--------------------------------------------------------------------------------------+
-
-        // Ignore the upper end of roll for this effect since we want the max
-        // output when the hand is flat.
-        if (gloveSensorDataLocal.pitch > 0)
-            lpfBinIndexStart = (uint16_t)PITCH_MAX;
+        // TASK 3 - Update effect parameters based on glove sensor data + update LCD.
         else
-            lpfBinIndexStart = (uint16_t)(gloveSensorDataLocal.pitch - (int16_t)PITCH_MIN);
-
-        lpfBinIndexStart = (uint16_t)( ((float)CFFT_SIZE/2-1) * ((float)lpfBinIndexStart) / PITCH_MAX );
-
-        // +--------------------------------------------------------------------------------------+
-        // Pitch shifting control
-        // +--------------------------------------------------------------------------------------+
-
-        float shiftFloat = (MAX_SHIFT/ROLL_MAX)*(float)gloveSensorDataLocal.roll;
-        shift = (int16_t)shiftFloat;
-
-        // +--------------------------------------------------------------------------------------+
-        // NEW SAMPLES ARE READY FOR USER APPLICATION
-        // +--------------------------------------------------------------------------------------+
-
-        if (dma_flag)
         {
-            timerOn();
+            // +--------------------------------------------------------------------------------------+
+            // Toggle effects enable if flex sensor meets required threshold.
+            // +--------------------------------------------------------------------------------------+
 
-            // +----------------------------------------------------------------------------+
-            // EFFECTS PROCESSING
-            // +----------------------------------------------------------------------------+
-
-            // Only perform effects processing if FX are enabled.
-            if (isFxEnabled)
+            static uint16_t edgeCount = 0;
+            if (gloveSensorDataLocal.flexSensors[FLEX_INDEX_EFFECTS_ENABLE] > EFFECTS_TOGGLE_THRESHOLD)
             {
-                // create mono samples by averaging left and right samples and store to the fft buffer
-                for (int i = 0; i < CFFT_SIZE_X2_MASK; i+=2)
-                    currInPtr[i>>1] = ((float)fftFrame->buffer[i] + (float)fftFrame->buffer[i+1])/2.0f;
-
-                kiss_fftr(kiss_fftr_state, currInPtr, cout); // FFT
-
-                // Low-pass filter (clear bins above starting index)
-                for (Uint16 i = lpfBinIndexStart; i < CFFT_SIZE/2; i++)
-                {
-                    cout[i].r = 0.0f;
-                    cout[i].i = 0.0f;
-                }
-
-                //// High-pass filter (clear bins below starting index)
-                //for (Uint16 i = (Uint16)hpfBinIndexStart+1; i > 0; i--)
-                //{
-                //    cout[i-1].r = 0.0f;
-                //    cout[i-1].i = 0.0f;
-                //}
-
-                bins = (kiss_fft_cpx*)&cout;
-                bins = pitchShift(bins, CFFT_SIZE, shift);
-
-                kiss_fftri(kiss_fftri_state, bins, currInPtr); // IFFT
-
-                // output the fft results
-                for (int i = 0; i < CFFT_SIZE_MIN_1; i++)
-                {
-                    fftFrame->buffer[2*i]      = (int16)(currInPtr[i] * 0.02);    // left channel
-                    fftFrame->buffer[2*i+1]    = fftFrame->buffer[2*i];           // right channel
-                }
+                edgeCount++;
+            }
+            else if (gloveSensorDataLocal.flexSensors[FLEX_INDEX_EFFECTS_ENABLE] < EFFECTS_TOGGLE_THRESHOLD && edgeCount > 0)
+            {
+                isFxEnabled = !isFxEnabled;
+                edgeCount = 0;
             }
 
-            // +----------------------------------------------------------------------------+
-            // BUFFER POINTER + LCD UPDATE
-            // +----------------------------------------------------------------------------+
+            // +--------------------------------------------------------------------------------------+
+            // Update volume levels if flex sensor reading has changed enough.
+            // +--------------------------------------------------------------------------------------+
 
-             // switch the inBuff pointers so the currentBuff becomes the previous input buffer
-             Uint32 tempSwitchingPtr = (Uint32)prevInPtr;
-             prevInPtr = currInPtr;
-             currInPtr = (float*)tempSwitchingPtr;
+            if (DOES_CHANGE_MEET_THRESH(gloveSensorDataLocal.flexSensors[FLEX_INDEX_VOLUME], prevVolumeFlexReading))
+            {
+                // set output gain to 0dB by default
+                volumeDown = (float)VOLUME_MAX * (float)gloveSensorDataLocal.flexSensors[FLEX_INDEX_VOLUME] / FLEX_MAX_ADC;
+                command = lhp_volctl (0x69 - volumeDown); // 12dB - volumeDown*1.5dB (-8 => 0dB, -16 => -12dB
+                BitBangedCodecSpiTransmit (command);
+                SmallDelay();
+            }
+            prevVolumeFlexReading = gloveSensorDataLocal.flexSensors[FLEX_INDEX_VOLUME];
 
-             // Update LCD with effect parameters
-             lcdCursorRow1(0);
-             char lcdMsgRow1[16] = {" "};
-             sprintf(lcdMsgRow1, "L=%03u H=%03u FX=%01u",
-                     lpfBinIndexStart,
-                     hpfBinIndexStart,
-                     isFxEnabled);
-             lcdString((Uint16 *)lcdMsgRow1);
+            // +--------------------------------------------------------------------------------------+
+            // High-pass filter control
+            // +--------------------------------------------------------------------------------------+
 
-             lcdCursorRow2(0);
-             char lcdMsgRow2[16] = {" "};
-             sprintf(lcdMsgRow2, "P=%03d V=%5.1f dB",
-                     shift,
-                     12.5f - (float)volumeDown*1.5f);
-             lcdString((Uint16 *)lcdMsgRow2);
+            hpfBinIndexStart = (CFFT_SIZE/2-1)*((float)gloveSensorDataLocal.flexSensors[FLEX_INDEX_HPF]) / FLEX_MAX_ADC;
 
-             timerOff();
-             dma_flag = 0;
+            // +--------------------------------------------------------------------------------------+
+            // Low-pass filter control
+            // +--------------------------------------------------------------------------------------+
+
+            // Ignore the upper end of roll for this effect since we want the max
+            // output when the hand is flat.
+            if (gloveSensorDataLocal.pitch > 0)
+                lpfBinIndexStart = (uint16_t)PITCH_MAX;
+            else
+                lpfBinIndexStart = (uint16_t)(gloveSensorDataLocal.pitch - (int16_t)PITCH_MIN);
+
+            lpfBinIndexStart = (uint16_t)( ((float)CFFT_SIZE/2-1) * ((float)lpfBinIndexStart) / PITCH_MAX );
+
+            // +--------------------------------------------------------------------------------------+
+            // Pitch shifting control
+            // +--------------------------------------------------------------------------------------+
+
+            float shiftFloat = (MAX_SHIFT/ROLL_MAX)*(float)gloveSensorDataLocal.roll;
+            shift = (int16_t)shiftFloat;
+
+            // +--------------------------------------------------------------------------------------+
+            // LCD update
+            // +--------------------------------------------------------------------------------------+
+
+            lcdCursorRow1(0);
+            char lcdMsgRow1[16] = {" "};
+            sprintf(lcdMsgRow1, "L=%03u H=%03u FX=%01u",
+                    lpfBinIndexStart,
+                    hpfBinIndexStart,
+                    isFxEnabled);
+            lcdString((Uint16 *)lcdMsgRow1);
+
+            lcdCursorRow2(0);
+            char lcdMsgRow2[16] = {" "};
+            sprintf(lcdMsgRow2, "P=%03d V=%5.1f dB",
+                    shift,
+                    12.5f - (float)volumeDown*1.5f);
+            lcdString((Uint16 *)lcdMsgRow2);
         }
     }
 }
