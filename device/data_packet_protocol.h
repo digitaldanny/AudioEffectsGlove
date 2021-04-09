@@ -19,6 +19,7 @@
                                     // Opcode (1) + joints 0-2 (3) + ? + suffix (1)
 
 #define DPP_FLOAT_LENGTH_TOTAL      6   // Total number of bytes for each string representation of a float
+                                        // 1=negative sign, 3=0-180 degrees, 1=dot, 1=decimal place
 #define DPP_FLOAT_LENGTH_DECIMAL    1   // Out of the total length of the float, how many hold the decimal?
 
 /*
@@ -32,8 +33,8 @@ typedef struct
 {
     unsigned char opCode;
     unsigned char flexSensors[3];
-    unsigned char pitch[DPP_FLOAT_LENGTH_TOTAL];
-    unsigned char roll[DPP_FLOAT_LENGTH_TOTAL];
+    signed short pitch;
+    signed short roll;
 } dataPacket_t;
 
 #endif // _SRC_DATA_PACKET_PROTOCOL
