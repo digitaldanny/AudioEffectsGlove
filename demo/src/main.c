@@ -47,11 +47,15 @@
 #define PITCH_MIN       (-75.0f)
 #define ROLL_MAX        (90.0f)
 #define ROLL_MIN        (-90.0f)
+#define VOLUME_MAX      (16)
 
 // Flex sensors index for controlling various features
 #define FLEX_INDEX_EFFECTS_ENABLE   0
 #define FLEX_INDEX_VOLUME           1
 #define FLEX_INDEX_HPF              2
+
+#define VOLUME_THRESHOLD    10
+#define DOES_CHANGE_MEET_THRESH(curr, prev)     (curr - VOLUME_THRESHOLD > prev || curr + VOLUME_THRESHOLD < prev)
 
 // FFT related
 // 9 => 512 pt, 10 => 1024 pt FFT
@@ -258,14 +262,11 @@ void main(void)
     Uint16* gloveDataBuf;      // Points to data stored in the UART RX buff (typecasts to dataPacket_t).
     dataPacket_t gloveSensorDataLocal;  // Data is copied over to be used in the main program.
     uint32_t unknownOpCodeCounter = 0;  // Times unknown op-code has been received over uart
+    uint16_t volumeDown = 0; // Multiple of 1.5dB to remove from the default output gain of 12dB.
+    unsigned char prevVolumeFlexReading = 123; // What was the value of gloveSensorDataLocal.flex[FLEX_INDEX_VOLUME] in previous loop?
 
     // set input gain to 0dB by default
     Uint16 command = linput_volctl (0x17); // 12dB - 8*1.5dB (-8 => 0dB, -12 => -6dB
-    BitBangedCodecSpiTransmit (command);
-    SmallDelay();
-
-    // set output gain to 0dB by default
-    command = lhp_volctl (0x69); // 12dB - 8*1.5dB (-8 => 0dB, -12 => -6dB
     BitBangedCodecSpiTransmit (command);
     SmallDelay();
 
@@ -306,6 +307,17 @@ void main(void)
                 unknownOpCodeCounter++;
             }
         }
+
+        // Update volume levels if flex sensor reading has changed enough
+        if (DOES_CHANGE_MEET_THRESH(gloveSensorDataLocal.flexSensors[FLEX_INDEX_VOLUME], prevVolumeFlexReading))
+        {
+            // set output gain to 0dB by default
+            volumeDown = (float)VOLUME_MAX * (float)gloveSensorDataLocal.flexSensors[FLEX_INDEX_VOLUME] / FLEX_MAX_ADC;
+            command = lhp_volctl (0x69 - volumeDown); // 12dB - volumeDown*1.5dB (-8 => 0dB, -16 => -12dB
+            BitBangedCodecSpiTransmit (command);
+            SmallDelay();
+        }
+        prevVolumeFlexReading = gloveSensorDataLocal.flexSensors[FLEX_INDEX_VOLUME];
 
         // +--------------------------------------------------------------------------------------+
         // High-pass filter control
@@ -391,17 +403,17 @@ void main(void)
              // Update LCD with effect parameters
              lcdCursorRow1(0);
              char lcdMsgRow1[16] = {" "};
-             sprintf(lcdMsgRow1, "L=%03u H=%03u V=%03u",
+             sprintf(lcdMsgRow1, "L=%03u H=%03u FX=%u",
                      lpfBinIndexStart,
                      hpfBinIndexStart,
-                     99);
+                     1);
              lcdString((Uint16 *)lcdMsgRow1);
 
              lcdCursorRow2(0);
              char lcdMsgRow2[16] = {" "};
-             sprintf(lcdMsgRow2, "P=%03d FX=%05u",
+             sprintf(lcdMsgRow2, "P=%03d V=%4.1f dB",
                      shift,
-                     gloveSensorDataLocal.flexSensors[FLEX_INDEX_EFFECTS_ENABLE]);
+                     12.5f - (float)volumeDown*1.5f);
              lcdString((Uint16 *)lcdMsgRow2);
 
              timerOff();
