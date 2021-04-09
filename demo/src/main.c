@@ -434,7 +434,7 @@ void main(void)
 
              lcdCursorRow2(0);
              char lcdMsgRow2[16] = {" "};
-             sprintf(lcdMsgRow2, "P=%03d V=%4.1f dB",
+             sprintf(lcdMsgRow2, "P=%03d V=%5.1f dB",
                      shift,
                      12.5f - (float)volumeDown*1.5f);
              lcdString((Uint16 *)lcdMsgRow2);
