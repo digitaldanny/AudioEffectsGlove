@@ -305,25 +305,12 @@ void main(void)
 
                 // Notify the master device that the last packet has been processed.
                 writeHc05(&ackMsg, 1);
-
-                lcdClear();
-                lcdCursorRow1(0);
-                char str1[16] = {" "};
-                sprintf(str1, "P: %d", gloveSensorDataLocal.pitch);
-                lcdString((Uint16 *)str1);
-
-                lcdCursorRow2(0);
-                char str2[16] = {" "};
-                sprintf(str2, "R: %d", gloveSensorDataLocal.roll);
-                lcdString((Uint16 *)str2);
             }
             else
             {
                 unknownOpCodeCounter++;
             }
         }
-        for (uint32_t i = 0; i < 10000; i++);
-        continue;
 
         // +--------------------------------------------------------------------------------------+
         // CREATE ADC VALUES WHILE WAITING FOR NEW SAMPLES
