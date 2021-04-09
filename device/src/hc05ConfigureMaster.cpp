@@ -72,6 +72,8 @@ int unitTest_hc05ConfigMaster()
             while(1);
         }
 
+        delayMs(100);
+
         // Read back the HC-05 module response
         if (!Hc05Api::Recv(&rxBuf, UART_NUMBYTES_WAITFORNL))
         {
@@ -97,6 +99,8 @@ int unitTest_hc05ConfigMaster()
             /* UART send failed */
             while(1);
         }
+
+        delayMs(100);
 
         // Read back the HC-05 module response
         if (!Hc05Api::Recv(&rxBuf, lenExpectedMsg))
