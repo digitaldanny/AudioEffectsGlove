@@ -17,6 +17,10 @@
 
 #define LCD_ROW_BLUETOOTH_STATUS    0
 #define LCD_COL_BLUETOOTH_STATUS    0
+#define LCD_ROW_PITCH               1
+#define LCD_ROW_ROLL                2
+#define LCD_ROW_FLEX                3
+#define LCD_ROW_BATTERY             4
 
 #define BLUETOOTH_TIMEOUT_COUNT     50 // Iteration count between data update to ack is expected to be around 10-15.
 
@@ -224,11 +228,11 @@ void updatePitchRoll()
     // Update LCD with Pitch and Roll angles.
     memset(state.lcdMsg, ' ', LCD_MAX_CHARS_PER_LINE);
     sprintf(state.lcdMsg, "P: %d", state.packet.pitch);
-    LcdGfx::drawString(0, 1, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
+    LcdGfx::drawString(0, LCD_ROW_PITCH, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
 
     memset(state.lcdMsg, ' ', LCD_MAX_CHARS_PER_LINE);
     sprintf(state.lcdMsg, "R: %d", state.packet.roll);
-    LcdGfx::drawString(0, 2, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
+    LcdGfx::drawString(0, LCD_ROW_ROLL, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
 }
 
 /*
@@ -288,10 +292,10 @@ bool updateFlexSensorReadings()
     {
         state.packet.flexSensors[f] = (unsigned char)FlexSensors::GetJointsData(f);
 
-        // // Update LCD with flex sensor readings
-        // memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
-        // sprintf(state.lcdMsg, "F%u: %u", f, state.packet.flexSensors[f]);
-        // LcdGfx::drawString(0, f + 1, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
+        // Update LCD with flex sensor readings
+        memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
+        sprintf(state.lcdMsg, "F: %03u %03u", state.packet.flexSensors[1], state.packet.flexSensors[2]);
+        LcdGfx::drawString(0, LCD_ROW_FLEX, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
     }
     return true;
 }
