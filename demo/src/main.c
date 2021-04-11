@@ -188,6 +188,18 @@ char wr[6] = "#XX.X"; // store ASCII versions of DFT magnitude in here..
  *                         MAINS
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+
  */
+
+void printHundredsToStr(Uint16 num)
+{
+    Uint16 hundreds = num / 100;
+    Uint16 tens = (num - 100*hundreds)/10;
+    Uint16 ones = num - 100*hundreds - 10*tens;
+
+    lcdByteData(hundreds + '0');
+    lcdByteData(tens + '0');
+    lcdByteData(ones + '0');
+}
+
 #ifdef PITCHSHIFTER
 /*
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
@@ -239,7 +251,7 @@ void main(void)
     adcB2Init();
 
     // Enable global Interrupts and higher priority real-time debug events:
-    EINT;  // Enable Global interr222222222222222upt INTM
+    EINT;  // Enable Global interrupt INTM
     ERTM;  // Enable Global realtime interrupt DBGM
 
     // Initialize HC-05 module
@@ -285,10 +297,11 @@ void main(void)
             timerOn();
 
             // +----------------------------------------------------------------------------+
-            // EFFECTS PROCESSING
+            // Effects Processing
             // +----------------------------------------------------------------------------+
 
             // Only perform effects processing if FX are enabled.
+            isFxEnabled = true;
             if (isFxEnabled)
             {
                 // create mono samples by averaging left and right samples and store to the fft buffer
@@ -305,7 +318,7 @@ void main(void)
                 }
 
                 // High-pass filter (clear bins below starting index)
-                for (int32_t i = (int32_t)hpfBinIndexStart; i > 0; i--)
+                for (int32_t i = (int32_t)hpfBinIndexStart; i >= 0; i--)
                 {
                     cout[i].r = 0.0f;
                     cout[i].i = 0.0f;
@@ -328,6 +341,27 @@ void main(void)
              Uint32 tempSwitchingPtr = (Uint32)prevInPtr;
              prevInPtr = currInPtr;
              currInPtr = (float*)tempSwitchingPtr;
+
+             // +--------------------------------------------------------------------------------------+
+             // LCD update
+             // +--------------------------------------------------------------------------------------+
+
+             //lcdCursorRow1(0);
+             //lcdString((Uint16*)"L=");
+             //printHundredsToStr(lpfBinIndexStart);
+             //lcdString((Uint16*)" H=");
+             //printHundredsToStr(hpfBinIndexStart);
+             //if (isFxEnabled)
+             //    lcdString((Uint16*)" FX");
+             //else
+             //    lcdString((Uint16*)" IO");
+             //
+             // lcdCursorRow2(0);
+             // char lcdMsgRow2[16] = {'\0'};
+             // sprintf_(lcdMsgRow2, "P=%03d V=%5.1fdB",
+             //         shift,
+             //         12.5f - (float)volumeDown*1.5f);
+             // lcdString((Uint16 *)lcdMsgRow2);
 
              timerOff();
              dma_flag = 0;
@@ -423,25 +457,6 @@ void main(void)
 
             float shiftFloat = (MAX_SHIFT/ROLL_MAX)*(float)gloveSensorDataLocal.roll;
             shift = (int16_t)shiftFloat;
-
-            // +--------------------------------------------------------------------------------------+
-            // LCD update
-            // +--------------------------------------------------------------------------------------+
-
-            lcdCursorRow1(0);
-            char lcdMsgRow1[16] = {" "};
-            sprintf(lcdMsgRow1, "L=%03u H=%03u FX=%01u",
-                    lpfBinIndexStart,
-                    hpfBinIndexStart,
-                    isFxEnabled);
-            lcdString((Uint16 *)lcdMsgRow1);
-
-            lcdCursorRow2(0);
-            char lcdMsgRow2[16] = {" "};
-            sprintf(lcdMsgRow2, "P=%03d V=%5.1f dB",
-                    shift,
-                    12.5f - (float)volumeDown*1.5f);
-            lcdString((Uint16 *)lcdMsgRow2);
         }
     }
 }
