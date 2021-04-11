@@ -59,6 +59,8 @@
 
 #define EFFECTS_TOGGLE_THRESHOLD    (FLEX_MAX_ADC/2.0f)
 
+#define HPF_MAX_BIN     100
+
 // FFT related
 // 9 => 512 pt, 10 => 1024 pt FFT
 // (hamming LUT will have to be regenerated if this value changes)
@@ -81,8 +83,8 @@
 #define WAIT_FOR_ADC_CONVERSION_B   while (AdcbRegs.ADCCTL1.bit.ADCBSY == 1)
 #define CLEAR_ADC_FLAG_B            AdcbRegs.ADCINTFLGCLR.bit.ADCINT1 = 0x0001
 
-#define MAX_SHIFT                   12.0f
-#define MIN_SHIFT                   -12.0f
+#define MAX_SHIFT                   6.0f
+#define MIN_SHIFT                   -6.0f
 
 #define LEFT_BUTTON                 0x4
 #define MIDDLE_BUTTON               0x2
@@ -436,7 +438,7 @@ void main(void)
             // High-pass filter control
             // +--------------------------------------------------------------------------------------+
 
-            hpfBinIndexStart = (CFFT_SIZE/2-1)*((float)gloveSensorDataLocal.flexSensors[FLEX_INDEX_HPF]) / FLEX_MAX_ADC;
+            hpfBinIndexStart = (HPF_MAX_BIN)*((float)gloveSensorDataLocal.flexSensors[FLEX_INDEX_HPF]) / FLEX_MAX_ADC;
 
             // +--------------------------------------------------------------------------------------+
             // Low-pass filter control
