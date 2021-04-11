@@ -446,7 +446,9 @@ void main(void)
 
             // Ignore the upper end of roll for this effect since we want the max
             // output when the hand is flat.
-            if (gloveSensorDataLocal.pitch > 0)
+            if (gloveSensorDataLocal.pitch < PITCH_MIN) // handle underflow
+                lpfBinIndexStart = 0;
+            else if (gloveSensorDataLocal.pitch > 0) // ignore upper end
                 lpfBinIndexStart = (uint16_t)PITCH_MAX;
             else
                 lpfBinIndexStart = (uint16_t)(gloveSensorDataLocal.pitch - (int16_t)PITCH_MIN);
