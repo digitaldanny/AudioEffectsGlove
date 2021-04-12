@@ -40,7 +40,7 @@
 
 // Glove sensor data related
 #define FLEX_MIN_ADC    0.0f
-#define FLEX_MAX_ADC    160.0f
+#define FLEX_MAX_ADC    190.0f
 
 // Pitch and roll max/min values
 #define PITCH_MAX       (75.0f)
@@ -428,7 +428,7 @@ void main(void)
             {
                 // set output gain to 0dB by default
                 volumeDown = (float)VOLUME_MAX * (float)gloveSensorDataLocal.flexSensors[FLEX_INDEX_VOLUME] / FLEX_MAX_ADC;
-                command = lhp_volctl (0x69 - volumeDown); // 12dB - volumeDown*1.5dB (-8 => 0dB, -16 => -12dB
+                command = lhp_volctl (0x69 - 3*volumeDown); // 12dB - volumeDown*1.5dB (-8 => 0dB, -16 => -12dB
                 BitBangedCodecSpiTransmit (command);
                 SmallDelay();
             }
@@ -438,7 +438,7 @@ void main(void)
             // High-pass filter control
             // +--------------------------------------------------------------------------------------+
 
-            hpfBinIndexStart = (HPF_MAX_BIN)*((float)gloveSensorDataLocal.flexSensors[FLEX_INDEX_HPF]) / FLEX_MAX_ADC;
+            hpfBinIndexStart = (HPF_MAX_BIN)*(FLEX_MAX_ADC - (float)gloveSensorDataLocal.flexSensors[FLEX_INDEX_HPF]) / FLEX_MAX_ADC;
 
             // +--------------------------------------------------------------------------------------+
             // Low-pass filter control
