@@ -47,7 +47,7 @@
 #define PITCH_MIN       (-75.0f)
 #define ROLL_MAX        (90.0f)
 #define ROLL_MIN        (-90.0f)
-#define VOLUME_MAX      (16)
+#define VOLUME_MAX      (4)
 
 // Flex sensors index for controlling various features
 #define FLEX_INDEX_EFFECTS_ENABLE   0
@@ -282,11 +282,6 @@ void main(void)
     unsigned char prevVolumeFlexReading = 123; // What was the value of gloveSensorDataLocal.flex[FLEX_INDEX_VOLUME] in previous loop?
     bool isFxEnabled = false;
 
-    // set input gain to 0dB by default
-    Uint16 command = linput_volctl (0x17); // 12dB - 8*1.5dB (-8 => 0dB, -12 => -6dB
-    BitBangedCodecSpiTransmit (command);
-    SmallDelay();
-
     // Initialize glove sensor data
     memset((void*)&gloveSensorDataLocal, 0, sizeof(dataPacket_t));
 
@@ -426,9 +421,15 @@ void main(void)
 
             if (DOES_CHANGE_MEET_THRESH(gloveSensorDataLocal.flexSensors[FLEX_INDEX_VOLUME], prevVolumeFlexReading))
             {
+                volumeDown = (float)VOLUME_MAX * (FLEX_MAX_ADC - (float)gloveSensorDataLocal.flexSensors[FLEX_INDEX_VOLUME]) / FLEX_MAX_ADC;
+
+                // set input gain to 0dB by default
+                Uint16 command = linput_volctl (0x17 - 4*volumeDown); // 12dB - 8*1.5dB (-8 => 0dB, -12 => -6dB
+                BitBangedCodecSpiTransmit (command);
+                SmallDelay();
+
                 // set output gain to 0dB by default
-                volumeDown = (float)VOLUME_MAX * (float)gloveSensorDataLocal.flexSensors[FLEX_INDEX_VOLUME] / FLEX_MAX_ADC;
-                command = lhp_volctl (0x69 - 3*volumeDown); // 12dB - volumeDown*1.5dB (-8 => 0dB, -16 => -12dB
+                command = lhp_volctl (0x69 - 4*volumeDown); // 12dB - volumeDown*1.5dB (-8 => 0dB, -16 => -12dB
                 BitBangedCodecSpiTransmit (command);
                 SmallDelay();
             }
