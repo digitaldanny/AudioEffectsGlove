@@ -298,7 +298,6 @@ void main(void)
             // +----------------------------------------------------------------------------+
 
             // Only perform effects processing if FX are enabled.
-            isFxEnabled = true;
             if (isFxEnabled)
             {
                 // create mono samples by averaging left and right samples and store to the fft buffer
@@ -333,6 +332,15 @@ void main(void)
                     fftFrame->buffer[2*i+1]    = fftFrame->buffer[2*i];           // right channel
                 }
             }
+            else
+            {
+                // Amplify samples so they match more closely with the FFT/IFFT samples
+                for (int i = 0; i < CFFT_SIZE_MIN_1; i++)
+                {
+                    fftFrame->buffer[2*i]      *= 5;    // left channel
+                    fftFrame->buffer[2*i+1]    *= 5;    // right channel
+                }
+            }
 
              // switch the inBuff pointers so the currentBuff becomes the previous input buffer
              Uint32 tempSwitchingPtr = (Uint32)prevInPtr;
@@ -343,15 +351,15 @@ void main(void)
              // LCD update
              // +--------------------------------------------------------------------------------------+
 
-             //lcdCursorRow1(0);
+             lcdCursorRow1(0);
              //lcdString((Uint16*)"L=");
              //printHundredsToStr(lpfBinIndexStart);
              //lcdString((Uint16*)" H=");
              //printHundredsToStr(hpfBinIndexStart);
-             //if (isFxEnabled)
-             //    lcdString((Uint16*)" FX");
-             //else
-             //    lcdString((Uint16*)" IO");
+             if (isFxEnabled)
+                 lcdString((Uint16*)" FX");
+             else
+                 lcdString((Uint16*)" IO");
              //
              // lcdCursorRow2(0);
              // char lcdMsgRow2[16] = {'\0'};
