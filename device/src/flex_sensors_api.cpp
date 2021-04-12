@@ -1,5 +1,7 @@
 #include "flex_sensors_api.h"
 
+const uint16_t flexSensorError[FLEX_MAX_NUM_FINGERS] = {3000, 3000, 3000};
+
 /*
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
  * DESCRIPTION: Init
@@ -64,5 +66,5 @@ uint8_t FlexSensors::GetJointsData(uint8_t finger)
     // This means the top bit is not required, so I am interested
     // in bits B12:B5. Therefore, I shift the reading to the right
     // by 5 to get the most useful readings.
-    return (uint8_t)(adcReadingRaw>>6);
+    return (uint8_t)((adcReadingRaw-flexSensorError[finger]) >> 5);
 }
