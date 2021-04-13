@@ -7,12 +7,7 @@
 int main()
 {
     setupTargetHw(); // MSP432 configurations (clock speed, WDT disable, etc)
-    initExternalHwPower(); // Initialize external hardware power (off by default)
-
-#if ENABLE_UNIT_TEST
-    // Power up the external hardware (needed for some of the unit tests).
-    setExternalHwPower(true);
-#endif // ENABLE_UNIT_TEST
+    initExternalHwPower(); // Initialize external hardware power (on by default)
 
 #if ENABLE_UNIT_TEST_TIMER_DELAY
     TEST_timerDelay();
@@ -85,6 +80,10 @@ int main()
 #if ENABLE_UNIT_TEST_HC05_RW_TO_SLAVE
     unitTest_hc05RwToSlave();
 #endif // ENABLE_UNIT_TEST_HC05_RW_TO_SLAVE
+
+#if ENABLE_MPU6050_ESTIMATE_GYRO_ERROR
+    mpu6050GyroError();
+#endif // ENABLE_MPU6050_ESTIMATE_GYRO_ERROR
 
 #if ENABLE_HC05_CONFIG_MSTR
     unitTest_hc05ConfigMaster();

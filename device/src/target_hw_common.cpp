@@ -50,12 +50,33 @@ const systemIO_t systemIO = {
 };
 
 volatile systemInfo_t systemInfo;
+volatile uint32_t millisCount; // millis function would not work with this inside systemInfo variable
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
  * FUNCTION IMPLEMENTATIONS
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
+
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: millis
+ *This function returns the number of milliseconds at the time. The number starts
+ *increasing once the board is powered up and will overflow after days time.
+ *
+ * DESCRIPTION: SysTick_Handler
+ * This interrupt triggers once per millisecond to increment the millis count variable.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
+uint32_t millis()
+{
+    return millisCount;
+}
+
+extern "C" void SysTick_Handler(void)
+{
+    millisCount++;
+}
 
 /*
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
@@ -67,7 +88,7 @@ volatile systemInfo_t systemInfo;
 void initExternalHwPower()
 {
     // Configure GPIO as output pin with the power disabled by default.
-    setExternalHwPower(false);
+    setExternalHwPower(true);
     MAP_GPIO_setAsOutputPin(SYSIO_PIN_EXTERNALHWPOWER_PORT, SYSIO_PIN_EXTERNALHWPOWER_PIN);
 }
 
@@ -100,7 +121,7 @@ void setExternalHwPower(bool enable)
 
     // Update system variable
     SYSINFO_EXTERNALHWPOWER_ENABLE = enable;
-    delayMs(50);
+    delayMs(1000);
 }
 
 /*
@@ -116,7 +137,7 @@ void delayMs(uint32_t ms)
 {
     for (int i = 0; i < ms; i++)
     {
-        delayUs(1260); //
+        delayUs(1260);
     }
 }
 
@@ -164,6 +185,7 @@ void setupTargetHw()
 {
     // Initialize system info struct
     memset((void*)&systemInfo, 0, sizeof(systemInfo_t));
+    millisCount = 0;
 
 #if TARGET_HW_C2000
     Device_init();                  // Initialize device clock and peripherals
@@ -214,6 +236,12 @@ void setupTargetHw()
     /* Enabling the FPU for floating point operation */
     MAP_FPU_enableModule();
     MAP_FPU_enableLazyStacking();
+
+    // Configuring SysTick to trigger every millisecond
+    //MAP_SysTick_enableModule();
+    //MAP_SysTick_setPeriod(MAP_CS_getMCLK() / 1000);
+    //MAP_Interrupt_enableSleepOnIsrExit();
+    //MAP_SysTick_enableInterrupt();
 
     /* Enabling interrupts */
     MAP_Interrupt_enableMaster();

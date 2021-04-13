@@ -30,7 +30,7 @@
 */
 
 // Unit tests
-#define ENABLE_UNIT_TEST                (1)
+#define ENABLE_UNIT_TEST                (0)
 #define ENABLE_UNIT_TEST_TIMER_DELAY    (0 & ENABLE_UNIT_TEST)  // Issue NONE: Infinitely toggle using ms and us delays. Requires oscilloscope connections.
 #define ENABLE_UNIT_TEST_WIRELESS_API   (0 & ENABLE_UNIT_TEST)   // Issue #8: Enables unit test for the wireless API.
 #define ENABLE_UNIT_TEST_NXP_API        (0 & ENABLE_UNIT_TEST)   // Issue #2: Enables unit test for the gyro/accel/mag sensor pack reading.
@@ -52,6 +52,7 @@
 #define ENABLE_UNIT_TEST_LCD_TEXT       (0 & ENABLE_UNIT_TEST)  // Issue #46: Draws custom text and image to the LCD.
 #define ENABLE_UNIT_TEST_STATE_OF_CHARGE (1 & ENABLE_UNIT_TEST) // Issue #51: Estimates battery state of charge using OCV and CCV circuits.
 
+#define ENABLE_MPU6050_ESTIMATE_GYRO_ERROR  (0) // Issue #47: Script to get the average gyro error seen while the device is sitting still.
 #define ENABLE_HC05_CONFIG_MSTR (0) // Issue #35: Script to configure the master HC-05's role, slave address, etc.
 #define ENABLE_HAND_TRACKING_GLOVE (1) // Issue #53: Hand tracking glove's main loop (capture data, transfer to DSP Effects Rack)
 

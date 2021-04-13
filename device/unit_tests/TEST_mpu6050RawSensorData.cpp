@@ -22,7 +22,7 @@ int16_t gyroBuffer[3];
 // NOTE - Only append to the end of this array. **ORDER MATTERS**
 // Each config contains the following - Register addr, register value
 uint8_t mpu6050Configs[MPU6050_NUM_CONFIGS][2] = {
-    /* MPU6050_PWR_MGMT_1   */ {0x68, 0x00},
+    /* MPU6050_PWR_MGMT_1   */ {0x6B, 0x00}, // Wake up device
     /* MPU6050_GYRO_CONFIG  */ {0x1B, 0x08}, // +- 500 deg/s
     /* MPU6050_ACCEL_CONFIG */ {0x1C, 0x08} // +- 4g
 };
@@ -35,12 +35,16 @@ uint8_t mpu6050Configs[MPU6050_NUM_CONFIGS][2] = {
 int TEST_mpu6500RawSensorData()
 {
     I2c::init();
+    delayMs(10);
 
     // Write configuration register values
     for (int iConfig = 0; iConfig < MPU6050_NUM_CONFIGS; iConfig++)
     {
-        I2c::write(MPU6050_DEV_ADDR, mpu6050Configs[iConfig][0], 1, &mpu6050Configs[iConfig][1]);
-        delayMs(1);
+        if (!I2c::write(MPU6050_DEV_ADDR, mpu6050Configs[iConfig][0], 1, &mpu6050Configs[iConfig][1]))
+        {
+            while(1); // I2c NACK received - track CPU for HW debug
+        }
+        delayMs(10);
     }
 
     delayMs(10);
@@ -62,7 +66,7 @@ int TEST_mpu6500RawSensorData()
         gyroBuffer[1] = (sensorBuffer[10] << 8) | (sensorBuffer[11]);
         gyroBuffer[2] = (sensorBuffer[12] << 8) | (sensorBuffer[13]);
 
-        delayMs(1); // delay here for breakpointing
+        delayMs(10); // delay here for breakpointing
     }
     return 0;
 }

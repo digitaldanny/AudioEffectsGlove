@@ -87,6 +87,10 @@ int unitTest_stateOfCharge();
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
+#if ENABLE_MPU6050_ESTIMATE_GYRO_ERROR
+int mpu6050GyroError();
+#endif // ENABLE_MPU6050_ESTIMATE_GYRO_ERROR
+
 #if ENABLE_HC05_CONFIG_MSTR
 int unitTest_hc05ConfigMaster();
 #endif // ENABLE_HC05_CONFIG_MSTR

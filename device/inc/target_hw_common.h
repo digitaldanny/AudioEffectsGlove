@@ -77,15 +77,14 @@ typedef struct
  * FIELD DESCRIPTIONS:
  * @externalHwPowerEnable - Issue #45
  *  Is power enabled for other hardware (HC-05, MPU6500, Flex Sensors, etc)?
- *
- * TODO:
- * - Add field for timer32 in use
- * - Add field for target configured
+ *@millisCount - Issue #64
+ *  Number of milliseconds counted since the program started running.
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
  */
 typedef struct
 {
     bool externalHwPowerEnable;
+    uint32_t millisCount;
 } systemInfo_t;
 
 
@@ -164,8 +163,9 @@ extern const systemIO_t systemIO;
 
 void initExternalHwPower();
 void setupTargetHw();
+void delayMs(uint32_t ms) ;
 void delayUs(uint32_t us);
-void delayMs(uint32_t ms);
 void setExternalHwPower(bool enable);
+uint32_t millis();
 
 #endif // _SETUP_TARGET_HARDWARE

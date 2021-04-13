@@ -19,6 +19,7 @@
 
 #include "kiss_fft.h"
 #include "kiss_fftr.h"
+#include "hc05.h"
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -36,6 +37,29 @@
  *                        DEFINES
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+
  */
+
+// Glove sensor data related
+#define FLEX_MIN_ADC    0.0f
+#define FLEX_MAX_ADC    190.0f
+
+// Pitch and roll max/min values
+#define PITCH_MAX       (75.0f)
+#define PITCH_MIN       (-75.0f)
+#define ROLL_MAX        (90.0f)
+#define ROLL_MIN        (-90.0f)
+#define VOLUME_MAX      (16)
+
+// Flex sensors index for controlling various features
+#define FLEX_INDEX_EFFECTS_ENABLE   0
+#define FLEX_INDEX_VOLUME           1
+#define FLEX_INDEX_HPF              2
+
+#define VOLUME_THRESHOLD    10
+#define DOES_CHANGE_MEET_THRESH(curr, prev)     (curr > prev + VOLUME_THRESHOLD || curr + VOLUME_THRESHOLD < prev)
+
+#define EFFECTS_TOGGLE_THRESHOLD    (FLEX_MAX_ADC/2.0f)
+
+#define HPF_MAX_BIN     100
 
 // FFT related
 // 9 => 512 pt, 10 => 1024 pt FFT
@@ -60,7 +84,7 @@
 #define CLEAR_ADC_FLAG_B            AdcbRegs.ADCINTFLGCLR.bit.ADCINT1 = 0x0001
 
 #define MAX_SHIFT                   6.0f
-#define MIN_SHIFT                   -12.0f
+#define MIN_SHIFT                   -6.0f
 
 #define LEFT_BUTTON                 0x4
 #define MIDDLE_BUTTON               0x2
@@ -154,11 +178,11 @@ float * prevInPtr;
 float * currInPtr;
 
 // PITCH SHIFTING
-volatile Uint16 robotEffectEn;
 volatile Uint16 adcBResult;
 volatile Uint16 adcAResult;
-volatile float shift;
-volatile float kFilter;
+int16_t shift;
+uint16_t lpfBinIndexStart;
+uint16_t hpfBinIndexStart;
 char wr[6] = "#XX.X"; // store ASCII versions of DFT magnitude in here..
 
 /*
@@ -166,6 +190,18 @@ char wr[6] = "#XX.X"; // store ASCII versions of DFT magnitude in here..
  *                         MAINS
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+
  */
+
+void printHundredsToStr(Uint16 num)
+{
+    Uint16 hundreds = num / 100;
+    Uint16 tens = (num - 100*hundreds)/10;
+    Uint16 ones = num - 100*hundreds - 10*tens;
+
+    lcdByteData(hundreds + '0');
+    lcdByteData(tens + '0');
+    lcdByteData(ones + '0');
+}
+
 #ifdef PITCHSHIFTER
 /*
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
@@ -194,7 +230,6 @@ void main(void)
     currInPtr               = (float*)&rin1[0];
     prevInPtr               = (float*)&rin2[0];     // prev buff must be initialized to 0 for stft
 
-    robotEffectEn           = 0;
     // ------------------------------------------------------------------------
 
     // prev buff must be initialized to 0 for stft
@@ -221,15 +256,14 @@ void main(void)
     EINT;  // Enable Global interrupt INTM
     ERTM;  // Enable Global realtime interrupt DBGM
 
-    // update frequencies on LCD
-    char s1[] = "filter k = ";
-    lcdRow1();
-    lcdString((Uint16 *)&s1);
+    // Initialize HC-05 module
+    initHc05();
 
-    // update shift amount on
-    char s2[] = "shift = ";
-    lcdRow2();
-    lcdString((Uint16 *)&s2);
+    // Baud rate must be configured to 9600 for HC-05 to communicate in data mode.
+    if (BAUDRATE_DEFAULT != BAUDRATE_9600)
+    {
+        while(1); // Failure - Configure baud rate to 9600
+    }
 
     /*
      * fftptr - assigns where the fft malloc will start at
@@ -241,193 +275,192 @@ void main(void)
     kiss_fftri_state = kiss_fftr_alloc(fftSize, 1, NULL, NULL);
     EALLOW;
 
-    Uint16 switches;
-    Uint16 prevSwitches = 1234; // switches != prevSwitches initially
+    Uint16* gloveDataBuf;      // Points to data stored in the UART RX buff (typecasts to dataPacket_t).
+    dataPacket_t gloveSensorDataLocal;  // Data is copied over to be used in the main program.
+    uint32_t unknownOpCodeCounter = 0;  // Times unknown op-code has been received over uart
+    uint16_t volumeDown = 0; // Multiple of 1.5dB to remove from the default output gain of 12dB.
+    unsigned char prevVolumeFlexReading = 123; // What was the value of gloveSensorDataLocal.flex[FLEX_INDEX_VOLUME] in previous loop?
+    bool isFxEnabled = false;
+
+    // set input gain to 0dB by default
+    Uint16 command = linput_volctl (0x17); // 12dB - 8*1.5dB (-8 => 0dB, -12 => -6dB
+    BitBangedCodecSpiTransmit (command);
+    SmallDelay();
+
+    // Initialize glove sensor data
+    memset((void*)&gloveSensorDataLocal, 0, sizeof(dataPacket_t));
 
     while(1)
     {
-        // +--------------------------------------------------------------------------------------+
-        // CREATE ADC VALUES WHILE WAITING FOR NEW SAMPLES
-        // +--------------------------------------------------------------------------------------+
 
-        // line in volume control
-        switches = getCodecSwitches();
-        if (switches != prevSwitches)
-        {
-            // set input gain to 0dB by default
-            Uint16 command = linput_volctl (0x17 - 8 - switches); // 12dB - 8*1.5dB (-8 => 0dB, -12 => -6dB
-            BitBangedCodecSpiTransmit (command);
-            SmallDelay();
-
-            // set output gain to 0dB by default
-            command = lhp_volctl (0x69 - 8 - switches); // 12dB - 8*1.5dB (-8 => 0dB, -12 => -6dB
-            BitBangedCodecSpiTransmit (command);
-            SmallDelay();
-        }
-        prevSwitches = switches;
-
-        // Select the audio source..
-        Uint16 buttons = getCodecButtons();
-        if (buttons == LEFT_BUTTON || buttons == MIDDLE_BUTTON)
-        {
-            // turn mic on
-            Uint16 command = fullpowerup();
-            BitBangedCodecSpiTransmit (command);
-            SmallDelay();
-
-            command = aaudpath();
-            BitBangedCodecSpiTransmit (command);
-            SmallDelay();
-
-            lcdClearTopRow();
-            lcdCursorRow1(0);
-            char str[] = "MIC ON";
-            lcdString((Uint16 *)&str);
-
-            // only enable the robot vocal effect if the middle button
-            // is pushed and the mic is enabled.
-            if (buttons == MIDDLE_BUTTON)
-            {
-                lcdCursorRow1(7);
-                char str[] = "-R";
-                lcdString((Uint16 *)&str);
-
-                robotEffectEn = 1;
-            }
-            else
-                robotEffectEn = 0;
-        }
-        else if (buttons == RIGHT_BUTTON)
-        {
-            // turn mic off
-            Uint16 command = nomicpowerup();
-            BitBangedCodecSpiTransmit (command);
-            SmallDelay();
-
-            command = nomicaaudpath();
-            BitBangedCodecSpiTransmit (command);
-            SmallDelay();
-
-            lcdClearTopRow();
-            lcdCursorRow1(0);
-            char str[] = "MIC OFF";
-            lcdString((Uint16 *)&str);
-
-            robotEffectEn = 0;
-        }
-
-        FORCE_ADC_CONVERSION;     // force ADC to convert on A0 (shift)
-        FORCE_ADC_CONVERSION_B;   // force ADC to convert on B2 (kFilter)
-
-        // find ADC value to pitch shift by
-        WAIT_FOR_ADC_CONVERSION;  // wait for first conversion to complete
-        CLEAR_ADC_FLAG;           // clear the interrupt flag generated by the conversion
-        adcAResult = AdcaResultRegs.ADCRESULT0; // save results of the conversion
-        shift = (MAX_SHIFT - MIN_SHIFT)*(float)adcAResult/(float)4095 + MIN_SHIFT;
-
-        // find ADC value to change filter bin by
-        WAIT_FOR_ADC_CONVERSION_B;  // wait for first conversion to complete
-        CLEAR_ADC_FLAG_B;           // clear the interrupt flag generated by the conversion
-        adcBResult = AdcbResultRegs.ADCRESULT0; // save results of the conversion
-        kFilter = (CFFT_SIZE/2-1)*(float)adcBResult/(float)4095;
-
-        float tens   = abs(shift) / 10.0;
-        float ones   = (tens - (Uint16)tens) * 10;
-        float tenths = (ones - (Uint16)ones) * 10;
-
-        float k_hundreds = abs(kFilter) / 100.0;
-        float k_tens   = (k_hundreds - (Uint16)k_hundreds) * 10;
-        float k_ones   = (k_tens - (Uint16)k_tens) * 10;
-
-        // +--------------------------------------------------------------------------------------+
-        // NEW SAMPLES ARE READY FOR USER APPLICATION
-        // +--------------------------------------------------------------------------------------+
-
+        // TASK 1 - Process the DSP effects.
         if (dma_flag)
         {
             timerOn();
 
-             // create mono samples by averaging left and right samples and store to the fft buffer
-             for (int i = 0; i < CFFT_SIZE_X2_MASK; i+=2)
-                 currInPtr[i>>1] = ((float)fftFrame->buffer[i] + (float)fftFrame->buffer[i+1])/2.0f;
+            // +----------------------------------------------------------------------------+
+            // Effects Processing
+            // +----------------------------------------------------------------------------+
 
-             kiss_fftr(kiss_fftr_state, currInPtr, cout); // FFT
+            // Only perform effects processing if FX are enabled.
+            isFxEnabled = true;
+            if (isFxEnabled)
+            {
+                // create mono samples by averaging left and right samples and store to the fft buffer
+                for (int i = 0; i < CFFT_SIZE_X2_MASK; i+=2)
+                    currInPtr[i>>1] = ((float)fftFrame->buffer[i] + (float)fftFrame->buffer[i+1])/2.0f;
 
-             // +----------------------------------------------------------------------------+
-             //                               USER APP END
-             // +----------------------------------------------------------------------------+
+                kiss_fftr(kiss_fftr_state, currInPtr, cout); // FFT
 
-             // Create the index for filtering in the buffer
-             // Uint16 k = 442; // tested value to remove white noise (32KHz sampling) -> 13.8 KHz
-             // Uint16 k = 295; // (48KHz sampling) -> 13.8 KHz
-             Uint16 k = (Uint16)kFilter; // controllable using B2 ADC
+                // Low-pass filter (clear bins above starting index)
+                for (Uint16 i = lpfBinIndexStart; i < CFFT_SIZE/2; i++)
+                {
+                    cout[i].r = 0.0f;
+                    cout[i].i = 0.0f;
+                }
 
-             // robotic voice effect zeros out the phase without changing the magnitude of the
-             // frequency bins.. (optional effect)
-             if (robotEffectEn)
-             {
-                 for (Uint16 i = 0; i < k; i++)
-                 {
-                     cout[i].r = sqrtf(cout[i].r*cout[i].r + cout[i].i*cout[i].i);
-                     cout[i].i = 0.0f;
-                 }
-             }
+                // High-pass filter (clear bins below starting index)
+                for (int32_t i = (int32_t)hpfBinIndexStart; i >= 0; i--)
+                {
+                    cout[i].r = 0.0f;
+                    cout[i].i = 0.0f;
+                }
 
-             // get rid of the white noise in upper bins
-             for (Uint16 i = k; i < CFFT_SIZE/2; i++)
-             {
-                 cout[i].r = 0.0f;
-                 cout[i].i = 0.0f;
-             }
+                bins = (kiss_fft_cpx*)&cout;
+                bins = pitchShift(bins, CFFT_SIZE, shift);
 
-             bins = (kiss_fft_cpx*)&cout;
-             bins = pitchShift(bins, CFFT_SIZE, shift);
+                kiss_fftri(kiss_fftri_state, bins, currInPtr); // IFFT
 
-             // +----------------------------------------------------------------------------+
-             //                               USER APP END
-             // +----------------------------------------------------------------------------+
-
-             kiss_fftri(kiss_fftri_state, bins, currInPtr); // IFFT
-
-             // output the fft results
-             for (int i = 0; i < CFFT_SIZE_MIN_1; i++)
-             {
-                 fftFrame->buffer[2*i]      = (int16)(currInPtr[i] * 0.02);    // left channel
-                 fftFrame->buffer[2*i+1]    = fftFrame->buffer[2*i];           // right channel
-             }
+                // output the fft results
+                for (int i = 0; i < CFFT_SIZE_MIN_1; i++)
+                {
+                    fftFrame->buffer[2*i]      = (int16)(currInPtr[i] * 0.02);    // left channel
+                    fftFrame->buffer[2*i+1]    = fftFrame->buffer[2*i];           // right channel
+                }
+            }
 
              // switch the inBuff pointers so the currentBuff becomes the previous input buffer
              Uint32 tempSwitchingPtr = (Uint32)prevInPtr;
              prevInPtr = currInPtr;
              currInPtr = (float*)tempSwitchingPtr;
 
-             // Write to the LCD AFTER processing has completed
-             // handle adc input to work with pitch function
-             if (shift > 0.0f)
-                 wr[0] = '+';
-             else
-                 wr[0] = '-';
+             // +--------------------------------------------------------------------------------------+
+             // LCD update
+             // +--------------------------------------------------------------------------------------+
 
-             // update LCD with shift/kFilter data
-             lcdCursorRow2(8);
-             wr[1] = INT_TO_ASCII((Uint16)tens + 0.5f);
-             wr[2] = INT_TO_ASCII((Uint16)ones); // 1's place (Ex. [1].23)
-             wr[3] = '.';
-             wr[4] = INT_TO_ASCII((Uint16)tenths); // 10th's place (Ex. 1.[2]3)
-             wr[5] = '\0';
-             lcdString((Uint16 *)&wr);
-
-             lcdCursorRow1(11);
-             wr[0] = INT_TO_ASCII((Uint16)k_hundreds);
-             wr[1] = INT_TO_ASCII((Uint16)k_tens);
-             wr[2] = INT_TO_ASCII((Uint16)k_ones);
-             wr[3] = '\0';
-             wr[4] = '\0';
-             wr[5] = '\0';
-             lcdString((Uint16 *)&wr);
+             //lcdCursorRow1(0);
+             //lcdString((Uint16*)"L=");
+             //printHundredsToStr(lpfBinIndexStart);
+             //lcdString((Uint16*)" H=");
+             //printHundredsToStr(hpfBinIndexStart);
+             //if (isFxEnabled)
+             //    lcdString((Uint16*)" FX");
+             //else
+             //    lcdString((Uint16*)" IO");
+             //
+             // lcdCursorRow2(0);
+             // char lcdMsgRow2[16] = {'\0'};
+             // sprintf_(lcdMsgRow2, "P=%03d V=%5.1fdB",
+             //         shift,
+             //         12.5f - (float)volumeDown*1.5f);
+             // lcdString((Uint16 *)lcdMsgRow2);
 
              timerOff();
              dma_flag = 0;
+        }
+
+        // TASK 2 - Read glove sensor data from master device and notify the device that
+        // the data packet was received.
+        else if (readHc05NonBlocking((Uint16**)&gloveDataBuf, DPP_PACKET_SIZE_IN_BYTES_C2000))
+        {
+            // Store received data in the uart RX buffer into the local data structure
+            // and reset the uart buffers for next transfer.
+            Interrupt_disable(INT_SCIC_RX);
+
+            //memcpy((void*)&gloveSensorDataLocal, (void*)gloveSensorData, sizeof(dataPacket_t));
+            gloveSensorDataLocal.opCode = gloveDataBuf[0];
+            gloveSensorDataLocal.flexSensors[0] = gloveDataBuf[1];
+            gloveSensorDataLocal.flexSensors[1] = gloveDataBuf[2];
+            gloveSensorDataLocal.flexSensors[2] = gloveDataBuf[3];
+            gloveSensorDataLocal.pitch = (short)((gloveDataBuf[5] << 8) | gloveDataBuf[4]);
+            gloveSensorDataLocal.roll = (short)((gloveDataBuf[7] << 8) | gloveDataBuf[6]);
+
+            resetBuffersHc05();
+            Interrupt_enable(INT_SCIC_RX);
+
+            // Decode received message
+            if (gloveSensorDataLocal.opCode == DPP_OPCODE_PACKET)
+            {
+                Uint16 ackMsg = DPP_OPCODE_ACK;
+
+                // Notify the master device that the last packet has been processed.
+                writeHc05(&ackMsg, 1);
+            }
+            else
+            {
+                unknownOpCodeCounter++;
+            }
+        }
+
+        // TASK 3 - Update effect parameters based on glove sensor data + update LCD.
+        else
+        {
+            // +--------------------------------------------------------------------------------------+
+            // Toggle effects enable if flex sensor meets required threshold.
+            // +--------------------------------------------------------------------------------------+
+
+            static uint16_t edgeCount = 0;
+            if (gloveSensorDataLocal.flexSensors[FLEX_INDEX_EFFECTS_ENABLE] > EFFECTS_TOGGLE_THRESHOLD)
+            {
+                edgeCount++;
+            }
+            else if (gloveSensorDataLocal.flexSensors[FLEX_INDEX_EFFECTS_ENABLE] < EFFECTS_TOGGLE_THRESHOLD && edgeCount > 0)
+            {
+                isFxEnabled = !isFxEnabled;
+                edgeCount = 0;
+            }
+
+            // +--------------------------------------------------------------------------------------+
+            // Update volume levels if flex sensor reading has changed enough.
+            // +--------------------------------------------------------------------------------------+
+
+            if (DOES_CHANGE_MEET_THRESH(gloveSensorDataLocal.flexSensors[FLEX_INDEX_VOLUME], prevVolumeFlexReading))
+            {
+                // set output gain to 0dB by default
+                volumeDown = (float)VOLUME_MAX * (float)gloveSensorDataLocal.flexSensors[FLEX_INDEX_VOLUME] / FLEX_MAX_ADC;
+                command = lhp_volctl (0x69 - 3*volumeDown); // 12dB - volumeDown*1.5dB (-8 => 0dB, -16 => -12dB
+                BitBangedCodecSpiTransmit (command);
+                SmallDelay();
+            }
+            prevVolumeFlexReading = gloveSensorDataLocal.flexSensors[FLEX_INDEX_VOLUME];
+
+            // +--------------------------------------------------------------------------------------+
+            // High-pass filter control
+            // +--------------------------------------------------------------------------------------+
+
+            hpfBinIndexStart = (HPF_MAX_BIN)*(FLEX_MAX_ADC - (float)gloveSensorDataLocal.flexSensors[FLEX_INDEX_HPF]) / FLEX_MAX_ADC;
+
+            // +--------------------------------------------------------------------------------------+
+            // Low-pass filter control
+            // +--------------------------------------------------------------------------------------+
+
+            // Ignore the upper end of roll for this effect since we want the max
+            // output when the hand is flat.
+            if (gloveSensorDataLocal.pitch < PITCH_MIN) // handle underflow
+                lpfBinIndexStart = 0;
+            else if (gloveSensorDataLocal.pitch > 0) // ignore upper end
+                lpfBinIndexStart = (uint16_t)PITCH_MAX;
+            else
+                lpfBinIndexStart = (uint16_t)(gloveSensorDataLocal.pitch - (int16_t)PITCH_MIN);
+
+            lpfBinIndexStart = (uint16_t)( ((float)CFFT_SIZE/2-1) * ((float)lpfBinIndexStart) / PITCH_MAX );
+
+            // +--------------------------------------------------------------------------------------+
+            // Pitch shifting control
+            // +--------------------------------------------------------------------------------------+
+
+            float shiftFloat = (MAX_SHIFT/ROLL_MAX)*(float)gloveSensorDataLocal.roll;
+            shift = (int16_t)shiftFloat;
         }
     }
 }
