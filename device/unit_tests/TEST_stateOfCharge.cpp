@@ -33,15 +33,14 @@ int unitTest_stateOfCharge()
     Adc::Init();
     LcdGfx::init();
 
+    ocv = Adc::ReadAdcChannel(ADC_CH_OCV);
+    memset(lcdBuff, ' ', 10);
+    sprintf(lcdBuff, "OCV: %u", ocv);
+    LcdGfx::drawString(0, 0, lcdBuff, 10);
+
     while(true)
     {
-        ocv     = Adc::ReadAdcChannel(ADC_CH_OCV);
-        ccv     = Adc::ReadAdcChannel(ADC_CH_CCV);
-
-        memset(lcdBuff, ' ', 10);
-        sprintf(lcdBuff, "OCV: %u", ocv);
-        LcdGfx::drawString(0, 0, lcdBuff, 10);
-
+        ccv = Adc::ReadAdcChannel(ADC_CH_CCV);
         memset(lcdBuff, ' ', 10);
         sprintf(lcdBuff, "CCV: %u", ccv);
         LcdGfx::drawString(0, 1, lcdBuff, 10);

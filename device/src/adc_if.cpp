@@ -146,7 +146,10 @@ uint16_t Adc::MSP432::ReadAdcChannel(uint8_t adc_channel) {
 
     // Wait until the ADC interrupt sets the adc conversion flag
     // before returning the captured adc value.
-    while (!flagAdcReady);
+    while (!flagAdcReady)
+    {
+        MAP_PCM_gotoLPM0();
+    }
     return adcReading[adc_channel];
 }
 
