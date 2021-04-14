@@ -49,3 +49,35 @@ float SocApi::getChargeFromOcv(uint16_t ocv)
     else
         return soc;
 }
+
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: calculateStateOfCharge
+ * Calculate the new state of charge based on the previous state of charge and
+ * the difference in time.
+ *
+ * INPUTS:
+ * @prevSoc -
+ *
+ * RETURN:
+ * float - New estimated state of charge.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+*/
+float SocApi::calculateStateOfCharge(float prevSoc, float currentLoad)
+{
+    static uint32_t prevMillis = 0;
+
+    uint32_t currMillis = millis();
+
+    float soc = prevSoc + currentLoad * (((float)currMillis - (float)prevMillis)/1000.0f * MS_PER_HOUR) / BATTERY_NOMINAL_CAPACITY_MAH;
+
+    // Boundary checks
+    if (soc < 0.0f)
+        soc = 0.0f;
+    else if (soc > 100.0f)
+        soc = 100.0f;
+
+    prevMillis = currMillis;
+
+    return soc;
+}

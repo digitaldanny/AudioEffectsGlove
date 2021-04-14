@@ -148,7 +148,7 @@ uint16_t Adc::MSP432::ReadAdcChannel(uint8_t adc_channel) {
     // before returning the captured adc value.
     while (!flagAdcReady)
     {
-        MAP_PCM_gotoLPM0();
+        ; //MAP_PCM_gotoLPM0();
     }
     return adcReading[adc_channel];
 }

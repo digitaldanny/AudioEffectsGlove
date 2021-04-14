@@ -96,6 +96,7 @@ gloveState_t state;
 bool updateBluetoothConnectionStatus();
 bool updateFlexSensorReadings();
 void updatePitchRoll();
+void updateLcdBatteryCharge();
 void SendUpdateToSlave();
 void CheckForSlaveAck();
 
@@ -173,6 +174,8 @@ int handTrackingGlove()
 
         // Update pitch and roll angles from accel / gyro readings.
         updatePitchRoll();
+
+        state.stateOfCharge = SocApi::calculateStateOfCharge(state.stateOfCharge, CURRENT_LOAD_STATIC_MA);
 
         if (state.isSlaveConnected)
         {
