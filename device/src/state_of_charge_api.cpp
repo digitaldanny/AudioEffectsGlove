@@ -32,7 +32,7 @@ float SocApi::getChargeFromOcv(uint16_t ocv)
     // In the linear portion of the SOC and OCV relationship?
     if (ocv > 3.5f)
     {
-        soc = (100.0f - 20.0f) / (4.2f - 3.5f) * ocvf;
+        soc = (100.0f - 20.0f) / (4.2f - 3.5f) * ocvf - 380.0f;
     }
 
     // In the logarithmic portion of the relationship?
