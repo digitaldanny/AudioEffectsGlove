@@ -5,3 +5,4 @@
 */
 
 #include "state_of_charge_api.h"
+

@@ -48,6 +48,11 @@
 #define ADC_CH2             (2)
 #define ADC_CH3             (3)
 
+#define ADC_MAX_VALUE       16383   // 2^14-1
+#define ADC_VREF            3.3f    // Voltage reference for ADC channel
+#define OCV_VDIV            (100000.0f/(100000.0f + 100000.0f)) // Voltage divider formula for OCV voltage divider
+#define ADC_ERR             1.26f   // Percentage error of expected value - should be 1.0 ideally
+
 // Multi-sequence ADC conversion being used - 4 ADC_MEM regions.
 #define NUM_ADC_CONVERSIONS_MAX 4
 

@@ -96,10 +96,6 @@ bool Hc05Api::MSP432::SetMode(hc05Mode_e mode)
 
     // Configure the STATE GPIO for reading if the HC-05 is connected to slave or not.
     MAP_GPIO_setAsInputPin(systemIO.bluetoothState.port, systemIO.bluetoothState.pin);
-
-    // Power cycle to switch the HC-05 mode.
-    setExternalHwPower(false);
-    setExternalHwPower(true);
     return true;
 }
 

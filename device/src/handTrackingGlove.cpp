@@ -7,6 +7,7 @@
 #include "flex_sensors_api.h"
 #include "mpu6050_api.h"
 #include "sensor_processing_lib.h"
+#include "adc_if.h"
 #include "lcd_graphics.h"
 
 /*
@@ -14,6 +15,9 @@
  * DEFINES
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
+
+#define ADC_CH_OCV      ADC_CH3 // Open circuit voltage ADC buffer index
+#define ADC_CH_CCV      ADC_CH1 // Closed circuit voltage ADC buffer index
 
 #define LCD_ROW_BLUETOOTH_STATUS    0
 #define LCD_COL_BLUETOOTH_STATUS    0
@@ -49,6 +53,9 @@ typedef struct
     // Message received back from the slave device
     // This will only contain the opcode portion of the dataPacket_t.
     char* slaveResponse;
+
+    // 14-bit ADC reading for the battery's open circuit voltage.
+    uint16_t batteryOcvAdc;
 
     // MPU6050 sensor data
     int16_t accelBuffer[3];
@@ -118,14 +125,25 @@ int handTrackingGlove()
     // Initialize GPIO to control external hardware power and set power to off
     initExternalHwPower();
 
-    // Configures SPI module, LCD registers, and clears screen
-    LcdGfx::init();
+    // Start power cycle.
+    setExternalHwPower(false);
+
+    // Configure UART to communicate with HC-05 module
+    Hc05Api::SetMode(HC05MODE_DATA);
+
+    // Enter Low-power mode and read battery's (near) open circuit voltage
+    // and estimate starting battery charge.
+    Adc::Init();
+    state.batteryOcvAdc = Adc::ReadAdcChannel(ADC_CH_OCV);
+
+    // Finish power cycle.
+    setExternalHwPower(true);
 
     // Configures ADC module and sets mux GPIO
     FlexSensors::Init();
 
-    // Configure UART to communicate with HC-05 module
-    Hc05Api::SetMode(HC05MODE_DATA);
+    // Configures SPI module, LCD registers, and clears screen
+    LcdGfx::init();
 
     // Configure I2C and MPU6050 module to read accelerometer and gyroscope sensor data.
     Mpu6050Api::init();
@@ -137,6 +155,10 @@ int handTrackingGlove()
 
     // Slave will be ready for update as soon as master and slave connect
     state.isSlaveReadyForUpdate = true;
+
+    memset(state.lcdMsg, ' ', 10);
+    sprintf(state.lcdMsg, "OCV: %1.2f", ADC_ERR*ADC_VREF*(float)state.batteryOcvAdc/(float)ADC_MAX_VALUE/OCV_VDIV);
+    LcdGfx::drawString(0, LCD_ROW_BATTERY, state.lcdMsg, 10);
 
     // Main program loop
     while(1)
