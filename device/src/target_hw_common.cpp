@@ -238,10 +238,10 @@ void setupTargetHw()
     MAP_FPU_enableLazyStacking();
 
     // Configuring SysTick to trigger every millisecond
-    //MAP_SysTick_enableModule();
-    //MAP_SysTick_setPeriod(MAP_CS_getMCLK() / 1000);
+    MAP_SysTick_enableModule();
+    MAP_SysTick_setPeriod(MAP_CS_getMCLK() / 1000);
     //MAP_Interrupt_enableSleepOnIsrExit();
-    //MAP_SysTick_enableInterrupt();
+    MAP_SysTick_enableInterrupt();
 
     /* Enabling interrupts */
     MAP_Interrupt_enableMaster();
