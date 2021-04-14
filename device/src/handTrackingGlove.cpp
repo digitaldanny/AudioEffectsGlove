@@ -8,6 +8,7 @@
 #include "mpu6050_api.h"
 #include "sensor_processing_lib.h"
 #include "adc_if.h"
+#include "state_of_charge_api.h"
 #include "lcd_graphics.h"
 
 /*
@@ -56,6 +57,7 @@ typedef struct
 
     // 14-bit ADC reading for the battery's open circuit voltage.
     uint16_t batteryOcvAdc;
+    float stateOfCharge;
 
     // MPU6050 sensor data
     int16_t accelBuffer[3];
@@ -135,6 +137,7 @@ int handTrackingGlove()
     // and estimate starting battery charge.
     Adc::Init();
     state.batteryOcvAdc = Adc::ReadAdcChannel(ADC_CH_OCV);
+    state.stateOfCharge = SocApi::getChargeFromOcv(state.batteryOcvAdc);
 
     // Finish power cycle.
     setExternalHwPower(true);
@@ -155,10 +158,6 @@ int handTrackingGlove()
 
     // Slave will be ready for update as soon as master and slave connect
     state.isSlaveReadyForUpdate = true;
-
-    memset(state.lcdMsg, ' ', 10);
-    sprintf(state.lcdMsg, "OCV: %1.2f", ADC_ERR*ADC_VREF*(float)state.batteryOcvAdc/(float)ADC_MAX_VALUE/OCV_VDIV);
-    LcdGfx::drawString(0, LCD_ROW_BATTERY, state.lcdMsg, 10);
 
     // Main program loop
     while(1)
@@ -197,10 +196,36 @@ int handTrackingGlove()
         }
 
         state.bluetoothTimeoutCounter++;
+
+        // Update LCD's battery charge percentage + battery symbol
+        updateLcdBatteryCharge();
+
         delayMs(5);
     }
 
     return 0;
+}
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * Description: updateLcdBatteryCharge
+ * Update LCD's battery charge percentage + battery symbol
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+void updateLcdBatteryCharge()
+{
+    // Update battery charge percentage + icon
+    memset(state.lcdMsg, ' ', 10);
+    if (state.stateOfCharge > 75.0f)
+        sprintf(state.lcdMsg, "[####] %3.0f", state.stateOfCharge);
+    else if (state.stateOfCharge > 50.0f)
+        sprintf(state.lcdMsg, "[### ] %3.0f", state.stateOfCharge);
+    else if (state.stateOfCharge > 25.0f)
+        sprintf(state.lcdMsg, "[##  ] %3.0f", state.stateOfCharge);
+    else
+        sprintf(state.lcdMsg, "[#   ] %3.0f", state.stateOfCharge);
+
+    LcdGfx::drawString(0, LCD_ROW_BATTERY, state.lcdMsg, 10);
 }
 
 /*

@@ -10,6 +10,7 @@
 #include "build_switches.h"
 #include "target_hw_common.h"
 #include "adc_if.h"
+#include <math.h>
 
 /*
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
@@ -24,5 +25,6 @@ namespace SocApi {
     * PROTOTYPES
     * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
     */
+    float getChargeFromOcv(uint16_t ocv);
 }
 #endif // _SRC_STATE_OF_CHARGE_API
