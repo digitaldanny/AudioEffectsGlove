@@ -18,7 +18,7 @@ volatile adcData_t adcData[ADC_MAX_NUM_CHAN];
 #endif // ENABLE_ADC_C2000
 
 #if TARGET_HW_MSP432
-static volatile uint16_t adcReading;
+static volatile uint16_t adcReading[NUM_ADC_CONVERSIONS_MAX];
 static volatile bool flagAdcReady;
 #endif // TARGET_HW_MSP432
 
@@ -83,31 +83,59 @@ uint16_t Adc::ReadAdcChannel(uint8_t adc_channel) {
 
 #if TARGET_HW_MSP432
 bool Adc::MSP432::Init() {
-    /* Initializing ADC (MCLK/1/4) */
+
+    /* Initializing ADC (MCLK/1/1) */
     MAP_ADC14_enableModule();
     MAP_ADC14_initModule(ADC_CLOCKSOURCE_MCLK, ADC_PREDIVIDER_1, ADC_DIVIDER_4, 0);
 
     /* Configuring GPIOs (5.5 A0) */
-    MAP_GPIO_setAsPeripheralModuleFunctionInputPin(systemIO.flexAdc.port, systemIO.flexAdc.pin,
-    GPIO_TERTIARY_MODULE_FUNCTION);
+    MAP_GPIO_setAsPeripheralModuleFunctionInputPin(systemIO.flexAdc.port,
+        systemIO.flexAdc.pin | systemIO.ocvAdc.pin | systemIO.spareAdc.pin | systemIO.ccvAdc.pin,
+        GPIO_TERTIARY_MODULE_FUNCTION);
 
-    /* Configuring ADC Memory */
-    MAP_ADC14_configureSingleSampleMode(ADC_MEM0, true);
-    MAP_ADC14_configureConversionMemory(ADC_MEM0, ADC_VREFPOS_AVCC_VREFNEG_VSS,
-    ADC_INPUT_A0, false);
+    // Configuring ADC Memory
+    // ADC_MEM0 - Flex sensors
+    // ADC_MEM1 - UNUSED
+    // ADC_MEM2 - Closed Circuit Voltage
+    // ADC_MEM3 - Open Circuit Voltage
+    MAP_ADC14_configureMultiSequenceMode(ADC_MEM0, ADC_MEM3, false);
+    MAP_ADC14_configureConversionMemory(ADC_MEM0,
+            ADC_VREFPOS_AVCC_VREFNEG_VSS,
+            ADC_INPUT_A0, false);
+    MAP_ADC14_configureConversionMemory(ADC_MEM1,
+            ADC_VREFPOS_AVCC_VREFNEG_VSS,
+            ADC_INPUT_A1, false);
+    MAP_ADC14_configureConversionMemory(ADC_MEM2,
+            ADC_VREFPOS_AVCC_VREFNEG_VSS,
+            ADC_INPUT_A2, false);
+    MAP_ADC14_configureConversionMemory(ADC_MEM3,
+            ADC_VREFPOS_AVCC_VREFNEG_VSS,
+            ADC_INPUT_A3, false);
 
-    /* Configuring Sample Timer */
-    MAP_ADC14_enableSampleTimer(ADC_MANUAL_ITERATION);
+    /* Enabling the interrupt when a conversion on channel 7 (end of sequence)
+     *  is complete and enabling conversions */
+    MAP_ADC14_enableInterrupt(ADC_INT3);
 
-    /* Enabling/Toggling Conversion */
-    MAP_ADC14_enableConversion();
-
-    /* Enabling interrupts */
-    MAP_ADC14_enableInterrupt(ADC_INT0);
+    /* Enabling Interrupts */
     MAP_Interrupt_enableInterrupt(INT_ADC14);
+    MAP_Interrupt_enableMaster();
+
+    /* After triggering conversion, ADC channel automatically increments for conversion */
+    MAP_ADC14_enableSampleTimer(ADC_AUTOMATIC_ITERATION);
+    MAP_ADC14_enableConversion();
     return true;
 }
 
+/*
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * DESCRIPTION: ReadAdcChannel
+ * This function triggers the ADC conversion on all 4 channels and returns
+ * the requested channel's value.
+ *
+ * NOTE - This function is not efficient when reading from all 4 channels
+ * sequentially since it will trigger a new conversion each time.
+ * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ */
 uint16_t Adc::MSP432::ReadAdcChannel(uint8_t adc_channel) {
 
     // Clear conversion ready flag
@@ -118,15 +146,19 @@ uint16_t Adc::MSP432::ReadAdcChannel(uint8_t adc_channel) {
 
     // Wait until the ADC interrupt sets the adc conversion flag
     // before returning the captured adc value.
-    while (!flagAdcReady);
-    return adcReading;
+    while (!flagAdcReady)
+    {
+        ; //MAP_PCM_gotoLPM0();
+    }
+    return adcReading[adc_channel];
 }
 
 /*
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
  * DESCRIPTION: ADC14_IRQHandler
- * ADC Interrupt Handler. This handler is called whenever there is a conversion
- * that is finished for ADC_MEM0.
+ * This interrupt is fired whenever a conversion is completed and placed in
+ * ADC_MEM3. This signals the end of conversion and the results array is
+ * grabbed and placed in resultsBuffer
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
  */
 extern "C" void ADC14_IRQHandler(void)
@@ -134,9 +166,12 @@ extern "C" void ADC14_IRQHandler(void)
     uint64_t status = MAP_ADC14_getEnabledInterruptStatus();
     MAP_ADC14_clearInterruptFlag(status);
 
-    if (ADC_INT0 & status)
+    if (ADC_INT3 & status)
     {
-        adcReading = MAP_ADC14_getResult(ADC_MEM0);
+        adcReading[0] = MAP_ADC14_getResult(ADC_MEM0);
+        adcReading[1] = MAP_ADC14_getResult(ADC_MEM1);
+        adcReading[2] = MAP_ADC14_getResult(ADC_MEM2);
+        adcReading[3] = MAP_ADC14_getResult(ADC_MEM3);
         flagAdcReady = true;
     }
 }
