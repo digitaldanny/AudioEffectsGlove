@@ -1,6 +1,6 @@
 #include "flex_sensors_api.h"
 
-const uint16_t flexSensorError[FLEX_MAX_NUM_FINGERS] = {3000, 3000, 3000};
+const uint16_t flexSensorError[FLEX_MAX_NUM_FINGERS] = {2500, 3000, 3000};
 
 /*
  * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
