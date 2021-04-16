@@ -40,7 +40,7 @@
 
 // Glove sensor data related
 #define FLEX_MIN_ADC    0.0f
-#define FLEX_MAX_ADC    190.0f
+#define FLEX_MAX_ADC    180.0f
 
 // Pitch and roll max/min values
 #define PITCH_MAX       (75.0f)
@@ -413,11 +413,11 @@ void main(void)
             // +--------------------------------------------------------------------------------------+
 
             static uint16_t edgeCount = 0;
-            if (gloveSensorDataLocal.flexSensors[FLEX_INDEX_EFFECTS_ENABLE] > EFFECTS_TOGGLE_THRESHOLD)
+            if (gloveSensorDataLocal.flexSensors[FLEX_INDEX_EFFECTS_ENABLE] < EFFECTS_TOGGLE_THRESHOLD)
             {
                 edgeCount++;
             }
-            else if (gloveSensorDataLocal.flexSensors[FLEX_INDEX_EFFECTS_ENABLE] < EFFECTS_TOGGLE_THRESHOLD && edgeCount > 0)
+            else if (gloveSensorDataLocal.flexSensors[FLEX_INDEX_EFFECTS_ENABLE] > EFFECTS_TOGGLE_THRESHOLD && edgeCount > 30)
             {
                 isFxEnabled = !isFxEnabled;
                 edgeCount = 0;
