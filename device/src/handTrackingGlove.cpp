@@ -7,6 +7,8 @@
 #include "flex_sensors_api.h"
 #include "mpu6050_api.h"
 #include "sensor_processing_lib.h"
+#include "adc_if.h"
+#include "state_of_charge_api.h"
 #include "lcd_graphics.h"
 
 /*
@@ -15,12 +17,16 @@
  * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
 */
 
+#define ADC_CH_OCV      ADC_CH3 // Open circuit voltage ADC buffer index
+#define ADC_CH_CCV      ADC_CH1 // Closed circuit voltage ADC buffer index
+
 #define LCD_ROW_BLUETOOTH_STATUS    0
 #define LCD_COL_BLUETOOTH_STATUS    0
 #define LCD_ROW_PITCH               1
 #define LCD_ROW_ROLL                2
-#define LCD_ROW_FLEX                3
-#define LCD_ROW_BATTERY             4
+#define LCD_ROW_FLEX1               3
+#define LCD_ROW_FLEX2               4
+#define LCD_ROW_BATTERY             5
 
 #define BLUETOOTH_TIMEOUT_COUNT     50 // Iteration count between data update to ack is expected to be around 10-15.
 
@@ -49,6 +55,10 @@ typedef struct
     // Message received back from the slave device
     // This will only contain the opcode portion of the dataPacket_t.
     char* slaveResponse;
+
+    // 14-bit ADC reading for the battery's open circuit voltage.
+    uint16_t batteryOcvAdc;
+    float stateOfCharge;
 
     // MPU6050 sensor data
     int16_t accelBuffer[3];
@@ -87,6 +97,7 @@ gloveState_t state;
 bool updateBluetoothConnectionStatus();
 bool updateFlexSensorReadings();
 void updatePitchRoll();
+void updateLcdBatteryCharge();
 void SendUpdateToSlave();
 void CheckForSlaveAck();
 
@@ -118,14 +129,26 @@ int handTrackingGlove()
     // Initialize GPIO to control external hardware power and set power to off
     initExternalHwPower();
 
-    // Configures SPI module, LCD registers, and clears screen
-    LcdGfx::init();
+    // Start power cycle.
+    setExternalHwPower(false);
+
+    // Configure UART to communicate with HC-05 module
+    Hc05Api::SetMode(HC05MODE_DATA);
+
+    // Enter Low-power mode and read battery's (near) open circuit voltage
+    // and estimate starting battery charge.
+    Adc::Init();
+    state.batteryOcvAdc = Adc::ReadAdcChannel(ADC_CH_OCV);
+    state.stateOfCharge = SocApi::getChargeFromOcv(state.batteryOcvAdc);
+
+    // Finish power cycle.
+    setExternalHwPower(true);
 
     // Configures ADC module and sets mux GPIO
     FlexSensors::Init();
 
-    // Configure UART to communicate with HC-05 module
-    Hc05Api::SetMode(HC05MODE_DATA);
+    // Configures SPI module, LCD registers, and clears screen
+    LcdGfx::init();
 
     // Configure I2C and MPU6050 module to read accelerometer and gyroscope sensor data.
     Mpu6050Api::init();
@@ -153,6 +176,8 @@ int handTrackingGlove()
         // Update pitch and roll angles from accel / gyro readings.
         updatePitchRoll();
 
+        state.stateOfCharge = SocApi::calculateStateOfCharge(state.stateOfCharge, CURRENT_LOAD_STATIC_MA);
+
         if (state.isSlaveConnected)
         {
             // Send the next packet to the slave device if ready
@@ -175,10 +200,36 @@ int handTrackingGlove()
         }
 
         state.bluetoothTimeoutCounter++;
+
+        // Update LCD's battery charge percentage + battery symbol
+        updateLcdBatteryCharge();
+
         delayMs(5);
     }
 
     return 0;
+}
+
+/*
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+ * Description: updateLcdBatteryCharge
+ * Update LCD's battery charge percentage + battery symbol
+ * +=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+=====+
+*/
+void updateLcdBatteryCharge()
+{
+    // Update battery charge percentage + icon
+    memset(state.lcdMsg, ' ', 10);
+    if (state.stateOfCharge > 75.0f)
+        sprintf(state.lcdMsg, "[####] %3.0f", state.stateOfCharge);
+    else if (state.stateOfCharge > 50.0f)
+        sprintf(state.lcdMsg, "[### ] %3.0f", state.stateOfCharge);
+    else if (state.stateOfCharge > 25.0f)
+        sprintf(state.lcdMsg, "[##  ] %3.0f", state.stateOfCharge);
+    else
+        sprintf(state.lcdMsg, "[#   ] %3.0f", state.stateOfCharge);
+
+    LcdGfx::drawString(0, LCD_ROW_BATTERY, state.lcdMsg, 10);
 }
 
 /*
@@ -291,12 +342,17 @@ bool updateFlexSensorReadings()
     for (uint8_t f = 0; f < FLEX_MAX_NUM_FINGERS; f++)
     {
         state.packet.flexSensors[f] = (unsigned char)FlexSensors::GetJointsData(f);
-
-        // Update LCD with flex sensor readings
-        memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
-        sprintf(state.lcdMsg, "F: %03u %03u", state.packet.flexSensors[1], state.packet.flexSensors[2]);
-        LcdGfx::drawString(0, LCD_ROW_FLEX, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
     }
+
+    // Update LCD with flex sensor readings - flex sensor 0
+    memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
+    sprintf(state.lcdMsg, "F: %03u", state.packet.flexSensors[0]);
+    LcdGfx::drawString(0, LCD_ROW_FLEX1, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
+
+    // Update LCD with flex sensor readings - flex sensors 1-2
+    memset(state.lcdMsg, 0, LCD_MAX_CHARS_PER_LINE);
+    sprintf(state.lcdMsg, "F: %03u %03u", state.packet.flexSensors[1], state.packet.flexSensors[2]);
+    LcdGfx::drawString(0, LCD_ROW_FLEX2, state.lcdMsg, LCD_MAX_CHARS_PER_LINE);
     return true;
 }
 
