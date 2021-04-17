@@ -69,7 +69,7 @@ float SocApi::calculateStateOfCharge(float prevSoc, float currentLoad)
 
     uint32_t currMillis = millis();
 
-    float soc = prevSoc + currentLoad * (((float)currMillis - (float)prevMillis)/1000.0f * MS_PER_HOUR) / BATTERY_NOMINAL_CAPACITY_MAH;
+    float soc = prevSoc + currentLoad * (((float)currMillis - (float)prevMillis) * MS_PER_HOUR) / BATTERY_NOMINAL_CAPACITY_MAH * 100.0f;
 
     // Boundary checks
     if (soc < 0.0f)
