@@ -4,12 +4,17 @@
 
 The goal of the Hand Tracking Glove is to track joint bends in multiple fingers and hand orientation of the right hand. The glove produces messages containing sensor data that can be transferred to a user-end application via Bluetooth. My user-end application to demonstrate the glove’s capabilities is an interactive audio effects rack utilizing the hardware platform from the Real-Time Digital Signal Processing course (EEL4750). The user wears the glove to control parameters of high-pass and low-pass filters, pitch shifting, and volume.  
 
+<img src="/images/gloveAssembly.PNG" width="1400"/>
 
 **Figure 1: Hand Tracking Glove device.**
 
-
+<img src="/images/gloveAndCharger.PNG" width="1400"/>
 
 **Figure 2: Charger PCB (left) attached to the glove PCB (right) for battery charging.**
+
+<img src="/images/dspBoard.PNG" width="1400"/>
+
+**Figure 3: DSP board and codec for processing audio.**
 
 ## Features
 
@@ -35,7 +40,9 @@ In this section, I will discuss the core features and objectives of this project
 - The charger PCB plays a 4 note tune when the glove is connected or disconnected. The tune is  played forwards when connected and backwards when disconnected.
 - The charger PCB automatically detects when the glove PCB is connected or disconnected even if the Li-ion battery on the glove PCB is fully depleted.
 
-**Figure 3: Hardware diagram for Glove, Charger, and DSP Effects Rack.**
+<img src="/images/hwDiagram.PNG" width="1400"/>
+
+**Figure 4: Hardware diagram for Glove, Charger, and DSP Effects Rack.**
 
 ## Concept & Technology Selection
 
@@ -81,8 +88,9 @@ The load current is a static value that is estimated based on the typical curren
 
 Recharging Lithium-ion batteries involves a 2-step process - Constant Current and Constant Voltage (CCCV). The first stage provides the battery with a constant flow of the max charging current until the battery reaches a 4.2V threshold. At this threshold, a Schmitt trigger switches the CC circuit off and the CV circuit on so that a constant voltage of 4.2V is provided to the battery. When the battery’s current draw reaches a minimum threshold of around 5 mA, a comparator circuit shuts the circuit off completely.
 
+<img src="/images/cccv.jpg" width="700"/>
 
-**Figure 4: Charge characteristics curve showing expected circuit outputs.**
+**Figure 5: Charge characteristics curve showing expected circuit outputs.**
 
 Initially, I planned to charge the battery with a 5V power supply. However, I tried multiple designs for the CC and CV circuits that worked poorly due to high voltage dropout or instability. Eventually, I decided to upgrade my power supply to 10V, which allowed me to use an LM317 regulator as constant voltage and constant current power supplies.
 
@@ -100,8 +108,9 @@ This circuit plays a 4-note tune either forwards or backwards when triggered. I'
 - The volume controller amplifies the signal in the range 0V - 5V. 
 - The AB amplifier will keep a 1:1 voltage gain but allows for more current to be drawn from the power supply rather than the volume control amplifier. Output is fed into the speaker to produce the audio.
 
+<img src="/images/wavegen.PNG" width="700"/>
 
-**Figure 5: High-level block diagram of hardware used in the waveform generator and speaker amplifier.**
+**Figure 6: High-level block diagram of hardware used in the waveform generator and speaker amplifier.**
 
 This circuit could have been easily implemented with a microcontroller and an AB amplifier; however, I wanted this board to work without having to be programmed. Additionally, this whole circuit can be built cheaper than the $13 worth of hardware required for the microcontroller (microcontroller, crystal, inductors, etc).
 
@@ -109,14 +118,17 @@ This circuit could have been easily implemented with a microcontroller and an AB
 
 The circuit for detecting connection between the charger PCB and the glove PCB uses a pull-up resistor and a disconnectable ground wire looping between the two PCBs. When the PCBs are disconnected, the pull-up resistor will pull the Connected pin high. When the PCBs are connected, the ground signal will pull the Connected pin low. 
 
+<img src="/images/connDetection.PNG" width="400"/>
 
-**Figure 6: Connection detection circuit that will trigger 4 note tune circuit.**
+**Figure 7: Connection detection circuit that will trigger 4 note tune circuit.**
 
 #### Interactive Audio Effect Rack - Demo Application
 
 The goal of this project is to create an expressive and easy-to-use controller. However, a controller is not an interesting project without an application to control. I used the glove’s outputs to control several audio effects on a DSP/codec platform. Figure 10 shows the components used in this application from a high level.
 
-**Figure 7: Hardware platform for the demo application.**
+<img src="/images/dspHwDiagram.PNG" width="1000"/>
+
+**Figure 8: Hardware diagram for the demo application.**
 
 The C2000 receives flex sensor data, pitch, and roll from the glove application through the slave HC-05 module. The microcontroller decodes the message data according to the established message protocol.
 The C2000 implements several frequency domain effects listed in the table below. The microcontroller software maps various sensor readings from the glove to control “knobs” of the effects as described in the table below.
