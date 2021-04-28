@@ -15,7 +15,7 @@ The goal of the Hand Tracking Glove is to track joint bends in multiple fingers 
 
 In this section, I will discuss the core features and objectives of this project. This project features two PCBs - one for the glove and one for the battery charger. Additionally, the hardware platform from Real-Time Digital Signal Processing (EEL4750) is used in this project. The features for each platform are separated into three lists below. 
 
-#### Glove PCB Features**
+#### Glove PCB Features
 
 - Capture bends in 3 fingers using bend-sensitive resistors as a proof of concept. The current hardware design allows for easily adding 5 more flex sensors with minimal changes required in software/hardware.
 - Finger sensor bend resolution is high enough to detect noticeable differences in finger movements. Testing shows that I can achieve ~130 readings per flex sensor after ADC filtering (14-bit to 8-bit bit shifting).
@@ -51,7 +51,7 @@ Another issue with using flex sensors is pricing. The popular Adafruit flex sens
 
 Finally, I built a 10 Hz low-pass filter on the mux output to reduce noise on the ADC readings. However, this created a problem during the software development stage when switching between the finger voltage readings. The LPF’s capacitor discharge time was so long that each finger’s voltage reading was related to the previous finger’s voltage reading. My solution was to remove the LPF hardware from the PCB since my software essentially implemented a low-pass filter by removing the bottom 6 bits of the ADC readings.
 
-####Hand Orientation (Pitch and Roll)
+#### Hand Orientation (Pitch and Roll)
 My first idea to capture hand rotation around pitch, yaw, and roll axes was to simply use a gyroscope. In theory, the angular velocity data could be integrated to determine rotational position (orientation). However, high-precision gyroscopes are expensive ($200 - $1000+ range) and cheaper gyroscopes become highly inaccurate due to drift. The alternative I used was to combine data from a cheap accelerometer and gyroscope using a sensor fusion algorithm. The accelerometer data is used to find orientation based on gravity’s vector, and the gyroscope data is used to correct the accelerometer’s sensitivity to non-gravity related acceleration (i.e. the user’s hand moving).
 
 #### Bluetooth Message Transmission
