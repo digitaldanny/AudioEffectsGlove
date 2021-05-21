@@ -1,5 +1,9 @@
 # DSP Effects Glove
 
+## Glove PCB Demo
+
+[YouTube - Main Glove Audio Effects Demo](https://www.youtube.com/watch?v=skrbZ-dCfOY)
+
 ## Project Abstract
 
 The goal of the Hand Tracking Glove is to track joint bends in multiple fingers and hand orientation of the right hand. The glove produces messages containing sensor data that can be transferred to a user-end application via Bluetooth. My user-end application to demonstrate the glove’s capabilities is an interactive audio effects rack utilizing the hardware platform from the Real-Time Digital Signal Processing course (EEL4750). The user wears the glove to control parameters of high-pass and low-pass filters, pitch shifting, and volume.  
